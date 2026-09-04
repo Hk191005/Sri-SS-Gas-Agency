@@ -21,6 +21,7 @@ import { AddPurchaseModal } from '../components/purchases/AddPurchaseModal';
 import { AddPaymentModal } from '../components/payments/AddPaymentModal';
 import { getDashboardStats } from '../lib/db';
 import { getCustomerReminderCycles } from '../lib/messaging';
+import { getTimeBasedGreeting } from '../lib/greeting';
 import type { DashboardStats, CustomerReminderCycle } from '../types/database.types';
 
 interface DashboardProps {
@@ -28,6 +29,21 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
+  const [greeting, setGreeting] = useState<string>(() => getTimeBasedGreeting());
+
+  useEffect(() => {
+    // Dynamic time-aware greeting updates across time boundaries
+    setGreeting(getTimeBasedGreeting());
+    const interval = setInterval(() => {
+      setGreeting((prev) => {
+        const next = getTimeBasedGreeting();
+        return prev === next ? prev : next;
+      });
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const [stats, setStats] = useState<DashboardStats>({
     totalCustomers: 0,
     activeCustomers: 0,
@@ -106,7 +122,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#111111] dark:text-white tracking-tight">
-              Good morning, Harikanth & Selvaraj
+              {greeting}, Harikanth & Selvaraj
             </h1>
             <p className="text-xs sm:text-sm font-semibold text-[#525252] dark:text-[#A3A3A3] mt-1">
               Here's what's happening with SRI SS GAS AGENCY today in Tiruppur District, Tamil Nadu.
