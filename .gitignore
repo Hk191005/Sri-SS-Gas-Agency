@@ -20,6 +20,8 @@ dist-ssr
 # Scratch and test verification scripts
 scratch/
 test_production_verification.mjs
+test-results/
+playwright-report/
 
 # Editor directories and files
 .vscode/*
