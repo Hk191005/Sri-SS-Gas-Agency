@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, isSupabaseConfigured, isMockModeAllowed } from '../lib/supabase';
-import { seedDemoDataIfEmpty } from '../lib/db';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { AGENCY_BRANDING, formatUsernameToEmail } from '../lib/constants';
 
 interface UserSession {
@@ -15,7 +14,6 @@ interface AuthContextType {
   user: UserSession | null;
   loading: boolean;
   isSupabaseActive: boolean;
-  isMockActive: boolean;
   isPasswordRecovery: boolean;
   login: (emailInput: string, password?: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
@@ -31,7 +29,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   const isSupabaseActive = isSupabaseConfigured();
-  const isMockActive = isMockModeAllowed();
 
   const resolveAdminProfile = (email: string) => {
     const lower = (email || '').toLowerCase();
@@ -49,10 +46,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    if (isMockActive) {
-      seedDemoDataIfEmpty();
-    }
-
     const checkSession = async () => {
       if (isSupabaseActive) {
         // Check if current URL contains recovery hash or query
@@ -77,25 +70,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
         } else {
           setUser(null);
-        }
-      } else if (isMockActive) {
-        const stored = localStorage.getItem('srissgas_admin_session');
-        if (stored) {
-          try {
-            setUser(JSON.parse(stored));
-          } catch (e) {
-            setUser(null);
-          }
-        } else {
-          const defaultAdmin = {
-            id: 'admin-owner-1',
-            username: 'harikanth',
-            email: 'sshk5318@gmail.com',
-            fullName: 'Harikanth',
-            role: 'Agency Owner / Admin',
-          };
-          localStorage.setItem('srissgas_admin_session', JSON.stringify(defaultAdmin));
-          setUser(defaultAdmin);
         }
       } else {
         setUser(null);
@@ -127,34 +101,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return () => listener.subscription.unsubscribe();
     }
-  }, [isSupabaseActive, isMockActive]);
+  }, [isSupabaseActive]);
 
   const login = async (emailInput: string, password?: string): Promise<{ error?: string }> => {
     setLoading(true);
     try {
       const mappedEmail = formatUsernameToEmail(emailInput);
 
-      if (isSupabaseActive) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: mappedEmail,
-          password: password || '',
-        });
-        if (error) {
-          return { error: error.message };
-        }
-      } else if (isMockActive) {
-        const { fullName, role } = resolveAdminProfile(mappedEmail);
-        const adminSession = {
-          id: 'admin-owner-1',
-          username: mappedEmail.split('@')[0],
-          email: mappedEmail,
-          fullName,
-          role,
-        };
-        localStorage.setItem('srissgas_admin_session', JSON.stringify(adminSession));
-        setUser(adminSession);
-      } else {
+      if (!isSupabaseActive) {
         return { error: 'Supabase is not configured. Please complete environment setup.' };
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: mappedEmail,
+        password: password || '',
+      });
+      if (error) {
+        return { error: error.message };
       }
       return {};
     } finally {
@@ -165,8 +128,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     if (isSupabaseActive) {
       await supabase.auth.signOut();
-    } else if (isMockActive) {
-      localStorage.removeItem('srissgas_admin_session');
     }
     setUser(null);
     setIsPasswordRecovery(false);
@@ -175,18 +136,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = async (emailInput: string): Promise<{ error?: string; success?: string }> => {
     const mappedEmail = formatUsernameToEmail(emailInput);
 
-    if (isSupabaseActive) {
-      const redirectUrl = `${window.location.origin}/reset-password`;
-      const { error } = await supabase.auth.resetPasswordForEmail(mappedEmail, {
-        redirectTo: redirectUrl,
-      });
-      if (error) return { error: error.message };
-      return { success: `Password recovery link sent to ${mappedEmail}. Check your inbox.` };
+    if (!isSupabaseActive) {
+      return { error: 'Supabase is not configured. Please complete environment setup.' };
     }
-    if (isMockActive) {
-      return { success: `Mock recovery triggered for ${mappedEmail}.` };
-    }
-    return { error: 'Supabase database setup required.' };
+
+    const redirectUrl = `${window.location.origin}/reset-password`;
+    const { error } = await supabase.auth.resetPasswordForEmail(mappedEmail, {
+      redirectTo: redirectUrl,
+    });
+    if (error) return { error: error.message };
+    return { success: `Password recovery link sent to ${mappedEmail}. Check your inbox.` };
   };
 
   const updatePassword = async (newPassword: string): Promise<{ error?: string; success?: string }> => {
@@ -194,20 +153,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: 'Password must be at least 6 characters long.' };
     }
 
-    if (isSupabaseActive) {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-      if (error) return { error: error.message };
-      setIsPasswordRecovery(false);
-      return { success: 'Password updated successfully. You can now login with your new credentials.' };
+    if (!isSupabaseActive) {
+      return { error: 'Supabase is not configured. Please complete environment setup.' };
     }
 
-    if (isMockActive) {
-      return { success: 'Password updated successfully (local sandbox).' };
-    }
-
-    return { error: 'Supabase database setup required.' };
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (error) return { error: error.message };
+    setIsPasswordRecovery(false);
+    return { success: 'Password updated successfully. You can now login with your new credentials.' };
   };
 
   return (
@@ -216,7 +171,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         loading,
         isSupabaseActive,
-        isMockActive,
         isPasswordRecovery,
         login,
         logout,

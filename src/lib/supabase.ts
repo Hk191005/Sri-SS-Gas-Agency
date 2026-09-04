@@ -8,7 +8,7 @@ export class SupabaseNotConfiguredError extends Error {
   constructor(message?: string) {
     super(
       message ||
-        'Supabase configuration missing. Production mode requires valid VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in environment variables. Set VITE_ENABLE_MOCK_DATA=true if explicitly testing in local dev sandbox.'
+        'Supabase configuration missing. Production mode requires valid VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in environment variables.'
     );
     this.name = 'SupabaseNotConfiguredError';
   }
@@ -24,10 +24,6 @@ export const isSupabaseConfigured = (): boolean => {
     supabaseAnonKey.trim().length > 0 &&
     !supabaseAnonKey.includes('your-anon-key')
   );
-};
-
-export const isMockModeAllowed = (): boolean => {
-  return import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
 };
 
 // Initialize Supabase Client

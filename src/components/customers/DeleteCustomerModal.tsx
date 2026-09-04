@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Trash2, ShieldAlert, X, Loader2 } from 'lucide-react';
 import type { Customer } from '../../types/database.types';
 import { deleteCustomer } from '../../lib/db';
-import { supabase, isSupabaseConfigured, isMockModeAllowed } from '../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 interface DeleteCustomerModalProps {
   isOpen: boolean;
@@ -52,25 +52,6 @@ export const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
           payments: pyRes.count || 0,
           deposits: dRes.count || 0,
           deliveries: delRes.count || 0,
-        });
-      } else if (isMockModeAllowed()) {
-        const getLocal = (k: string) => {
-          try {
-            const raw = localStorage.getItem('srissgas_db_' + k);
-            return raw ? JSON.parse(raw) : [];
-          } catch {
-            return [];
-          }
-        };
-        const p = getLocal('purchases').filter((item: any) => item.customer_id === customerId);
-        const py = getLocal('payments').filter((item: any) => item.customer_id === customerId);
-        const d = getLocal('deposits').filter((item: any) => item.customer_id === customerId);
-        const del = getLocal('deliveries').filter((item: any) => item.customer_id === customerId);
-        setStats({
-          purchases: p.length,
-          payments: py.length,
-          deposits: d.length,
-          deliveries: del.length,
         });
       }
     } catch (e: any) {

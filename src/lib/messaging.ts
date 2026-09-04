@@ -12,45 +12,13 @@ import type {
   CustomerMessage,
   CustomerMessageTemplate,
   CustomerReminderCycle,
-  CustomerCommunicationLog,
   MessageType,
   MessageStatus,
   ReminderStatus,
   AgencySettings,
 } from '../types/database.types';
 
-const MOCK_STORAGE_KEY_TEMPLATES = 'srissgas_msg_templates';
-const MOCK_STORAGE_KEY_MESSAGES = 'srissgas_msg_history';
-const MOCK_STORAGE_KEY_LOGS = 'srissgas_msg_logs';
-
-const memoryStore = new Map<string, string>();
-
-function getLocal<T>(key: string, defaultValue: T): T {
-  try {
-    if (typeof localStorage !== 'undefined') {
-      const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : defaultValue;
-    }
-    const mem = memoryStore.get(key);
-    return mem ? JSON.parse(mem) : defaultValue;
-  } catch (e) {
-    return defaultValue;
-  }
-}
-
-function setLocal<T>(key: string, value: T): void {
-  try {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(key, JSON.stringify(value));
-    } else {
-      memoryStore.set(key, JSON.stringify(value));
-    }
-  } catch (e) {
-    console.error('Failed to save to local persistence:', e);
-  }
-}
-
-// Default Seed Templates
+// Default Seed Templates (Standard fallback templates)
 export const DEFAULT_MESSAGE_TEMPLATES: CustomerMessageTemplate[] = [
   {
     id: 'tmpl-refill-1',
@@ -95,6 +63,24 @@ export const DEFAULT_MESSAGE_TEMPLATES: CustomerMessageTemplate[] = [
     channel: 'all',
     subject: 'Happy Independence Day — SRI SS GAS AGENCY',
     body: 'Dear {{customer_name}}, Wishing you a proud and Happy Independence Day! SRI SS GAS AGENCY is dedicated to powering homes and commercial kitchens with safe and reliable LPG service.',
+    is_active: true,
+  },
+  {
+    id: 'tmpl-republic-1',
+    title: 'Republic Day Greeting',
+    category: 'festival',
+    channel: 'all',
+    subject: 'Happy Republic Day — SRI SS GAS AGENCY',
+    body: 'Dear {{customer_name}}, Wishing you a Happy Republic Day! Thank you for choosing SRI SS GAS AGENCY for your LPG energy requirements.',
+    is_active: true,
+  },
+  {
+    id: 'tmpl-safety-1',
+    title: 'LPG Cylinder Safety Tips',
+    category: 'service',
+    channel: 'all',
+    subject: 'Important LPG Safety Guidelines — SRI SS GAS AGENCY',
+    body: 'Dear {{customer_name}}, Safety reminder: Always close regulator knob after cooking. Check rubber hose (Suraksha pipe) periodically for cracks. For leak emergency or assistance, call {{agency_phone}} immediately.',
     is_active: true,
   },
   {
@@ -176,11 +162,11 @@ export async function getCustomerMessageTemplates(): Promise<CustomerMessageTemp
         return data as CustomerMessageTemplate[];
       }
     } catch (e) {
-      console.warn('Supabase getCustomerMessageTemplates fell back to defaults:', e);
+      console.warn('Supabase getCustomerMessageTemplates error:', e);
     }
   }
 
-  return getLocal<CustomerMessageTemplate[]>(MOCK_STORAGE_KEY_TEMPLATES, DEFAULT_MESSAGE_TEMPLATES);
+  return DEFAULT_MESSAGE_TEMPLATES;
 }
 
 /**
@@ -217,21 +203,11 @@ export async function getCustomerMessageHistory(filters?: {
         return data as CustomerMessage[];
       }
     } catch (e) {
-      console.warn('Supabase getCustomerMessageHistory fell back to local store:', e);
+      console.warn('Supabase getCustomerMessageHistory error:', e);
     }
   }
 
-  let list = getLocal<CustomerMessage[]>(MOCK_STORAGE_KEY_MESSAGES, []);
-  if (filters?.customerId) {
-    list = list.filter((m) => m.customer_id === filters.customerId);
-  }
-  if (filters?.messageType) {
-    list = list.filter((m) => m.message_type === filters.messageType);
-  }
-  if (filters?.channel) {
-    list = list.filter((m) => m.channel === filters.channel);
-  }
-  return list;
+  return [];
 }
 
 /**
@@ -250,12 +226,11 @@ export async function isDuplicateReminder(deduplicationKey: string): Promise<boo
         return true;
       }
     } catch (e) {
-      // Fall through to local check
+      // Non-blocking
     }
   }
 
-  const logs = getLocal<CustomerCommunicationLog[]>(MOCK_STORAGE_KEY_LOGS, []);
-  return logs.some((l) => l.deduplication_key === deduplicationKey);
+  return false;
 }
 
 /**
@@ -283,23 +258,9 @@ async function logCommunicationRecord(payload: {
         },
       ]);
     } catch (e) {
-      // Non-blocking
+      console.warn('Failed to insert communication log:', e);
     }
   }
-
-  const logs = getLocal<CustomerCommunicationLog[]>(MOCK_STORAGE_KEY_LOGS, []);
-  logs.unshift({
-    id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-    customer_id: payload.customer_id,
-    message_id: payload.message_id,
-    communication_type: payload.communication_type,
-    channel: payload.channel,
-    deduplication_key: payload.deduplication_key,
-    status: payload.status,
-    sent_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-  });
-  setLocal(MOCK_STORAGE_KEY_LOGS, logs);
 }
 
 /**
@@ -392,14 +353,9 @@ export async function sendCustomerMessage(payload: {
         newRecord.id = data.id;
       }
     } catch (e) {
-      console.warn('Supabase customer_messages insert fell back to local store:', e);
+      console.warn('Supabase customer_messages insert failed:', e);
     }
   }
-
-  // Record in local store
-  const messages = getLocal<CustomerMessage[]>(MOCK_STORAGE_KEY_MESSAGES, []);
-  messages.unshift(newRecord);
-  setLocal(MOCK_STORAGE_KEY_MESSAGES, messages);
 
   // Record communication log
   const dedupKey =

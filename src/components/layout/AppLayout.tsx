@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { SupabaseSetupBanner } from '../SupabaseSetupBanner';
-import { isSupabaseConfigured, isMockModeAllowed } from '../../lib/supabase';
+import { isSupabaseConfigured } from '../../lib/supabase';
 import { AGENCY_BRANDING } from '../../lib/constants';
 import { AgencyLogo } from '../branding/AgencyLogo';
 import { ThemeToggle } from '../ThemeToggle';
@@ -41,9 +41,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
   const location = useLocation();
 
   const isConfigured = isSupabaseConfigured();
-  const isMock = isMockModeAllowed();
 
-  if (!isConfigured && !isMock) {
+  if (!isConfigured) {
     return <SupabaseSetupBanner />;
   }
 
