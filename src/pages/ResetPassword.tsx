@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { AgencyLogo } from '../components/branding/AgencyLogo';
@@ -15,6 +15,27 @@ export const ResetPassword: React.FC = () => {
 
   const { updatePassword } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if URL hash or search params contain error descriptions from Supabase recovery redirect
+    const hash = window.location.hash;
+    const search = window.location.search;
+
+    if (hash.includes('error=') || search.includes('error=')) {
+      const rawParams = hash.startsWith('#') ? hash.substring(1) : search.startsWith('?') ? search.substring(1) : search;
+      const params = new URLSearchParams(rawParams);
+      const errorDesc = params.get('error_description');
+      const errorCode = params.get('error_code');
+
+      if (errorDesc) {
+        setError(decodeURIComponent(errorDesc.replace(/\+/g, ' ')));
+      } else if (errorCode === 'otp_expired') {
+        setError('The password reset link has expired. Please request a new recovery link from the login page.');
+      } else {
+        setError('The password reset link is invalid or expired. Please request a new link.');
+      }
+    }
+  }, []);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -31,3 +31,29 @@ export const supabase = createClient(
   isSupabaseConfigured() ? supabaseUrl : 'https://placeholder.supabase.co',
   isSupabaseConfigured() ? supabaseAnonKey : 'placeholder-key'
 );
+
+/**
+ * Resolves an environment-aware, production-safe redirect URL for Supabase Auth flows.
+ * - Local development: Uses current localhost origin (e.g., http://localhost:5173 or http://localhost:3000)
+ * - Production: Uses window.location.origin (e.g., https://sri-ss-gas-agency.vercel.app) or canonical production fallback
+ */
+export function getAuthRedirectUrl(path: string = '/reset-password'): string {
+  const formattedPath = path.startsWith('/') ? path : `/${path}`;
+  const canonicalProductionUrl = 'https://sri-ss-gas-agency.vercel.app';
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    const origin = window.location.origin;
+    const hostname = window.location.hostname;
+
+    // Local development
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local')) {
+      return `${origin}${formattedPath}`;
+    }
+
+    // Production or custom domain deployment
+    return `${origin}${formattedPath}`;
+  }
+
+  // Fallback for non-browser execution
+  return `${canonicalProductionUrl}${formattedPath}`;
+}

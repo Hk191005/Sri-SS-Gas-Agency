@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getAuthRedirectUrl } from '../lib/supabase';
 import { AGENCY_BRANDING, formatUsernameToEmail } from '../lib/constants';
 
 interface UserSession {
@@ -140,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: 'Supabase is not configured. Please complete environment setup.' };
     }
 
-    const redirectUrl = `${window.location.origin}/reset-password`;
+    const redirectUrl = getAuthRedirectUrl('/reset-password');
     const { error } = await supabase.auth.resetPasswordForEmail(mappedEmail, {
       redirectTo: redirectUrl,
     });
@@ -162,6 +162,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     if (error) return { error: error.message };
     setIsPasswordRecovery(false);
+    await supabase.auth.signOut();
+    setUser(null);
     return { success: 'Password updated successfully. You can now login with your new credentials.' };
   };
 
