@@ -92,9 +92,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
               <AgencyLogo size="md" />
               {!sidebarCollapsed && (
                 <div className="min-w-0 transition-opacity duration-200">
-                  <h1 className="text-xs font-black text-[#111111] dark:text-white leading-tight tracking-tight whitespace-nowrap">
+                  <span className="text-xs font-black text-[#111111] dark:text-white leading-tight tracking-tight whitespace-nowrap block">
                     {AGENCY_BRANDING.NAME}
-                  </h1>
+                  </span>
                   <p className="text-[10px] text-[#E31B23] font-black tracking-wide uppercase whitespace-nowrap">
                     MANAGEMENT SYSTEM
                   </p>
@@ -135,10 +135,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
             {onOpenQuickAction && !sidebarCollapsed && (
               <button
                 onClick={() => onOpenQuickAction('customer')}
-                className="w-full flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white text-xs font-black py-2.5 px-3 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.14)] transition-all active:scale-98"
+                className="w-full flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#FFF1F2] dark:hover:bg-rose-950/30 text-[#E31B23] dark:text-red-400 border border-[#FECDD3] dark:border-red-900/40 hover:border-[#E31B23] text-xs font-bold py-2 px-3 rounded-xl transition-all active:scale-98 shadow-2xs"
+                title="Add New Customer"
               >
-                <Plus className="w-4 h-4 text-white shrink-0" />
-                <span>Customer</span>
+                <Plus className="w-4 h-4 text-[#E31B23] dark:text-red-400 shrink-0" />
+                <span>+ Customer</span>
               </button>
             )}
           </div>
@@ -156,17 +157,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
                     sidebarCollapsed ? 'justify-center px-0 py-3' : 'gap-3 px-3 py-2.5'
                   } transition-all ${
                     active
-                      ? 'nav-item-active font-bold'
+                      ? 'nav-item-active font-bold shadow-xs'
                       : 'text-[#525252] dark:text-[#A3A3A3] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] hover:text-[#111111] dark:hover:text-white font-medium rounded-xl'
                   }`}
                   title={sidebarCollapsed ? item.name : undefined}
                 >
-                  {/* Left subtle red active bar */}
+                  {/* Left vibrant red active bar */}
                   {active && !sidebarCollapsed && (
-                    <span className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#E31B23] rounded-r-full" />
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-[3.5px] bg-[#E31B23] rounded-r-full" />
                   )}
 
-                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[#E31B23]' : 'text-[#525252] dark:text-[#A3A3A3]'}`} />
+                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[#E31B23] dark:text-[#E31B23]' : 'text-[#525252] dark:text-[#A3A3A3]'}`} />
                   {!sidebarCollapsed && <span className="text-xs truncate">{item.name}</span>}
                 </NavLink>
               );
@@ -207,7 +208,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
           <div className="flex items-center gap-2.5">
             <AgencyLogo size="sm" />
             <div>
-              <h1 className="text-xs font-black text-[#111111] dark:text-white leading-none tracking-tight">{AGENCY_BRANDING.NAME}</h1>
+              <span className="text-xs font-black text-[#111111] dark:text-white leading-none tracking-tight block">{AGENCY_BRANDING.NAME}</span>
               <span className="text-[10px] text-[#E31B23] font-black uppercase">Management System</span>
             </div>
           </div>

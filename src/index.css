@@ -147,14 +147,14 @@
   background-color: #FFF1F2;
   border: 1px solid #FECDD3;
   color: #C9151C;
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
 .dark .nav-item-active {
-  background-color: rgba(227, 27, 35, 0.15);
-  border: 1px solid rgba(227, 27, 35, 0.3);
-  color: #F87171;
-  border-radius: 14px;
+  background-color: #221516;
+  border: 1px solid rgba(227, 27, 35, 0.45);
+  color: #FFFFFF;
+  border-radius: 12px;
 }
 
 /* SUPERGAS SaaS Card Surface */

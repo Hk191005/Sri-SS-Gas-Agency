@@ -627,25 +627,27 @@ export const SupplierPurchases: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-7xl mx-auto">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#171717] dark:text-white tracking-tight flex items-center gap-2.5">
-            <Building2 className="w-7 h-7 text-[#E31B23]" /> Supplier Stock Purchases
+            <Building2 className="w-7 h-7 text-[#E31B23]" />
+            <span>Supplier Stock Purchases</span>
           </h1>
-          <p className="text-xs font-semibold text-[#525252] dark:text-[#D4D4D4] mt-1">
+          <p className="text-sm font-medium text-[#525252] dark:text-[#A3A3A3] mt-0.5">
             Manage company stock purchases (SUPERGAS), bill OCR extractions, manual intake & inventory inflows
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          {/* Export Dropdown Menu */}
+          {/* Export Dropdown Menu (Secondary Button) */}
           <div className="relative">
             <button
               onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-              className="flex items-center justify-center gap-2 bg-white dark:bg-[#171717] hover:bg-[#F3F4F6] dark:hover:bg-[#262626] text-[#171717] dark:text-white border border-[#E5E5E5] dark:border-[#2A2A2A] font-black text-xs px-3.5 py-2.5 rounded-[12px] shadow-xs transition-all active:scale-98 shrink-0 min-h-[44px]"
+              className="flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#F8FAFC] dark:hover:bg-[#262626] text-[#171717] dark:text-white border border-[#E5E7EB] dark:border-[#2A2A2A] font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-2xs transition-all active:scale-98 shrink-0 min-h-[44px]"
               title="Export Supplier Purchases"
+              aria-label="Export Supplier Purchases"
             >
               <Download className="w-4 h-4 text-[#E31B23]" />
               <span>Export</span>
@@ -658,35 +660,35 @@ export const SupplierPurchases: React.FC = () => {
                   className="fixed inset-0 z-20"
                   onClick={() => setIsExportDropdownOpen(false)}
                 />
-                <div className="absolute right-0 mt-1.5 w-56 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl shadow-xl z-30 py-1 text-xs font-bold overflow-hidden animate-in fade-in duration-150">
+                <div className="absolute right-0 mt-1.5 w-60 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl shadow-xl z-30 py-1.5 text-xs font-bold overflow-hidden animate-in fade-in duration-150">
                   <button
                     onClick={() => handleExport('excel')}
-                    className="w-full px-3.5 py-2.5 text-left hover:bg-[#F3F4F6] dark:hover:bg-[#262626] flex items-center gap-2.5 text-[#171717] dark:text-white transition-colors"
+                    className="w-full px-3.5 py-2.5 text-left hover:bg-[#F8FAFC] dark:hover:bg-[#262626] flex items-center gap-2.5 text-[#171717] dark:text-white transition-colors"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <div>
-                      <span className="block font-black">Export as Excel (.xlsx)</span>
-                      <span className="block text-[10px] text-[#737373] font-medium">Summary, Items & Payments</span>
+                      <span className="block font-bold">Export as Excel (.xlsx)</span>
+                      <span className="block text-xs text-[#737373] dark:text-[#A3A3A3] font-normal">Summary, Items & Payments</span>
                     </div>
                   </button>
                   <button
                     onClick={() => handleExport('pdf')}
-                    className="w-full px-3.5 py-2.5 text-left hover:bg-[#F3F4F6] dark:hover:bg-[#262626] flex items-center gap-2.5 text-[#171717] dark:text-white transition-colors border-t border-[#F1F1F1] dark:border-[#262626]"
+                    className="w-full px-3.5 py-2.5 text-left hover:bg-[#F8FAFC] dark:hover:bg-[#262626] flex items-center gap-2.5 text-[#171717] dark:text-white transition-colors border-t border-[#F1F1F1] dark:border-[#262626]"
                   >
                     <FileText className="w-4 h-4 text-[#E31B23] shrink-0" />
                     <div>
-                      <span className="block font-black">Export as PDF (.pdf)</span>
-                      <span className="block text-[10px] text-[#737373] font-medium">Official Formatted Ledger</span>
+                      <span className="block font-bold">Export as PDF (.pdf)</span>
+                      <span className="block text-xs text-[#737373] dark:text-[#A3A3A3] font-normal">Official Formatted Ledger</span>
                     </div>
                   </button>
                   <button
                     onClick={() => handleExport('csv')}
-                    className="w-full px-3.5 py-2.5 text-left hover:bg-[#F3F4F6] dark:hover:bg-[#262626] flex items-center gap-2.5 text-[#171717] dark:text-white transition-colors border-t border-[#F1F1F1] dark:border-[#262626]"
+                    className="w-full px-3.5 py-2.5 text-left hover:bg-[#F8FAFC] dark:hover:bg-[#262626] flex items-center gap-2.5 text-[#171717] dark:text-white transition-colors border-t border-[#F1F1F1] dark:border-[#262626]"
                   >
                     <Download className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
                     <div>
-                      <span className="block font-black">Export as CSV (.csv)</span>
-                      <span className="block text-[10px] text-[#737373] font-medium">Detailed Line-Item Ledger</span>
+                      <span className="block font-bold">Export as CSV (.csv)</span>
+                      <span className="block text-xs text-[#737373] dark:text-[#A3A3A3] font-normal">Detailed Line-Item Ledger</span>
                     </div>
                   </button>
                 </div>
@@ -694,76 +696,83 @@ export const SupplierPurchases: React.FC = () => {
             )}
           </div>
 
+          {/* Secondary Action: Upload Bill (OCR) */}
           <button
             onClick={() => openModal('upload')}
-            className="flex items-center justify-center gap-2 bg-[#171717] dark:bg-[#262626] hover:bg-black text-white font-black text-xs px-4 py-2.5 rounded-[12px] shadow-xs transition-all active:scale-98 shrink-0 min-h-[44px]"
+            className="flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#F8FAFC] dark:hover:bg-[#262626] text-[#171717] dark:text-white border border-[#E5E7EB] dark:border-[#2A2A2A] font-bold text-xs px-4 py-2.5 rounded-xl shadow-2xs transition-all active:scale-98 shrink-0 min-h-[44px]"
+            aria-label="Upload Bill using OCR"
           >
-            <Upload className="w-4 h-4" /> Upload Bill (OCR)
+            <Upload className="w-4 h-4 text-[#E31B23]" />
+            <span>Upload Bill (OCR)</span>
           </button>
+
+          {/* Primary Action: Manual Entry (Visually Dominant) */}
           <button
             onClick={() => openModal('manual')}
-            className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 shrink-0 min-h-[44px]"
+            className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-[0_4px_14px_rgba(227,27,35,0.16)] transition-all active:scale-98 shrink-0 min-h-[44px]"
+            aria-label="Add Supplier Purchase Manual Entry"
           >
-            <Plus className="w-4 h-4" /> Manual Entry
+            <Plus className="w-4 h-4 text-white" />
+            <span>Manual Entry</span>
           </button>
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-5 rounded-2xl shadow-xs">
+      {/* Summary KPI Cards (Tight Vertical Spacing, Title Case, 12px Subtitles) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-4 sm:p-5 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between text-[#737373] mb-2">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#525252]">Total Stock Purchases</span>
-            <div className="w-9 h-9 rounded-xl bg-[#FFF1F2] text-[#E31B23] border border-[#FFD6D8] flex items-center justify-center">
+            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3]">Total Stock Purchases</span>
+            <div className="w-10 h-10 rounded-xl bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] border border-[#FECDD3] dark:border-red-900/40 flex items-center justify-center">
               <ShoppingBag className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-[#171717] dark:text-white">₹{totalPurchasesMonth.toLocaleString('en-IN')}</p>
-          <span className="text-[11px] font-semibold text-[#737373] mt-1 block">{purchases.length} supplier invoices recorded</span>
+          <p className="text-2xl sm:text-3xl font-black text-[#171717] dark:text-white tracking-tight">₹{totalPurchasesMonth.toLocaleString('en-IN')}</p>
+          <span className="text-xs font-medium text-[#737373] dark:text-[#A3A3A3] mt-1 block">{purchases.length} supplier invoices recorded</span>
         </div>
 
-        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-5 rounded-2xl shadow-xs">
+        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-4 sm:p-5 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between text-[#737373] mb-2">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#525252]">Supplier Payments Paid</span>
-            <div className="w-9 h-9 rounded-xl bg-[#F0FDF4] text-[#16A34A] border border-emerald-200/60 flex items-center justify-center">
+            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3]">Supplier Payments Paid</span>
+            <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] dark:bg-emerald-950/40 text-[#059669] border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-[#16A34A] dark:text-emerald-400">₹{totalPaidMonth.toLocaleString('en-IN')}</p>
-          <span className="text-[11px] font-semibold text-[#737373] mt-1 block">Paid against company invoices</span>
+          <p className="text-2xl sm:text-3xl font-black text-[#059669] dark:text-emerald-400 tracking-tight">₹{totalPaidMonth.toLocaleString('en-IN')}</p>
+          <span className="text-xs font-medium text-[#737373] dark:text-[#A3A3A3] mt-1 block">Paid against company invoices</span>
         </div>
 
-        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-5 rounded-2xl shadow-xs">
+        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-4 sm:p-5 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between text-[#737373] mb-2">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#525252]">Supplier Outstanding</span>
-            <div className="w-9 h-9 rounded-xl bg-[#FFFBEB] text-[#D97706] border border-amber-200/60 flex items-center justify-center">
+            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3]">Supplier Outstanding</span>
+            <div className="w-10 h-10 rounded-xl bg-[#FFFBEB] dark:bg-amber-950/40 text-[#D97706] border border-amber-200/60 dark:border-amber-900/40 flex items-center justify-center">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-[#D97706] dark:text-amber-400">₹{totalOutstandingPayable.toLocaleString('en-IN')}</p>
-          <span className="text-[11px] font-semibold text-[#737373] mt-1 block">Pending company invoice balance</span>
+          <p className="text-2xl sm:text-3xl font-black text-[#D97706] dark:text-amber-400 tracking-tight">₹{totalOutstandingPayable.toLocaleString('en-IN')}</p>
+          <span className="text-xs font-medium text-[#737373] dark:text-[#A3A3A3] mt-1 block">Pending company invoice balance</span>
         </div>
       </div>
 
-      {/* Filter & View Controls */}
-      <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-4 rounded-2xl shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 absolute left-3.5 top-3 text-[#737373]" />
+      {/* Filter & View Controls (Cohesive Grouped Row) */}
+      <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-3.5 rounded-2xl shadow-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search invoice #, supplier..."
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs text-[#171717] dark:text-white placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#E31B23]/20 font-semibold"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#F9FAFB] dark:bg-[#1F1F1F] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl text-xs text-[#171717] dark:text-white placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#E31B23]/20 focus:border-[#E31B23] font-semibold transition-all min-h-[44px]"
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="w-full sm:w-48 shrink-0">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs text-[#171717] dark:text-white px-3 py-2 rounded-xl focus:outline-none font-bold"
+              className="w-full bg-[#F9FAFB] dark:bg-[#1F1F1F] border border-[#E5E7EB] dark:border-[#2A2A2A] text-xs text-[#171717] dark:text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E31B23]/20 focus:border-[#E31B23] font-bold transition-all min-h-[44px]"
             >
               <option value="all">All Statuses</option>
               <option value="confirmed">Confirmed</option>
@@ -776,43 +785,43 @@ export const SupplierPurchases: React.FC = () => {
 
       {/* Purchases Table */}
       {loading ? (
-        <div className="saas-card bg-white dark:bg-[#171717] p-12 text-center rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs font-semibold text-[#737373]">
+        <div className="saas-card bg-white dark:bg-[#171717] p-12 text-center rounded-2xl border border-[#E5E7EB] dark:border-[#2A2A2A] text-xs font-semibold text-[#737373]">
           Loading supplier invoices & intake ledger...
         </div>
       ) : loadError ? (
         <div className="saas-card bg-white dark:bg-[#171717] p-8 text-center rounded-2xl border border-red-200 dark:border-red-900/50 space-y-3">
           <AlertTriangle className="w-10 h-10 text-red-500 mx-auto" />
-          <p className="font-black text-red-600 dark:text-red-400 text-sm">Failed to load supplier records</p>
+          <p className="font-bold text-red-600 dark:text-red-400 text-sm">Failed to load supplier records</p>
           <p className="text-xs text-[#737373] max-w-md mx-auto">{loadError}</p>
           <button
             onClick={loadData}
-            className="px-4 py-2 bg-[#E31B23] text-white text-xs font-bold rounded-xl hover:bg-[#C9151C] transition-colors"
+            className="px-4 py-2 bg-[#E31B23] text-white text-xs font-bold rounded-xl hover:bg-[#C9151C] transition-colors min-h-[44px]"
           >
             Retry Loading
           </button>
         </div>
       ) : filteredPurchases.length === 0 ? (
-        <div className="saas-card bg-white dark:bg-[#171717] p-12 text-center rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-3">
+        <div className="saas-card bg-white dark:bg-[#171717] p-12 text-center rounded-2xl border border-[#E5E7EB] dark:border-[#2A2A2A] space-y-3">
           <Building2 className="w-10 h-10 text-[#737373] mx-auto" />
           <p className="font-black text-[#171717] dark:text-white text-sm">No supplier purchases recorded yet</p>
-          <p className="text-xs font-semibold text-[#525252] dark:text-[#D4D4D4]">
+          <p className="text-xs font-medium text-[#525252] dark:text-[#A3A3A3]">
             Click "Upload Bill (OCR)" or "Manual Entry" to record your first stock purchase.
           </p>
         </div>
       ) : (
-        <div className="saas-card bg-white dark:bg-[#171717] rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs overflow-hidden">
+        <div className="saas-card bg-white dark:bg-[#171717] rounded-2xl border border-[#E5E7EB] dark:border-[#2A2A2A] shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs font-semibold">
               <thead>
-                <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E5E5] dark:border-[#2A2A2A] font-extrabold text-[#525252] uppercase text-[10px] tracking-wider">
-                  <th className="py-3.5 px-4">Purchase Code</th>
-                  <th className="py-3.5 px-4">Supplier / Invoice</th>
-                  <th className="py-3.5 px-4">Source</th>
-                  <th className="py-3.5 px-4">Date</th>
-                  <th className="py-3.5 px-4">Total Amount</th>
-                  <th className="py-3.5 px-4">Paid</th>
-                  <th className="py-3.5 px-4">Outstanding</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E7EB] dark:border-[#2A2A2A] font-bold text-[#525252] dark:text-[#A3A3A3] text-xs">
+                  <th className="py-3.5 px-4 font-bold">Purchase Code</th>
+                  <th className="py-3.5 px-4 font-bold">Supplier / Invoice</th>
+                  <th className="py-3.5 px-4 font-bold">Source</th>
+                  <th className="py-3.5 px-4 font-bold">Date</th>
+                  <th className="py-3.5 px-4 font-bold">Total Amount</th>
+                  <th className="py-3.5 px-4 font-bold">Paid</th>
+                  <th className="py-3.5 px-4 font-bold">Outstanding</th>
+                  <th className="py-3.5 px-4 text-right font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F1F1F1] dark:divide-[#262626] text-[#171717] dark:text-[#F5F5F5]">
@@ -822,37 +831,39 @@ export const SupplierPurchases: React.FC = () => {
                     <tr key={p.id} className="hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] transition-colors">
                       <td className="py-3.5 px-4 font-mono font-black text-[#E31B23]">{p.purchase_code}</td>
                       <td className="py-3.5 px-4">
-                        <span className="font-black text-[#171717] dark:text-white block">{p.supplier_name}</span>
-                        <span className="text-[10px] font-mono text-[#737373]">Invoice #{p.invoice_number}</span>
+                        <span className="font-bold text-[#171717] dark:text-white block">{p.supplier_name}</span>
+                        <span className="text-xs font-mono text-[#737373] dark:text-[#A3A3A3]">Invoice #{p.invoice_number}</span>
                       </td>
                       <td className="py-3.5 px-4">
                         {isManual ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-[#F3F4F6] dark:bg-[#262626] text-[#4B5563] dark:text-[#9CA3AF] border border-[#E5E7EB] dark:border-[#374151]">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-[#F3F4F6] dark:bg-[#262626] text-[#4B5563] dark:text-[#9CA3AF] border border-[#E5E7EB] dark:border-[#374151]">
                             MANUAL
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-[#EFF6FF] dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 border border-blue-200/60">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-[#EFF6FF] dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 border border-blue-200/60">
                             OCR UPLOAD
                           </span>
                         )}
                       </td>
-                      <td className="py-3.5 px-4 font-bold">{p.invoice_date}</td>
+                      <td className="py-3.5 px-4 font-medium">{p.invoice_date}</td>
                       <td className="py-3.5 px-4 font-black text-[#171717] dark:text-white">₹{p.total_amount.toLocaleString('en-IN')}</td>
-                      <td className="py-3.5 px-4 font-extrabold text-[#16A34A]">₹{p.amount_paid.toLocaleString('en-IN')}</td>
-                      <td className="py-3.5 px-4 font-extrabold text-[#D97706]">₹{p.outstanding_amount.toLocaleString('en-IN')}</td>
+                      <td className="py-3.5 px-4 font-bold text-[#16A34A] dark:text-emerald-400">₹{p.amount_paid.toLocaleString('en-IN')}</td>
+                      <td className="py-3.5 px-4 font-bold text-[#D97706] dark:text-amber-400">₹{p.outstanding_amount.toLocaleString('en-IN')}</td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => openEditModal(p)}
-                            className="p-1.5 text-[#525252] dark:text-[#A3A3A3] hover:text-[#E31B23] dark:hover:text-white hover:bg-[#F3F4F6] dark:hover:bg-[#262626] rounded-lg transition-all"
+                            className="p-2 text-[#525252] dark:text-[#A3A3A3] hover:text-[#E31B23] dark:hover:text-white hover:bg-[#F3F4F6] dark:hover:bg-[#262626] rounded-lg transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
                             title="Edit Purchase"
+                            aria-label="Edit Purchase"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => openDeleteModal(p)}
-                            className="p-1.5 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-rose-950/40 rounded-lg transition-all"
+                            className="p-2 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-rose-950/40 rounded-lg transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
                             title="Delete Purchase"
+                            aria-label="Delete Purchase"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -863,7 +874,7 @@ export const SupplierPurchases: React.FC = () => {
                                 setPaymentAmount(p.outstanding_amount);
                                 setIsPaymentModalOpen(true);
                               }}
-                              className="px-2.5 py-1.5 bg-[#FFF1F2] text-[#C9151C] hover:bg-[#E31B23] hover:text-white rounded-lg border border-[#FFD6D8] font-black text-xs transition-all shrink-0 ml-1"
+                              className="px-3 py-1.5 bg-[#FFF1F2] dark:bg-rose-950/30 text-[#C9151C] dark:text-red-400 hover:bg-[#E31B23] hover:text-white rounded-lg border border-[#FECDD3] dark:border-red-900/40 font-bold text-xs transition-all shrink-0 ml-1 min-h-[36px]"
                             >
                               Record Payment
                             </button>
@@ -882,18 +893,18 @@ export const SupplierPurchases: React.FC = () => {
       {/* Unified Supplier Purchase Modal: Upload Bill (OCR) & Manual Entry */}
       {isPurchaseModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200 my-8">
+          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200 my-8">
             {/* Modal Header with Mode Switcher */}
             <div className="flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626] pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] flex items-center justify-center border border-[#FFD6D8]">
+                <div className="w-9 h-9 rounded-xl bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] flex items-center justify-center border border-[#FECDD3] dark:border-red-900/40">
                   {entryMode === 'upload' ? <Upload className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-[#171717] dark:text-white">
+                  <h2 className="text-base font-black text-[#171717] dark:text-white">
                     {entryMode === 'upload' ? 'Upload Supplier Bill (OCR)' : 'Manual Supplier Purchase Entry'}
-                  </h3>
-                  <p className="text-[11px] font-semibold text-[#737373]">
+                  </h2>
+                  <p className="text-xs text-[#737373] dark:text-[#A3A3A3] mt-0.5">
                     {entryMode === 'upload'
                       ? 'Scan bill image/PDF to auto-extract invoice details and line items'
                       : 'Enter supplier stock purchase with authorized buying prices and inventory inflow'}
@@ -902,24 +913,25 @@ export const SupplierPurchases: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsPurchaseModalOpen(false)}
-                className="text-[#737373] hover:text-[#171717] dark:hover:text-white p-1"
+                className="text-[#737373] hover:text-[#171717] dark:hover:text-white p-1.5 rounded-lg hover:bg-[#F3F4F6] dark:hover:bg-[#262626] transition-colors"
+                aria-label="Close Modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Mode Switcher Tabs */}
-            <div className="flex p-1 bg-[#F3F4F6] dark:bg-[#1F1F1F] rounded-xl">
+            <div className="flex p-1 bg-[#F3F4F6] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
               <button
                 type="button"
                 onClick={() => {
                   setEntryMode('upload');
                   setUploadStep('select');
                 }}
-                className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                   entryMode === 'upload'
                     ? 'bg-white dark:bg-[#2A2A2A] text-[#171717] dark:text-white shadow-xs'
-                    : 'text-[#737373] hover:text-[#171717]'
+                    : 'text-[#737373] hover:text-[#171717] dark:hover:text-white'
                 }`}
               >
                 Upload Bill (OCR)
@@ -933,10 +945,10 @@ export const SupplierPurchases: React.FC = () => {
                     setItems([createDefaultLineItem(cylinderTypes)]);
                   }
                 }}
-                className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                   entryMode === 'manual'
                     ? 'bg-white dark:bg-[#2A2A2A] text-[#171717] dark:text-white shadow-xs'
-                    : 'text-[#737373] hover:text-[#171717]'
+                    : 'text-[#737373] hover:text-[#171717] dark:hover:text-white'
                 }`}
               >
                 Manual Line-Item Entry
@@ -947,7 +959,7 @@ export const SupplierPurchases: React.FC = () => {
             {entryMode === 'upload' && uploadStep === 'select' && (
               <div className="space-y-4">
                 {extractError && (
-                  <div className="p-3 bg-[#FFF1F2] border border-[#FFD6D8] text-[#DC2626] font-bold rounded-xl flex items-center gap-2 text-xs">
+                  <div className="p-3 bg-[#FFF1F2] dark:bg-rose-950/30 border border-[#FECDD3] dark:border-rose-900/50 text-[#DC2626] dark:text-rose-400 font-bold rounded-xl flex items-center gap-2 text-xs">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>{extractError}</span>
                   </div>
@@ -956,8 +968,8 @@ export const SupplierPurchases: React.FC = () => {
                 <div className="border-2 border-dashed border-[#D6D6D6] dark:border-[#3A3A3A] bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-2xl p-8 text-center space-y-3">
                   <FileCheck className="w-12 h-12 text-[#E31B23] mx-auto" />
                   <div>
-                    <p className="text-xs font-black text-[#171717] dark:text-white">Upload Supplier Bill Image or PDF</p>
-                    <p className="text-[11px] font-semibold text-[#737373]">Supports JPG, PNG, and PDF format invoices</p>
+                    <p className="text-sm font-bold text-[#171717] dark:text-white">Upload Supplier Bill Image or PDF</p>
+                    <p className="text-xs text-[#737373] dark:text-[#A3A3A3] mt-0.5">Supports JPG, PNG, and PDF format invoices</p>
                   </div>
                   <input
                     type="file"
@@ -972,9 +984,10 @@ export const SupplierPurchases: React.FC = () => {
                   />
                   <label
                     htmlFor="supplier-bill-upload-input"
-                    className="inline-flex items-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-5 py-2.5 rounded-[12px] cursor-pointer shadow-[0_6px_18px_rgba(227,27,35,0.16)]"
+                    className="inline-flex items-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-bold text-xs px-5 py-2.5 rounded-xl cursor-pointer shadow-[0_4px_14px_rgba(227,27,35,0.16)] min-h-[44px]"
                   >
-                    <Upload className="w-4 h-4" /> Select Invoice File
+                    <Upload className="w-4 h-4" />
+                    <span>Select Invoice File</span>
                   </label>
                 </div>
               </div>
@@ -984,8 +997,8 @@ export const SupplierPurchases: React.FC = () => {
             {entryMode === 'upload' && uploadStep === 'analyzing' && (
               <div className="py-12 text-center space-y-3">
                 <RefreshCw className="w-10 h-10 text-[#E31B23] animate-spin mx-auto" />
-                <p className="text-xs font-black text-[#171717] dark:text-white">Extracting invoice details via OCR...</p>
-                <p className="text-[11px] font-semibold text-[#737373]">Analyzing cylinder sizes (4 kg, 12 kg, 17 kg, 21 kg), quantities, and tax</p>
+                <p className="text-sm font-bold text-[#171717] dark:text-white">Extracting invoice details via OCR...</p>
+                <p className="text-xs text-[#737373] dark:text-[#A3A3A3]">Analyzing cylinder sizes (4 kg, 12 kg, 17 kg, 21 kg), quantities, and tax</p>
               </div>
             )}
 
@@ -993,22 +1006,23 @@ export const SupplierPurchases: React.FC = () => {
             {uploadStep === 'review' && (
               <form onSubmit={handleConfirmSupplierPurchase} className="space-y-4 text-xs font-semibold">
                 {duplicateWarning && (
-                  <div className="p-3 bg-[#FFF1F2] border border-[#FFD6D8] text-[#DC2626] font-bold rounded-xl flex items-center gap-2">
+                  <div className="p-3 bg-[#FFF1F2] dark:bg-rose-950/30 border border-[#FECDD3] dark:border-rose-900/50 text-[#DC2626] dark:text-rose-400 font-bold rounded-xl flex items-center gap-2 text-xs">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>{duplicateWarning}</span>
                   </div>
                 )}
 
                 {/* Section 1: Supplier Company Selection */}
-                <div className="p-3.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-3">
+                <div className="p-3.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-black text-[#171717] dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-[#E31B23]" /> Supplier Company
+                    <label className="text-xs font-bold text-[#171717] dark:text-white flex items-center gap-1.5">
+                      <Building2 className="w-4 h-4 text-[#E31B23]" />
+                      <span>Supplier Company</span>
                     </label>
                     <button
                       type="button"
                       onClick={() => setIsAddingNewSupplier(!isAddingNewSupplier)}
-                      className="text-[11px] font-bold text-[#E31B23] hover:underline flex items-center gap-1"
+                      className="text-xs font-bold text-[#E31B23] hover:underline flex items-center gap-1"
                     >
                       {isAddingNewSupplier ? 'Select Existing Company' : '+ Add Supplier Company'}
                     </button>
@@ -1017,44 +1031,44 @@ export const SupplierPurchases: React.FC = () => {
                   {isAddingNewSupplier ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                       <div>
-                        <label className="block text-[10px] font-bold text-[#737373] mb-1">Company Name</label>
+                        <label className="block text-xs font-bold text-[#737373] dark:text-[#A3A3A3] mb-1">Company Name</label>
                         <input
                           type="text"
                           required
                           value={supplierName}
                           onChange={(e) => setSupplierName(e.target.value)}
                           placeholder="e.g. SUPERGAS Plant #2"
-                          className="w-full p-2 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-bold text-[#171717] dark:text-white"
+                          className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-[#737373] mb-1">Contact Person</label>
+                        <label className="block text-xs font-bold text-[#737373] dark:text-[#A3A3A3] mb-1">Contact Person</label>
                         <input
                           type="text"
                           value={newSupplierContact}
                           onChange={(e) => setNewSupplierContact(e.target.value)}
                           placeholder="e.g. Logistics Executive"
-                          className="w-full p-2 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-bold text-[#171717] dark:text-white"
+                          className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-[#737373] mb-1">Phone Number</label>
+                        <label className="block text-xs font-bold text-[#737373] dark:text-[#A3A3A3] mb-1">Phone Number</label>
                         <input
                           type="text"
                           value={newSupplierPhone}
                           onChange={(e) => setNewSupplierPhone(e.target.value)}
                           placeholder="e.g. +91 9876500000"
-                          className="w-full p-2 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-bold text-[#171717] dark:text-white"
+                          className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-[#737373] mb-1">GSTIN Number</label>
+                        <label className="block text-xs font-bold text-[#737373] dark:text-[#A3A3A3] mb-1">GSTIN Number</label>
                         <input
                           type="text"
                           value={newSupplierGstin}
                           onChange={(e) => setNewSupplierGstin(e.target.value)}
                           placeholder="e.g. 33AAAAA0000A1Z5"
-                          className="w-full p-2 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-bold text-[#171717] dark:text-white"
+                          className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                         />
                       </div>
                     </div>
@@ -1071,7 +1085,7 @@ export const SupplierPurchases: React.FC = () => {
                           setSupplierName(val);
                         }
                       }}
-                      className="w-full p-2 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-black text-[#171717] dark:text-white"
+                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                     >
                       {supplierCompanies.map((comp) => (
                         <option key={comp.id} value={comp.id}>
@@ -1088,7 +1102,7 @@ export const SupplierPurchases: React.FC = () => {
                 {/* Section 2: Invoice Details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                    <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                       Invoice / Bill Number {entryMode === 'manual' ? '(Optional)' : '*'}
                     </label>
                     <input
@@ -1096,11 +1110,11 @@ export const SupplierPurchases: React.FC = () => {
                       value={invoiceNumber}
                       onChange={(e) => setInvoiceNumber(e.target.value)}
                       placeholder="e.g. SUP-2026-0042"
-                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-black text-[#171717] dark:text-white"
+                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                    <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                       Purchase Date *
                     </label>
                     <input
@@ -1108,7 +1122,7 @@ export const SupplierPurchases: React.FC = () => {
                       required
                       value={invoiceDate}
                       onChange={(e) => setInvoiceDate(e.target.value)}
-                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-[#171717] dark:text-white"
+                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                     />
                   </div>
                 </div>
@@ -1117,19 +1131,20 @@ export const SupplierPurchases: React.FC = () => {
                 <div className="space-y-2.5 pt-2 border-t border-[#F1F1F1] dark:border-[#262626]">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-[11px] font-black text-[#171717] dark:text-white block">
+                      <span className="text-xs font-bold text-[#171717] dark:text-white block">
                         Cylinder Stock Line Items (Buying Acquisition Cost)
                       </span>
-                      <span className="text-[10px] text-[#737373] font-semibold">
+                      <span className="text-xs text-[#737373] dark:text-[#A3A3A3]">
                         Select cylinder type to auto-fill authorized buying rate, or override price.
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={handleAddLineItem}
-                      className="px-2.5 py-1 bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] hover:bg-[#E31B23] hover:text-white rounded-lg border border-[#FFD6D8] font-black text-[11px] transition-all flex items-center gap-1"
+                      className="px-3 py-1.5 bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] hover:bg-[#E31B23] hover:text-white rounded-lg border border-[#FECDD3] dark:border-red-900/40 font-bold text-xs transition-all flex items-center gap-1"
                     >
-                      <Plus className="w-3.5 h-3.5" /> Add Cylinder Line
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Cylinder Line</span>
                     </button>
                   </div>
 
@@ -1137,15 +1152,15 @@ export const SupplierPurchases: React.FC = () => {
                     {items.map((item, idx) => (
                       <div
                         key={idx}
-                        className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A]"
+                        className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]"
                       >
                         {/* Cylinder Type Select */}
                         <div className="flex-1 min-w-[140px]">
-                          <label className="block text-[9px] font-bold text-[#737373] mb-0.5">Cylinder Type</label>
+                          <label className="block text-xs font-bold text-[#737373] dark:text-[#A3A3A3] mb-0.5">Cylinder Type</label>
                           <select
                             value={item.cylinder_type_id || (cylinderTypes[0]?.id ?? '')}
                             onChange={(e) => handleCylinderTypeSelect(idx, e.target.value)}
-                            className="w-full p-1.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-black text-xs text-[#171717] dark:text-white"
+                            className="w-full p-2 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg font-bold text-xs text-[#171717] dark:text-white focus:outline-none"
                           >
                             {cylinderTypes.map((ct) => (
                               <option key={ct.id} value={ct.id}>
@@ -1157,32 +1172,32 @@ export const SupplierPurchases: React.FC = () => {
 
                         {/* Quantity */}
                         <div className="w-20">
-                          <label className="block text-[9px] font-bold text-[#737373] mb-0.5">Qty</label>
+                          <label className="block text-xs font-bold text-[#737373] dark:text-[#A3A3A3] mb-0.5 text-center">Qty</label>
                           <input
                             type="number"
                             min="1"
                             value={item.quantity}
                             onChange={(e) => handleUpdateItem(idx, 'quantity', parseInt(e.target.value, 10) || 0)}
-                            className="w-full p-1.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg text-center font-black text-xs text-[#171717] dark:text-white"
+                            className="w-full p-2 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg text-center font-bold text-xs text-[#171717] dark:text-white focus:outline-none"
                           />
                         </div>
 
                         {/* Buying Price / Unit */}
                         <div className="w-28">
-                          <label className="block text-[9px] font-bold text-[#737373] mb-0.5">Buying Price (₹)</label>
+                          <label className="block text-xs font-bold text-[#737373] dark:text-[#A3A3A3] mb-0.5">Buying Price (₹)</label>
                           <input
                             type="number"
                             min="0"
                             value={item.unit_price}
                             onChange={(e) => handleUpdateItem(idx, 'unit_price', parseFloat(e.target.value) || 0)}
-                            className="w-full p-1.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg text-center font-black text-xs text-[#171717] dark:text-white"
+                            className="w-full p-2 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg text-center font-bold text-xs text-[#171717] dark:text-white focus:outline-none"
                           />
                         </div>
 
                         {/* Line Total */}
                         <div className="w-28 text-right pr-2">
-                          <label className="block text-[9px] font-bold text-[#737373] mb-0.5">Line Total</label>
-                          <span className="font-black text-xs text-[#171717] dark:text-white block py-1.5">
+                          <label className="block text-xs font-bold text-[#737373] dark:text-[#A3A3A3] mb-0.5">Line Total</label>
+                          <span className="font-bold text-xs text-[#171717] dark:text-white block py-2">
                             ₹{(item.quantity * item.unit_price).toLocaleString('en-IN')}
                           </span>
                         </div>
@@ -1192,8 +1207,9 @@ export const SupplierPurchases: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveLineItem(idx)}
-                            className="p-1.5 text-[#9CA3AF] hover:text-[#DC2626] rounded-lg mt-3"
+                            className="p-2 text-[#9CA3AF] hover:text-[#DC2626] rounded-lg mt-3"
                             title="Remove line"
+                            aria-label="Remove cylinder line"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -1206,7 +1222,7 @@ export const SupplierPurchases: React.FC = () => {
                 {/* Section 4: Financial Adjustments & Notes */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                   <div>
-                    <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                    <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                       GST Tax Amount (₹)
                     </label>
                     <input
@@ -1215,11 +1231,11 @@ export const SupplierPurchases: React.FC = () => {
                       value={taxAmount}
                       onChange={(e) => setTaxAmount(parseFloat(e.target.value) || 0)}
                       placeholder="0"
-                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-[#171717] dark:text-white"
+                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                    <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                       Amount Paid Upfront (₹)
                     </label>
                     <input
@@ -1228,11 +1244,11 @@ export const SupplierPurchases: React.FC = () => {
                       value={amountPaid}
                       onChange={(e) => setAmountPaid(parseFloat(e.target.value) || 0)}
                       placeholder="0"
-                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-[#171717] dark:text-white"
+                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                    <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                       Notes / Remarks (Optional)
                     </label>
                     <input
@@ -1240,36 +1256,36 @@ export const SupplierPurchases: React.FC = () => {
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="e.g. Delivery truck #TN38-1234"
-                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-[#171717] dark:text-white"
+                      className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none"
                     />
                   </div>
                 </div>
 
                 {/* Section 5: Financial Summary */}
-                <div className="p-3.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-1.5 text-xs font-black">
-                  <div className="flex justify-between text-[#737373]">
+                <div className="p-3.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] space-y-1.5 text-xs font-bold">
+                  <div className="flex justify-between text-[#737373] dark:text-[#A3A3A3]">
                     <span>Subtotal:</span>
-                    <span>₹{subtotal.toLocaleString('en-IN')}</span>
+                    <span className="font-bold text-[#171717] dark:text-white">₹{subtotal.toLocaleString('en-IN')}</span>
                   </div>
                   {Number(taxAmount) > 0 && (
-                    <div className="flex justify-between text-[#737373]">
+                    <div className="flex justify-between text-[#737373] dark:text-[#A3A3A3]">
                       <span>GST Tax:</span>
-                      <span>+₹{Number(taxAmount).toLocaleString('en-IN')}</span>
+                      <span className="font-bold text-[#171717] dark:text-white">+₹{Number(taxAmount).toLocaleString('en-IN')}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-[#171717] dark:text-white text-sm pt-1 border-t border-[#E5E5E5] dark:border-[#2A2A2A]">
+                  <div className="flex justify-between text-[#171717] dark:text-white text-sm pt-1 border-t border-[#E5E7EB] dark:border-[#2A2A2A]">
                     <span>Total Purchase Payable:</span>
-                    <span className="text-[#E31B23]">₹{totalAmount.toLocaleString('en-IN')}</span>
+                    <span className="text-[#E31B23] font-black">₹{totalAmount.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex justify-end gap-2 pt-2 border-t border-[#F1F1F1] dark:border-[#262626]">
                   {entryMode === 'upload' && (
                     <button
                       type="button"
                       onClick={() => setUploadStep('select')}
-                      className="px-4 py-2 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-[#525252] dark:text-[#D4D4D4] rounded-xl font-bold"
+                      className="px-4 py-2.5 bg-white dark:bg-[#1F1F1F] hover:bg-[#F8FAFC] dark:hover:bg-[#262626] border border-[#E5E7EB] dark:border-[#2A2A2A] text-[#525252] dark:text-[#D4D4D4] rounded-xl font-bold text-xs min-h-[44px]"
                     >
                       Back
                     </button>
@@ -1277,17 +1293,17 @@ export const SupplierPurchases: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsPurchaseModalOpen(false)}
-                    className="px-4 py-2 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-[#525252] dark:text-[#D4D4D4] rounded-xl font-bold"
+                    className="px-4 py-2.5 bg-white dark:bg-[#1F1F1F] hover:bg-[#F8FAFC] dark:hover:bg-[#262626] border border-[#E5E7EB] dark:border-[#2A2A2A] text-[#525252] dark:text-[#D4D4D4] rounded-xl font-bold text-xs min-h-[44px]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-5 py-2 bg-[#E31B23] hover:bg-[#C9151C] text-white rounded-[12px] font-black shadow-[0_6px_18px_rgba(227,27,35,0.16)] flex items-center gap-1.5"
+                    className="px-5 py-2.5 bg-[#E31B23] hover:bg-[#C9151C] text-white rounded-xl font-black text-xs shadow-[0_4px_14px_rgba(227,27,35,0.16)] flex items-center gap-1.5 min-h-[44px] transition-all disabled:opacity-50"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    {submitting ? 'Saving Stock...' : 'Confirm Stock Intake'}
+                    <span>{submitting ? 'Saving Stock...' : 'Confirm Stock Intake'}</span>
                   </button>
                 </div>
               </form>
@@ -1299,27 +1315,28 @@ export const SupplierPurchases: React.FC = () => {
       {/* Add Supplier Payment Modal */}
       {isPaymentModalOpen && selectedPurchase && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200">
             <div className="flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626] pb-3">
-              <h3 className="text-sm font-black text-[#171717] dark:text-white">Record Supplier Payment</h3>
+              <h2 className="text-base font-black text-[#171717] dark:text-white">Record Supplier Payment</h2>
               <button
                 onClick={() => setIsPaymentModalOpen(false)}
-                className="text-[#737373] hover:text-[#171717] dark:hover:text-white"
+                className="text-[#737373] hover:text-[#171717] dark:hover:text-white p-1.5 rounded-lg hover:bg-[#F3F4F6] dark:hover:bg-[#262626]"
+                aria-label="Close Payment Modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleAddPaymentSubmit} className="space-y-3 text-xs font-semibold">
-              <div className="p-3 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-1">
-                <span className="text-[#737373] block text-[11px]">Invoice #{selectedPurchase.invoice_number} ({selectedPurchase.supplier_name})</span>
+              <div className="p-3 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] space-y-1">
+                <span className="text-[#737373] dark:text-[#A3A3A3] block text-xs">Invoice #{selectedPurchase.invoice_number} ({selectedPurchase.supplier_name})</span>
                 <span className="font-black text-[#171717] dark:text-white text-sm">
                   Outstanding: ₹{selectedPurchase.outstanding_amount.toLocaleString('en-IN')}
                 </span>
               </div>
 
               <div>
-                <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                   Payment Amount (₹)
                 </label>
                 <input
@@ -1329,18 +1346,18 @@ export const SupplierPurchases: React.FC = () => {
                   max={selectedPurchase.outstanding_amount}
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
-                  className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-black text-[#171717] dark:text-white"
+                  className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                   Payment Method
                 </label>
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as any)}
-                  className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-[#171717] dark:text-white"
+                  className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                 >
                   <option value="bank_transfer">Bank Transfer (NEFT/RTGS)</option>
                   <option value="upi">UPI / GPay</option>
@@ -1350,7 +1367,7 @@ export const SupplierPurchases: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                   Payment Date
                 </label>
                 <input
@@ -1358,12 +1375,12 @@ export const SupplierPurchases: React.FC = () => {
                   required
                   value={paymentDate}
                   onChange={(e) => setPaymentDate(e.target.value)}
-                  className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-[#171717] dark:text-white"
+                  className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                   Notes (Optional)
                 </label>
                 <input
@@ -1371,22 +1388,22 @@ export const SupplierPurchases: React.FC = () => {
                   value={paymentNotes}
                   onChange={(e) => setPaymentNotes(e.target.value)}
                   placeholder="e.g. UTR #1234567890"
-                  className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-[#171717] dark:text-white"
+                  className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#F1F1F1] dark:border-[#262626]">
                 <button
                   type="button"
                   onClick={() => setIsPaymentModalOpen(false)}
-                  className="px-4 py-2 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-[#525252] dark:text-[#D4D4D4] rounded-xl font-bold"
+                  className="px-4 py-2.5 bg-white dark:bg-[#1F1F1F] hover:bg-[#F8FAFC] dark:hover:bg-[#262626] border border-[#E5E7EB] dark:border-[#2A2A2A] text-[#525252] dark:text-[#D4D4D4] rounded-xl font-bold text-xs min-h-[44px]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-[#E31B23] text-white rounded-[12px] font-black shadow-[0_6px_18px_rgba(227,27,35,0.16)]"
+                  className="px-5 py-2.5 bg-[#E31B23] hover:bg-[#C9151C] text-white rounded-xl font-black text-xs shadow-[0_4px_14px_rgba(227,27,35,0.16)] min-h-[44px] transition-all disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : 'Record Payment'}
                 </button>
@@ -1399,20 +1416,20 @@ export const SupplierPurchases: React.FC = () => {
       {/* Edit Supplier Purchase Modal */}
       {isEditModalOpen && editingPurchase && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200 my-8">
+          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200 my-8">
             <div className="flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626] pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] flex items-center justify-center border border-[#FFD6D8]">
+                <div className="w-9 h-9 rounded-xl bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] flex items-center justify-center border border-[#FECDD3] dark:border-red-900/40">
                   <Pencil className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-[#171717] dark:text-white">Edit Supplier Purchase</h3>
-                    <span className="font-mono text-[10px] font-black px-2 py-0.5 rounded bg-red-100 text-[#E31B23] dark:bg-red-950/40">
+                    <h2 className="text-base font-black text-[#171717] dark:text-white">Edit Supplier Purchase</h2>
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] dark:text-red-400 border border-[#FECDD3] dark:border-red-900/40">
                       {editingPurchase.purchase_code}
                     </span>
                   </div>
-                  <p className="text-[11px] font-semibold text-[#737373]">
+                  <p className="text-xs text-[#737373] dark:text-[#A3A3A3] mt-0.5">
                     Modify supplier details, invoice metadata, cylinder line items, or buying rates
                   </p>
                 </div>
@@ -1422,7 +1439,8 @@ export const SupplierPurchases: React.FC = () => {
                   setIsEditModalOpen(false);
                   setEditingPurchase(null);
                 }}
-                className="text-[#737373] hover:text-[#171717] dark:hover:text-white p-1"
+                className="text-[#737373] hover:text-[#171717] dark:hover:text-white p-1.5 rounded-lg hover:bg-[#F3F4F6] dark:hover:bg-[#262626]"
+                aria-label="Close Edit Modal"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1437,7 +1455,7 @@ export const SupplierPurchases: React.FC = () => {
                     Payments recorded: <strong className="font-black text-[#171717] dark:text-white">₹{editingPurchase.amount_paid.toLocaleString('en-IN')}</strong>
                   </span>
                 </div>
-                <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
                   Total cannot be reduced below ₹{editingPurchase.amount_paid.toLocaleString('en-IN')}
                 </span>
               </div>
@@ -1446,7 +1464,7 @@ export const SupplierPurchases: React.FC = () => {
             <form onSubmit={handleEditSave} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                  <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                     Supplier Company
                   </label>
                   <select
@@ -1456,7 +1474,7 @@ export const SupplierPurchases: React.FC = () => {
                       const matched = supplierCompanies.find((c) => c.id === e.target.value);
                       if (matched) setEditSupplierName(matched.company_name);
                     }}
-                    className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
+                    className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                   >
                     {supplierCompanies.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -1467,7 +1485,7 @@ export const SupplierPurchases: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                  <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                     Invoice Number
                   </label>
                   <input
@@ -1475,12 +1493,12 @@ export const SupplierPurchases: React.FC = () => {
                     required
                     value={editInvoiceNumber}
                     onChange={(e) => setEditInvoiceNumber(e.target.value)}
-                    className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
+                    className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                  <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                     Invoice Date
                   </label>
                   <input
@@ -1488,12 +1506,12 @@ export const SupplierPurchases: React.FC = () => {
                     required
                     value={editInvoiceDate}
                     onChange={(e) => setEditInvoiceDate(e.target.value)}
-                    className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
+                    className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                  <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                     Tax / GST Amount (₹)
                   </label>
                   <input
@@ -1502,7 +1520,7 @@ export const SupplierPurchases: React.FC = () => {
                     step="any"
                     value={editTaxAmount}
                     onChange={(e) => setEditTaxAmount(e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0))}
-                    className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
+                    className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-bold text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                   />
                 </div>
               </div>
@@ -1510,26 +1528,27 @@ export const SupplierPurchases: React.FC = () => {
               {/* Line Items Section */}
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between">
-                  <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4]">
+                  <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4]">
                     Cylinder Line Items & Buying Rates
                   </label>
                   <button
                     type="button"
                     onClick={handleEditAddLineItem}
-                    className="flex items-center gap-1 text-[#E31B23] hover:text-[#C9151C] font-black text-xs transition-colors"
+                    className="flex items-center gap-1 text-[#E31B23] hover:text-[#C9151C] font-bold text-xs transition-colors"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Add Cylinder Type
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Cylinder Type</span>
                   </button>
                 </div>
 
-                <div className="space-y-2 border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl p-3 bg-[#FAFAFA] dark:bg-[#1F1F1F]">
+                <div className="space-y-2 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl p-3 bg-[#FAFAFA] dark:bg-[#1F1F1F]">
                   {editItems.map((item, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 items-center text-xs">
                       <div className="col-span-12 sm:col-span-4">
                         <select
                           value={item.cylinder_type_id}
                           onChange={(e) => handleEditCylinderTypeSelect(index, e.target.value)}
-                          className="w-full p-2 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-bold text-xs text-[#171717] dark:text-white"
+                          className="w-full p-2 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg font-bold text-xs text-[#171717] dark:text-white focus:outline-none"
                         >
                           {cylinderTypes.map((ct) => (
                             <option key={ct.id} value={ct.id}>
@@ -1540,33 +1559,33 @@ export const SupplierPurchases: React.FC = () => {
                       </div>
 
                       <div className="col-span-4 sm:col-span-3">
-                        <div className="flex items-center gap-1 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg px-2">
+                        <div className="flex items-center gap-1 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg px-2">
                           <input
                             type="number"
                             min="1"
                             value={item.quantity}
                             onChange={(e) => handleEditUpdateItem(index, 'quantity', Math.max(1, parseInt(e.target.value) || 0))}
-                            className="w-full py-1.5 bg-transparent font-black text-xs text-[#171717] dark:text-white focus:outline-none text-right"
+                            className="w-full py-2 bg-transparent font-bold text-xs text-[#171717] dark:text-white focus:outline-none text-right"
                           />
-                          <span className="text-[10px] font-bold text-[#737373]">qty</span>
+                          <span className="text-xs font-medium text-[#737373]">qty</span>
                         </div>
                       </div>
 
                       <div className="col-span-4 sm:col-span-3">
-                        <div className="flex items-center gap-1 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg px-2">
-                          <span className="text-[10px] font-bold text-[#737373]">₹</span>
+                        <div className="flex items-center gap-1 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg px-2">
+                          <span className="text-xs font-bold text-[#737373]">₹</span>
                           <input
                             type="number"
                             min="0"
                             step="any"
                             value={item.unit_price}
                             onChange={(e) => handleEditUpdateItem(index, 'unit_price', Math.max(0, parseFloat(e.target.value) || 0))}
-                            className="w-full py-1.5 bg-transparent font-black text-xs text-[#171717] dark:text-white focus:outline-none"
+                            className="w-full py-2 bg-transparent font-bold text-xs text-[#171717] dark:text-white focus:outline-none"
                           />
                         </div>
                       </div>
 
-                      <div className="col-span-3 sm:col-span-1 text-right font-black text-[#171717] dark:text-white">
+                      <div className="col-span-3 sm:col-span-1 text-right font-bold text-xs text-[#171717] dark:text-white">
                         ₹{(item.total_price || 0).toLocaleString('en-IN')}
                       </div>
 
@@ -1575,7 +1594,9 @@ export const SupplierPurchases: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleEditRemoveLineItem(index)}
-                            className="text-[#737373] hover:text-[#DC2626] p-1 transition-colors"
+                            className="text-[#737373] hover:text-[#DC2626] p-1.5 rounded-lg transition-colors"
+                            title="Remove line item"
+                            aria-label="Remove line item"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -1587,21 +1608,21 @@ export const SupplierPurchases: React.FC = () => {
               </div>
 
               {/* Total Summary Footer */}
-              <div className="p-3 bg-[#F3F4F6] dark:bg-[#262626] rounded-xl flex items-center justify-between text-xs">
+              <div className="p-3 bg-[#F3F4F6] dark:bg-[#262626] rounded-xl flex items-center justify-between text-xs font-bold">
                 <div>
-                  <span className="text-[#737373] block text-[10px] uppercase tracking-wider font-extrabold">Subtotal</span>
+                  <span className="text-[#737373] dark:text-[#A3A3A3] block text-xs font-bold">Subtotal</span>
                   <span className="font-bold text-[#171717] dark:text-white">
                     ₹{editItems.reduce((sum, it) => sum + (it.total_price || 0), 0).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[#737373] block text-[10px] uppercase tracking-wider font-extrabold">Tax</span>
+                  <span className="text-[#737373] dark:text-[#A3A3A3] block text-xs font-bold">Tax</span>
                   <span className="font-bold text-[#171717] dark:text-white">
                     ₹{Number(editTaxAmount || 0).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[#737373] block text-[10px] uppercase tracking-wider font-extrabold">Updated Total</span>
+                  <span className="text-[#737373] dark:text-[#A3A3A3] block text-xs font-bold">Updated Total</span>
                   <span className="text-sm font-black text-[#E31B23]">
                     ₹{(editItems.reduce((sum, it) => sum + (it.total_price || 0), 0) + Number(editTaxAmount || 0)).toLocaleString('en-IN')}
                   </span>
@@ -1609,7 +1630,7 @@ export const SupplierPurchases: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-extrabold text-[#171717] dark:text-[#D4D4D4] mb-1">
+                <label className="block text-xs font-bold text-[#171717] dark:text-[#D4D4D4] mb-1">
                   Notes / Remarks
                 </label>
                 <textarea
@@ -1617,7 +1638,7 @@ export const SupplierPurchases: React.FC = () => {
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
                   placeholder="e.g. Price adjustment, delivery slip reference..."
-                  className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl font-medium text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
+                  className="w-full p-2.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl font-medium text-xs text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23]"
                 />
               </div>
 
@@ -1628,14 +1649,14 @@ export const SupplierPurchases: React.FC = () => {
                     setIsEditModalOpen(false);
                     setEditingPurchase(null);
                   }}
-                  className="px-4 py-2 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-[#525252] dark:text-[#D4D4D4] rounded-xl font-bold text-xs"
+                  className="px-4 py-2.5 bg-white dark:bg-[#1F1F1F] hover:bg-[#F8FAFC] dark:hover:bg-[#262626] border border-[#E5E7EB] dark:border-[#2A2A2A] text-[#525252] dark:text-[#D4D4D4] rounded-xl font-bold text-xs min-h-[44px]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-[#E31B23] hover:bg-[#C9151C] text-white rounded-[12px] font-black text-xs shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all disabled:opacity-50"
+                  className="px-5 py-2.5 bg-[#E31B23] hover:bg-[#C9151C] text-white rounded-xl font-black text-xs shadow-[0_4px_14px_rgba(227,27,35,0.16)] transition-all min-h-[44px] disabled:opacity-50"
                 >
                   {submitting ? 'Saving Changes...' : 'Save Changes'}
                 </button>
@@ -1648,14 +1669,14 @@ export const SupplierPurchases: React.FC = () => {
       {/* Delete / Void Supplier Purchase Modal */}
       {isDeleteModalOpen && deletingPurchase && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200">
+          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200">
             <div className="flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626] pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#FFF1F2] dark:bg-rose-950/40 text-[#DC2626] flex items-center justify-center border border-[#FFD6D8]">
+                <div className="w-9 h-9 rounded-xl bg-[#FFF1F2] dark:bg-rose-950/40 text-[#DC2626] flex items-center justify-center border border-[#FECDD3] dark:border-red-900/40">
                   <Trash2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-[#171717] dark:text-white">Delete Supplier Purchase?</h3>
+                  <h2 className="text-base font-black text-[#171717] dark:text-white">Delete Supplier Purchase?</h2>
                   <span className="font-mono text-xs font-bold text-[#E31B23]">{deletingPurchase.purchase_code}</span>
                 </div>
               </div>
@@ -1664,48 +1685,49 @@ export const SupplierPurchases: React.FC = () => {
                   setIsDeleteModalOpen(false);
                   setDeletingPurchase(null);
                 }}
-                className="text-[#737373] hover:text-[#171717] dark:hover:text-white p-1"
+                className="text-[#737373] hover:text-[#171717] dark:hover:text-white p-1.5 rounded-lg hover:bg-[#F3F4F6] dark:hover:bg-[#262626]"
+                aria-label="Close Delete Modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Financial Details Summary Card */}
-            <div className="p-4 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-2 text-xs">
+            <div className="p-4 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-[#737373]">Supplier:</span>
+                <span className="text-[#737373] dark:text-[#A3A3A3]">Supplier:</span>
                 <span className="font-bold text-[#171717] dark:text-white">{deletingPurchase.supplier_name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#737373]">Invoice Number:</span>
+                <span className="text-[#737373] dark:text-[#A3A3A3]">Invoice Number:</span>
                 <span className="font-mono font-bold text-[#171717] dark:text-white">#{deletingPurchase.invoice_number} ({deletingPurchase.invoice_date})</span>
               </div>
               <div className="flex justify-between border-t border-[#F1F1F1] dark:border-[#262626] pt-2">
-                <span className="text-[#737373]">Total Purchase:</span>
+                <span className="text-[#737373] dark:text-[#A3A3A3]">Total Purchase:</span>
                 <span className="font-black text-[#171717] dark:text-white">₹{deletingPurchase.total_amount.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#737373]">Amount Paid:</span>
-                <span className="font-bold text-[#16A34A]">₹{deletingPurchase.amount_paid.toLocaleString('en-IN')}</span>
+                <span className="text-[#737373] dark:text-[#A3A3A3]">Amount Paid:</span>
+                <span className="font-bold text-[#16A34A] dark:text-emerald-400">₹{deletingPurchase.amount_paid.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#737373]">Outstanding:</span>
-                <span className="font-bold text-[#D97706]">₹{deletingPurchase.outstanding_amount.toLocaleString('en-IN')}</span>
+                <span className="text-[#737373] dark:text-[#A3A3A3]">Outstanding:</span>
+                <span className="font-bold text-[#D97706] dark:text-amber-400">₹{deletingPurchase.outstanding_amount.toLocaleString('en-IN')}</span>
               </div>
               <div className="border-t border-[#F1F1F1] dark:border-[#262626] pt-2">
-                <span className="text-[#737373] block mb-1">Cylinder Stock Inflow to Reverse:</span>
+                <span className="text-[#737373] dark:text-[#A3A3A3] block mb-1 font-bold">Cylinder Stock Inflow to Reverse:</span>
                 <div className="flex flex-wrap gap-1.5">
                   {deletingPurchase.items && deletingPurchase.items.length > 0 ? (
                     deletingPurchase.items.map((it, idx) => {
                       const ct = cylinderTypes.find((c) => c.id === it.cylinder_type_id);
                       return (
-                        <span key={idx} className="px-2 py-0.5 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded font-mono font-bold text-[11px] text-[#171717] dark:text-white">
+                        <span key={idx} className="px-2 py-0.5 bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-md font-mono font-bold text-xs text-[#171717] dark:text-white">
                           {it.quantity} × {ct?.name || 'Cylinder'}
                         </span>
                       );
                     })
                   ) : (
-                    <span className="text-[11px] text-[#737373]">No line items recorded</span>
+                    <span className="text-xs text-[#737373] dark:text-[#A3A3A3]">No line items recorded</span>
                   )}
                 </div>
               </div>
@@ -1720,12 +1742,12 @@ export const SupplierPurchases: React.FC = () => {
                     This purchase has <strong>₹{deletingPurchase.amount_paid.toLocaleString('en-IN')}</strong> in supplier payments linked to it and cannot be permanently deleted.
                   </p>
                 </div>
-                <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
                   You can <strong>Void / Cancel</strong> it instead to exclude it from stock intake while preserving the payment audit trail.
                 </p>
               </div>
             ) : (
-              <div className="p-3 bg-[#FFF1F2] dark:bg-rose-950/30 border border-[#FFD6D8] dark:border-rose-900/50 rounded-xl text-xs text-[#DC2626] dark:text-rose-400 leading-relaxed font-semibold">
+              <div className="p-3 bg-[#FFF1F2] dark:bg-rose-950/30 border border-[#FECDD3] dark:border-rose-900/50 rounded-xl text-xs text-[#DC2626] dark:text-rose-400 leading-relaxed font-semibold">
                 Are you sure you want to permanently delete this supplier purchase? This will atomically reverse the cylinder stock inflow and remove the record.
               </div>
             )}
@@ -1738,7 +1760,7 @@ export const SupplierPurchases: React.FC = () => {
                   setIsDeleteModalOpen(false);
                   setDeletingPurchase(null);
                 }}
-                className="px-4 py-2 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-[#525252] dark:text-[#D4D4D4] rounded-xl font-bold text-xs"
+                className="px-4 py-2.5 bg-white dark:bg-[#1F1F1F] hover:bg-[#F8FAFC] dark:hover:bg-[#262626] border border-[#E5E7EB] dark:border-[#2A2A2A] text-[#525252] dark:text-[#D4D4D4] rounded-xl font-bold text-xs min-h-[44px]"
               >
                 Cancel
               </button>
@@ -1747,20 +1769,20 @@ export const SupplierPurchases: React.FC = () => {
                   type="button"
                   disabled={submitting}
                   onClick={handleCancelConfirm}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-[12px] font-black text-xs transition-all disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-black text-xs transition-all disabled:opacity-50 flex items-center gap-1.5 min-h-[44px]"
                 >
-                  <Ban className="w-3.5 h-3.5" />
-                  {submitting ? 'Cancelling...' : 'Void / Cancel Purchase'}
+                  <Ban className="w-4 h-4" />
+                  <span>{submitting ? 'Cancelling...' : 'Void / Cancel Purchase'}</span>
                 </button>
               ) : (
                 <button
                   type="button"
                   disabled={submitting}
                   onClick={handleDeleteConfirm}
-                  className="px-5 py-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-[12px] font-black text-xs shadow-[0_6px_18px_rgba(220,38,38,0.2)] transition-all disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-5 py-2.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-xl font-black text-xs shadow-[0_4px_14px_rgba(220,38,38,0.2)] transition-all disabled:opacity-50 flex items-center gap-1.5 min-h-[44px]"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  {submitting ? 'Deleting...' : 'Yes, Delete Purchase'}
+                  <Trash2 className="w-4 h-4" />
+                  <span>{submitting ? 'Deleting...' : 'Yes, Delete Purchase'}</span>
                 </button>
               )}
             </div>
