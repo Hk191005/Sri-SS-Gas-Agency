@@ -1362,11 +1362,6 @@ export async function getAuditLogs(): Promise<AuditLog[]> {
   return [];
 }
 
-// Demo data seeding stub: live production stores all real records in Supabase
-export async function seedDemoDataIfEmpty(): Promise<void> {
-  // Live production mode: No-op. Real data resides in Supabase.
-}
-
 // -------------------------------------------------------------
 // CRM TIMELINE, NOTES & FOLLOW-UPS
 // -------------------------------------------------------------
