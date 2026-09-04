@@ -1,11 +1,10 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
-import { MobileNav } from './components/layout/MobileNav';
 import { Loader2 } from 'lucide-react';
 
 // Lazy Loaded Pages for Optimized Bundle Splitting
@@ -23,11 +22,6 @@ const Messages = lazy(() => import('./pages/Messages').then(m => ({ default: m.M
 const Reports = lazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 
-// Global Quick Action Modals
-import { CustomerFormModal } from './components/customers/CustomerFormModal';
-import { AddPurchaseModal } from './components/purchases/AddPurchaseModal';
-import { AddPaymentModal } from './components/payments/AddPaymentModal';
-
 const PageLoader: React.FC = () => (
   <div className="flex items-center justify-center min-h-[60vh] w-full text-slate-400">
     <div className="flex flex-col items-center gap-2">
@@ -38,16 +32,6 @@ const PageLoader: React.FC = () => (
 );
 
 export const App: React.FC = () => {
-  const [quickActionType, setQuickActionType] = useState<'customer' | 'purchase' | 'delivery' | 'payment' | null>(null);
-
-  const handleOpenQuickAction = (type: 'customer' | 'purchase' | 'delivery' | 'payment') => {
-    setQuickActionType(type);
-  };
-
-  const handleCloseQuickAction = () => {
-    setQuickActionType(null);
-  };
-
   return (
     <ThemeProvider>
       <AuthProvider>
@@ -55,64 +39,35 @@ export const App: React.FC = () => {
           <BrowserRouter>
             <Suspense fallback={<PageLoader />}>
               <Routes>
+                {/* Standalone Authentication Routes (Clean, No App Navigation) */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
 
+                {/* Authenticated Application Shell */}
                 <Route
                   element={
-                  <ProtectedRoute>
-                    <AppLayout onOpenQuickAction={handleOpenQuickAction} />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/" element={<Dashboard onOpenQuickAction={handleOpenQuickAction} />} />
-                <Route path="/customers" element={<Customers />} />
-                <Route path="/customers/:id" element={<CustomerProfile />} />
-                <Route path="/purchases" element={<Purchases />} />
-                <Route path="/supplier-purchases" element={<SupplierPurchases />} />
-                <Route path="/deliveries" element={<Deliveries />} />
-                <Route path="/cylinders" element={<Cylinders />} />
-                <Route path="/payments" element={<Payments />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings" element={<Settings />} />
-              </Route>
+                    <ProtectedRoute>
+                      <AppLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/customers" element={<Customers />} />
+                  <Route path="/customers/:id" element={<CustomerProfile />} />
+                  <Route path="/purchases" element={<Purchases />} />
+                  <Route path="/supplier-purchases" element={<SupplierPurchases />} />
+                  <Route path="/deliveries" element={<Deliveries />} />
+                  <Route path="/cylinders" element={<Cylinders />} />
+                  <Route path="/payments" element={<Payments />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Route>
 
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-
-          {/* Mobile Compact Navigation Bar */}
-          <MobileNav onOpenQuickAction={handleOpenQuickAction} />
-
-          {/* Global Quick Action Modals */}
-          <CustomerFormModal
-            isOpen={quickActionType === 'customer'}
-            onClose={handleCloseQuickAction}
-            onSuccess={() => {
-              handleCloseQuickAction();
-              window.location.reload();
-            }}
-          />
-
-          <AddPurchaseModal
-            isOpen={quickActionType === 'purchase'}
-            onClose={handleCloseQuickAction}
-            onSuccess={() => {
-              handleCloseQuickAction();
-              window.location.reload();
-            }}
-          />
-
-          <AddPaymentModal
-            isOpen={quickActionType === 'payment'}
-            onClose={handleCloseQuickAction}
-            onSuccess={() => {
-              handleCloseQuickAction();
-              window.location.reload();
-            }}
-          />
-        </BrowserRouter>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
         </ToastProvider>
       </AuthProvider>
     </ThemeProvider>

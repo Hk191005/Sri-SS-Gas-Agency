@@ -159,16 +159,6 @@ function parseInvoiceText(text: string): ExtractedBillData {
     }
   });
 
-  // Fallback default item if none detected
-  if (items.length === 0) {
-    items.push({
-      cylinder_size: '12 kg',
-      quantity: 50,
-      unit_price: 1625,
-      total_price: 81250,
-    });
-  }
-
   const subtotal = items.reduce((sum, i) => sum + i.total_price, 0);
   const taxAmount = Math.round(subtotal * 0.05); // 5% GST estimate
   const totalAmount = subtotal + taxAmount;

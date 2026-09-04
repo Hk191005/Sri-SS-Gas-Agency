@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { SupabaseSetupBanner } from '../SupabaseSetupBanner';
@@ -7,6 +7,10 @@ import { AGENCY_BRANDING } from '../../lib/constants';
 import { AgencyLogo } from '../branding/AgencyLogo';
 import { ThemeToggle } from '../ThemeToggle';
 import { GlobalSearchModal } from '../crm/GlobalSearchModal';
+import { MobileNav } from './MobileNav';
+import { CustomerFormModal } from '../customers/CustomerFormModal';
+import { AddPurchaseModal } from '../purchases/AddPurchaseModal';
+import { AddPaymentModal } from '../payments/AddPaymentModal';
 import {
   LayoutDashboard,
   Users,
@@ -25,7 +29,6 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -37,29 +40,65 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState<'customer' | 'purchase' | 'delivery' | 'payment' | null>(null);
+  
   const navigate = useNavigate();
   const location = useLocation();
 
   const isConfigured = isSupabaseConfigured();
+
+  // Handle escape key to close mobile drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   if (!isConfigured) {
     return <SupabaseSetupBanner />;
   }
 
   const navItems = [
-    { name: 'Overview', path: '/', icon: LayoutDashboard },
+    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Customers', path: '/customers', icon: Users },
-    { name: 'Sales', path: '/purchases', icon: ShoppingBag },
-    { name: 'Deliveries', path: '/deliveries', icon: Truck },
-    { name: 'Inventory', path: '/cylinders', icon: Database },
+    { name: 'Purchases / Sales', path: '/purchases', icon: ShoppingBag },
     { name: 'Supplier Purchases', path: '/supplier-purchases', icon: Building2 },
-    { name: 'Finance', path: '/payments', icon: CreditCard },
+    { name: 'Payments / Finance', path: '/payments', icon: CreditCard },
+    { name: 'Deliveries', path: '/deliveries', icon: Truck },
+    { name: 'Cylinder Inventory', path: '/cylinders', icon: Database },
     { name: 'Messages', path: '/messages', icon: MessageSquare },
     { name: 'Reports', path: '/reports', icon: BarChart3 },
     { name: 'Settings', path: '/settings', icon: SettingsIcon },
   ];
 
   const handleLogout = async () => {
+    setMobileMenuOpen(false);
     await logout();
     navigate('/login');
   };
@@ -69,6 +108,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
       return location.pathname === '/';
     }
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const handleQuickAction = (type: 'customer' | 'purchase' | 'delivery' | 'payment') => {
+    if (onOpenQuickAction) {
+      onOpenQuickAction(type);
+    } else {
+      setActiveModal(type);
+    }
   };
 
   return (
@@ -104,8 +151,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
             {/* Sidebar Collapse Toggle Button */}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-1.5 rounded-xl bg-[#F8FAFC] dark:bg-[#1F1F1F] text-[#525252] hover:text-[#111111] dark:hover:text-white border border-[#E5E7EB] dark:border-[#2A2A2A] transition-all hover:scale-105 shrink-0"
+              className="p-1.5 rounded-xl bg-[#F8FAFC] dark:bg-[#1F1F1F] text-[#525252] hover:text-[#111111] dark:hover:text-white border border-[#E5E7EB] dark:border-[#2A2A2A] transition-all hover:scale-105 shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer"
               title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+              aria-label={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
               {sidebarCollapsed ? <ChevronRight className="w-4 h-4 text-[#E31B23]" /> : <ChevronLeft className="w-4 h-4 text-[#E31B23]" />}
             </button>
@@ -117,7 +165,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
               onClick={() => setIsSearchOpen(true)}
               className={`w-full flex items-center ${
                 sidebarCollapsed ? 'justify-center px-0' : 'justify-between px-3'
-              } py-2 bg-[#F8FAFC] dark:bg-[#1F1F1F] hover:bg-white dark:hover:bg-[#262626] text-[#525252] dark:text-[#D4D4D4] rounded-xl text-xs border border-[#E5E7EB] dark:border-[#2A2A2A] transition-all group focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/12`}
+              } py-2 bg-[#F8FAFC] dark:bg-[#1F1F1F] hover:bg-white dark:hover:bg-[#262626] text-[#525252] dark:text-[#D4D4D4] rounded-xl text-xs border border-[#E5E7EB] dark:border-[#2A2A2A] transition-all group focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/12 cursor-pointer min-h-[38px]`}
               title="Global Search (Ctrl+K)"
             >
               <div className="flex items-center gap-2">
@@ -131,10 +179,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
               )}
             </button>
 
-            {onOpenQuickAction && !sidebarCollapsed && (
+            {!sidebarCollapsed && (
               <button
-                onClick={() => onOpenQuickAction('customer')}
-                className="w-full flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#FFF1F2] dark:hover:bg-rose-950/30 text-[#E31B23] dark:text-red-400 border border-[#FECDD3] dark:border-red-900/40 hover:border-[#E31B23] text-xs font-bold py-2 px-3 rounded-xl transition-all active:scale-98 shadow-2xs"
+                onClick={() => handleQuickAction('customer')}
+                className="w-full flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#FFF1F2] dark:hover:bg-rose-950/30 text-[#E31B23] dark:text-red-400 border border-[#FECDD3] dark:border-red-900/40 hover:border-[#E31B23] text-xs font-bold py-2 px-3 rounded-xl transition-all active:scale-98 shadow-2xs cursor-pointer min-h-[38px]"
                 title="Add New Customer"
               >
                 <Plus className="w-4 h-4 text-[#E31B23] dark:text-red-400 shrink-0" />
@@ -144,7 +192,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
           </div>
 
           {/* Navigation Links List */}
-          <nav className="space-y-1 pt-1">
+          <nav className="space-y-1 pt-1 max-h-[calc(100vh-290px)] overflow-y-auto pr-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isPathActive(item.path);
@@ -193,7 +241,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
             <button
               onClick={handleLogout}
               title="Sign Out"
-              className="p-1.5 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-[#262626] rounded-lg transition-colors shrink-0"
+              aria-label="Sign Out"
+              className="p-1.5 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-[#262626] rounded-lg transition-colors shrink-0 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -212,24 +261,148 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2 text-[#525252] dark:text-[#D4D4D4] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] rounded-lg"
-              title="Search"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#525252] dark:text-[#D4D4D4] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] rounded-xl transition-colors cursor-pointer"
+              title="Search (Ctrl+K)"
+              aria-label="Search"
             >
               <Search className="w-5 h-5 text-[#E31B23]" />
             </button>
             <ThemeToggle />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-[#525252] dark:text-[#D4D4D4] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] rounded-lg"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#525252] dark:text-[#D4D4D4] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] rounded-xl transition-colors cursor-pointer"
+              aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
+              aria-expanded={mobileMenuOpen}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-6 h-6 text-[#E31B23]" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
       </header>
+
+      {/* MOBILE FULL NAVIGATION DRAWER / SHEET */}
+      {mobileMenuOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile Navigation Menu"
+          className="fixed inset-0 z-50 lg:hidden flex"
+        >
+          {/* Backdrop overlay */}
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"
+          />
+
+          {/* Slide-over Drawer Panel */}
+          <div className="relative w-[85vw] max-w-[340px] h-full bg-white dark:bg-[#171717] border-r border-[#E5E7EB] dark:border-[#2A2A2A] shadow-2xl flex flex-col justify-between p-4 z-10 overflow-y-auto animate-in slide-in-from-left duration-300">
+            {/* Drawer Header */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#E5E7EB] dark:border-[#2A2A2A]">
+                <div className="flex items-center gap-2.5">
+                  <AgencyLogo size="md" />
+                  <div>
+                    <span className="text-xs font-black text-[#111111] dark:text-white leading-tight block">
+                      {AGENCY_BRANDING.NAME}
+                    </span>
+                    <span className="text-[10px] text-[#E31B23] font-black uppercase">
+                      MANAGEMENT SYSTEM
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#A3A3A3] hover:text-[#E31B23] dark:hover:text-red-400 border border-[#E5E7EB] dark:border-[#2A2A2A] transition-colors cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Quick Actions in Drawer */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsSearchOpen(true);
+                  }}
+                  className="w-full min-h-[44px] flex items-center justify-between px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] rounded-xl text-xs font-bold border border-[#E5E7EB] dark:border-[#2A2A2A] hover:border-[#E31B23] transition-all cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Search className="w-4 h-4 text-[#E31B23]" />
+                    <span>Search System</span>
+                  </div>
+                  <span className="text-[10px] text-[#737373] font-mono">Ctrl+K</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleQuickAction('customer');
+                  }}
+                  className="w-full min-h-[44px] flex items-center justify-center gap-2 bg-[#FFF1F2] dark:bg-rose-950/30 text-[#E31B23] dark:text-red-400 border border-[#FECDD3] dark:border-red-900/40 text-xs font-black py-2.5 px-3.5 rounded-xl transition-all active:scale-98 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Register New Customer</span>
+                </button>
+              </div>
+
+              {/* Full Navigation Items (>=44x44px touch targets) */}
+              <nav className="space-y-1 pt-2" aria-label="Main Navigation">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isPathActive(item.path);
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`min-h-[48px] w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all text-xs ${
+                        active
+                          ? 'bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] dark:text-red-400 font-black border border-[#FECDD3] dark:border-red-900/40 shadow-xs'
+                          : 'text-[#525252] dark:text-[#A3A3A3] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] hover:text-[#111111] dark:hover:text-white font-bold'
+                      }`}
+                    >
+                      <Icon className={`w-5 h-5 shrink-0 ${active ? 'text-[#E31B23] dark:text-red-400' : 'text-[#737373] dark:text-[#A3A3A3]'}`} />
+                      <span className="truncate">{item.name}</span>
+                    </NavLink>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="pt-4 border-t border-[#E5E7EB] dark:border-[#2A2A2A] space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-bold text-[#737373]">Appearance</span>
+                <ThemeToggle />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#E31B23] shrink-0"></span>
+                    <p className="text-xs font-black text-[#111111] dark:text-white truncate">SRI SS GAS Admin</p>
+                  </div>
+                  <p className="text-[10px] text-[#737373] font-mono truncate">@{user?.username || 'srissgas.agency'}</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-[#262626] rounded-xl transition-colors shrink-0 cursor-pointer"
+                  title="Sign Out"
+                  aria-label="Sign Out"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MAIN CONTENT AREA WITH DYNAMIC LEFT MARGIN */}
       <div
@@ -237,61 +410,46 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
           sidebarCollapsed ? 'lg:pl-[108px]' : 'lg:pl-[300px]'
         }`}
       >
-        <main className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-12">
-          <Outlet />
+        <main className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-28 lg:pb-12">
+          <Outlet context={{ onOpenQuickAction: handleQuickAction }} />
         </main>
       </div>
 
-      {/* MOBILE FLOATING BOTTOM NAVIGATION BAR */}
-      <nav className="lg:hidden fixed bottom-3 left-3 right-3 z-40 bg-white/95 dark:bg-[#171717]/95 backdrop-blur-md border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-xl px-2 py-1.5 flex items-center justify-around">
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            `flex flex-col items-center py-1 px-2 rounded-xl text-[10px] font-extrabold transition-all ${
-              isActive ? 'text-[#C9151C] dark:text-red-400 font-bold' : 'text-[#737373] dark:text-[#A3A3A3]'
-            }`
-          }
-        >
-          <LayoutDashboard className="w-5 h-5 mb-0.5 text-[#E31B23]" />
-          <span>Overview</span>
-        </NavLink>
-
-        <NavLink
-          to="/customers"
-          className={({ isActive }) =>
-            `flex flex-col items-center py-1 px-2 rounded-xl text-[10px] font-extrabold transition-all ${
-              isActive ? 'text-[#C9151C] dark:text-red-400 font-bold' : 'text-[#737373] dark:text-[#A3A3A3]'
-            }`
-          }
-        >
-          <Users className="w-5 h-5 mb-0.5 text-[#E31B23]" />
-          <span>Customers</span>
-        </NavLink>
-
-        <NavLink
-          to="/purchases"
-          className={({ isActive }) =>
-            `flex flex-col items-center py-1 px-2 rounded-xl text-[10px] font-extrabold transition-all ${
-              isActive ? 'text-[#C9151C] dark:text-red-400 font-bold' : 'text-[#737373] dark:text-[#A3A3A3]'
-            }`
-          }
-        >
-          <ShoppingBag className="w-5 h-5 mb-0.5 text-[#E31B23]" />
-          <span>Sales</span>
-        </NavLink>
-
-        <button
-          onClick={() => setMobileMenuOpen(true)}
-          className="flex flex-col items-center py-1 px-2 rounded-xl text-[10px] font-extrabold text-[#737373] dark:text-[#A3A3A3]"
-        >
-          <ChevronDown className="w-5 h-5 mb-0.5 text-[#E31B23]" />
-          <span>More</span>
-        </button>
-      </nav>
+      {/* MOBILE FLOATING BOTTOM NAVIGATION BAR (AUTHENTICATED ONLY) */}
+      <MobileNav onOpenQuickAction={handleQuickAction} />
 
       {/* Global Search Modal */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      {/* Global Quick Action Modals */}
+      <CustomerFormModal
+        isOpen={activeModal === 'customer'}
+        onClose={() => setActiveModal(null)}
+        onSuccess={() => {
+          setActiveModal(null);
+          window.location.reload();
+        }}
+      />
+
+      <AddPurchaseModal
+        isOpen={activeModal === 'purchase'}
+        onClose={() => setActiveModal(null)}
+        onSuccess={() => {
+          setActiveModal(null);
+          window.location.reload();
+        }}
+      />
+
+      <AddPaymentModal
+        isOpen={activeModal === 'payment'}
+        onClose={() => setActiveModal(null)}
+        onSuccess={() => {
+          setActiveModal(null);
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };
+
+export default AppLayout;
