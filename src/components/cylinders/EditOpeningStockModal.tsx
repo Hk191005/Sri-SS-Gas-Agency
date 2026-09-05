@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { getAgencySettings, updateOpeningStock } from '../../lib/db';
+import { getCylinderStockSummary, getInventoryOpeningBalances, updateInventoryOpeningBalances } from '../../lib/db';
 import { useToast } from '../../context/ToastContext';
-import { X, Save, AlertCircle, Database, Info, Loader2 } from 'lucide-react';
+import { X, Save, AlertCircle, Database, Info, Loader2, AlertTriangle } from 'lucide-react';
 
 interface EditOpeningStockModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+}
+
+interface StockRowState {
+  cylinderTypeId: string;
+  name: string;
+  weightKg: number;
+  currentOpening: number;
+  currentAvailable: number;
+  withCustomer: number;
+  empty: number;
+  inDelivery: number;
+  committedOutflow: number; // pending + inDelivery + withCustomer + empty - supplierIntake
+  inputQty: string;
 }
 
 export const EditOpeningStockModal: React.FC<EditOpeningStockModalProps> = ({
@@ -16,47 +29,55 @@ export const EditOpeningStockModal: React.FC<EditOpeningStockModalProps> = ({
 }) => {
   const { showSuccess, showError } = useToast();
 
-  const [stock4kg, setStock4kg] = useState<string>('40');
-  const [stock12kg, setStock12kg] = useState<string>('150');
-  const [stock17kg, setStock17kg] = useState<string>('60');
-  const [stock21kg, setStock21kg] = useState<string>('80');
-
-  // Baseline quantities loaded from database
-  const [currentStock, setCurrentStock] = useState({
-    kg4: 40,
-    kg12: 150,
-    kg17: 60,
-    kg21: 80,
-  });
-
+  const [rows, setRows] = useState<StockRowState[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     if (isOpen) {
-      loadCurrentOpeningStock();
+      loadData();
     }
   }, [isOpen]);
 
-  const loadCurrentOpeningStock = async () => {
+  const loadData = async () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      const settings = await getAgencySettings();
-      const s4 = settings.opening_stock_4kg ?? 40;
-      const s12 = settings.opening_stock_12kg ?? 150;
-      const s17 = settings.opening_stock_17kg ?? 60;
-      const s21 = settings.opening_stock_21kg ?? 80;
+      const [summaries, balances] = await Promise.all([
+        getCylinderStockSummary(),
+        getInventoryOpeningBalances(),
+      ]);
 
-      setCurrentStock({ kg4: s4, kg12: s12, kg17: s17, kg21: s21 });
-      setStock4kg(String(s4));
-      setStock12kg(String(s12));
-      setStock17kg(String(s17));
-      setStock21kg(String(s21));
+      const mappedRows: StockRowState[] = summaries.map((s) => {
+        const balanceRec = balances.find((b) => b.cylinder_type_id === s.cylinder_type_id);
+        const opening = balanceRec ? balanceRec.opening_full_quantity : (s.opening_balance ?? 0);
+        
+        // committedOutflow = Total physically committed in active circulation / unrefilled returns
+        // available = opening + supplierIntake - committedOutflow
+        // therefore committedOutflow = opening + supplierIntake - available = s.total - s.available
+        const committedOutflow = Math.max(0, s.total - s.available);
+
+        return {
+          cylinderTypeId: s.cylinder_type_id || '',
+          name: s.size,
+          weightKg: s.weight_kg ?? 0,
+          currentOpening: opening,
+          currentAvailable: s.available,
+          withCustomer: s.withCustomer,
+          empty: s.empty,
+          inDelivery: s.inDelivery,
+          committedOutflow,
+          inputQty: String(opening),
+        };
+      });
+
+      // Sort consistently by weight
+      mappedRows.sort((a, b) => a.weightKg - b.weightKg);
+      setRows(mappedRows);
     } catch (err: any) {
-      console.error('Failed to load opening stock settings:', err);
-      setErrorMsg(err.message || 'Failed to load current opening stock configuration.');
+      console.error('Failed to load opening balances:', err);
+      setErrorMsg(err.message || 'Failed to load current opening stock configuration from Supabase.');
     } finally {
       setLoading(false);
     }
@@ -64,55 +85,64 @@ export const EditOpeningStockModal: React.FC<EditOpeningStockModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleQtyChange = (cylinderTypeId: string, val: string) => {
+    setRows((prev) =>
+      prev.map((r) => (r.cylinderTypeId === cylinderTypeId ? { ...r, inputQty: val } : r))
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (saving || loading) return;
     setErrorMsg('');
 
     // Strict validation
-    const fields = [
-      { label: '4 kg Domestic', raw: stock4kg },
-      { label: '12 kg Commercial', raw: stock12kg },
-      { label: '17 kg Commercial', raw: stock17kg },
-      { label: '21 kg Industrial', raw: stock21kg },
-    ];
+    const updates: Array<{ cylinder_type_id: string; opening_full_quantity: number }> = [];
 
-    for (const f of fields) {
-      const trimmed = f.raw.trim();
+    for (const r of rows) {
+      const trimmed = r.inputQty.trim();
       if (trimmed === '') {
-        setErrorMsg(`Please enter a quantity for ${f.label}.`);
+        setErrorMsg(`Please enter an opening stock quantity for ${r.name}.`);
         return;
       }
       if (!/^\d+$/.test(trimmed)) {
-        setErrorMsg(`${f.label} must be a whole positive integer without decimals or special characters.`);
+        setErrorMsg(`${r.name} opening stock must be a whole non-negative integer without decimals or special characters.`);
         return;
       }
       const num = Number(trimmed);
       if (isNaN(num) || !isFinite(num) || num < 0) {
-        setErrorMsg(`${f.label} must be a valid non-negative number.`);
+        setErrorMsg(`${r.name} opening stock must be a valid non-negative number.`);
         return;
       }
       if (num > 100000) {
-        setErrorMsg(`${f.label} cannot exceed 100,000 units.`);
+        setErrorMsg(`${r.name} opening stock cannot exceed 100,000 units.`);
         return;
       }
-    }
 
-    const payload = {
-      opening_stock_4kg: parseInt(stock4kg.trim(), 10),
-      opening_stock_12kg: parseInt(stock12kg.trim(), 10),
-      opening_stock_17kg: parseInt(stock17kg.trim(), 10),
-      opening_stock_21kg: parseInt(stock21kg.trim(), 10),
-    };
+      // Invariant validation: Prevent impossible negative available inventory
+      // If new opening stock is less than already committed net outflow, reject
+      const minRequiredOpening = r.committedOutflow;
+      if (num < minRequiredOpening) {
+        setErrorMsg(
+          `Opening stock cannot be lower than the quantity already committed through recorded transactions (minimum ${minRequiredOpening} required for ${r.name}).`
+        );
+        return;
+      }
+
+      updates.push({
+        cylinder_type_id: r.cylinderTypeId,
+        opening_full_quantity: num,
+      });
+    }
 
     setSaving(true);
     try {
-      await updateOpeningStock(payload);
+      await updateInventoryOpeningBalances(updates);
       showSuccess('Opening stock updated successfully.');
       onSuccess();
       onClose();
     } catch (err: any) {
-      console.error('Failed to update opening stock:', err);
+      console.error('Failed to update opening stock balances:', err);
       const userMessage = err.message || 'Unable to update opening stock. Please try again.';
       setErrorMsg(userMessage);
       showError('Unable to update opening stock. Please try again.');
@@ -145,16 +175,23 @@ export const EditOpeningStockModal: React.FC<EditOpeningStockModalProps> = ({
           </button>
         </div>
 
-        {/* Informational Banner */}
-        <div className="px-6 pt-4">
+        {/* Informational & Warning Banners */}
+        <div className="px-6 pt-4 space-y-2.5">
           <div className="p-3 bg-[#EEF2FF] dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-900/40 rounded-xl flex items-start gap-2.5 text-xs text-[#3730A3] dark:text-indigo-300">
             <Info className="w-4 h-4 text-[#4F46E5] shrink-0 mt-0.5" />
             <div>
-              <span className="font-black block">Opening Stock Baseline</span>
+              <span className="font-black block">Opening Stock Definition</span>
               <p className="text-[11px] font-medium leading-relaxed">
-                Initial full cylinders available before recorded transactions. Updating this baseline recalculates warehouse stock without creating fake customer or purchase records.
+                Opening stock represents the full cylinders physically held by the agency before recorded inventory transactions.
               </p>
             </div>
+          </div>
+
+          <div className="p-2.5 bg-[#FFFBEB] dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 rounded-xl flex items-start gap-2 text-xs text-[#92400E] dark:text-amber-300">
+            <AlertTriangle className="w-4 h-4 text-[#D97706] shrink-0 mt-0.5" />
+            <p className="text-[11px] font-medium leading-relaxed">
+              Changing opening stock affects inventory calculations. Recorded transactions will not be modified.
+            </p>
           </div>
         </div>
 
@@ -170,97 +207,46 @@ export const EditOpeningStockModal: React.FC<EditOpeningStockModalProps> = ({
           {loading ? (
             <div className="py-8 text-center text-xs font-bold text-[#737373] flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-[#E31B23]" />
-              Loading current configuration...
+              Loading authoritative opening balances from Supabase...
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* 4 kg Domestic */}
-              <div className="p-3.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-2">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="input-stock-4kg" className="block text-xs font-black text-[#171717] dark:text-white">
-                    4 kg Domestic
-                  </label>
-                  <span className="text-[10px] font-bold text-[#737373]">Current: {currentStock.kg4}</span>
-                </div>
-                <input
-                  id="input-stock-4kg"
-                  type="number"
-                  min="0"
-                  step="1"
-                  required
-                  value={stock4kg}
-                  onChange={(e) => setStock4kg(e.target.value)}
-                  disabled={saving}
-                  placeholder="0"
-                  className="w-full px-3.5 py-2.5 min-h-[44px] bg-white dark:bg-[#171717] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/10"
-                />
-              </div>
+            <div className="space-y-3">
+              {rows.map((row) => (
+                <div
+                  key={row.cylinderTypeId}
+                  className="p-3.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                >
+                  <div>
+                    <span className="block text-xs font-black text-[#171717] dark:text-white">
+                      {row.name}
+                    </span>
+                    <span className="text-[11px] font-bold text-[#16A34A] dark:text-emerald-400">
+                      Current Available: {row.currentAvailable}
+                    </span>
+                  </div>
 
-              {/* 12 kg Commercial */}
-              <div className="p-3.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-2">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="input-stock-12kg" className="block text-xs font-black text-[#171717] dark:text-white">
-                    12 kg Commercial
-                  </label>
-                  <span className="text-[10px] font-bold text-[#737373]">Current: {currentStock.kg12}</span>
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor={`input-stock-${row.cylinderTypeId}`}
+                      className="text-[11px] font-bold text-[#737373] shrink-0"
+                    >
+                      Opening Stock:
+                    </label>
+                    <input
+                      id={`input-stock-${row.cylinderTypeId}`}
+                      type="number"
+                      min="0"
+                      step="1"
+                      required
+                      value={row.inputQty}
+                      onChange={(e) => handleQtyChange(row.cylinderTypeId, e.target.value)}
+                      disabled={saving}
+                      placeholder="0"
+                      className="w-28 px-3 py-2 min-h-[44px] bg-white dark:bg-[#171717] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#171717] dark:text-white text-right focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/10"
+                    />
+                  </div>
                 </div>
-                <input
-                  id="input-stock-12kg"
-                  type="number"
-                  min="0"
-                  step="1"
-                  required
-                  value={stock12kg}
-                  onChange={(e) => setStock12kg(e.target.value)}
-                  disabled={saving}
-                  placeholder="0"
-                  className="w-full px-3.5 py-2.5 min-h-[44px] bg-white dark:bg-[#171717] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/10"
-                />
-              </div>
-
-              {/* 17 kg Commercial */}
-              <div className="p-3.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-2">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="input-stock-17kg" className="block text-xs font-black text-[#171717] dark:text-white">
-                    17 kg Commercial
-                  </label>
-                  <span className="text-[10px] font-bold text-[#737373]">Current: {currentStock.kg17}</span>
-                </div>
-                <input
-                  id="input-stock-17kg"
-                  type="number"
-                  min="0"
-                  step="1"
-                  required
-                  value={stock17kg}
-                  onChange={(e) => setStock17kg(e.target.value)}
-                  disabled={saving}
-                  placeholder="0"
-                  className="w-full px-3.5 py-2.5 min-h-[44px] bg-white dark:bg-[#171717] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/10"
-                />
-              </div>
-
-              {/* 21 kg Industrial */}
-              <div className="p-3.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-2">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="input-stock-21kg" className="block text-xs font-black text-[#171717] dark:text-white">
-                    21 kg Industrial
-                  </label>
-                  <span className="text-[10px] font-bold text-[#737373]">Current: {currentStock.kg21}</span>
-                </div>
-                <input
-                  id="input-stock-21kg"
-                  type="number"
-                  min="0"
-                  step="1"
-                  required
-                  value={stock21kg}
-                  onChange={(e) => setStock21kg(e.target.value)}
-                  disabled={saving}
-                  placeholder="0"
-                  className="w-full px-3.5 py-2.5 min-h-[44px] bg-white dark:bg-[#171717] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#171717] dark:text-white focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/10"
-                />
-              </div>
+              ))}
             </div>
           )}
 

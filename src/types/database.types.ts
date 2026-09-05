@@ -317,8 +317,21 @@ export interface DashboardStats {
   supplierOutstanding: number;
 }
 
+export interface InventoryOpeningBalance {
+  id: string;
+  cylinder_type_id: string;
+  opening_full_quantity: number;
+  created_at?: string;
+  updated_at?: string;
+  updated_by?: string | null;
+  cylinder_type?: CylinderType;
+}
+
 export interface CylinderStockSummary {
-  size: string; // '5 kg', '12 kg', etc.
+  size: string; // '4 kg Domestic', '12 kg', etc.
+  cylinder_type_id?: string;
+  weight_kg?: number;
+  opening_balance?: number;
   available: number;
   withCustomer: number;
   empty: number;

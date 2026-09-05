@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getAgencySettings, updateAgencySettings } from '../lib/db';
+import {
+  getAgencySettings,
+  updateAgencySettings,
+  getInventoryOpeningBalances,
+  updateInventoryOpeningBalances,
+  getCylinderTypes,
+} from '../lib/db';
+import type { CylinderType } from '../types/database.types';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -27,6 +34,7 @@ import {
 export const Settings: React.FC = () => {
   const { showSuccess, showError } = useToast();
   const [settingsId, setSettingsId] = useState<string | undefined>(undefined);
+  const [cylinderTypes, setCylinderTypes] = useState<CylinderType[]>([]);
   const [agencyName, setAgencyName] = useState('SRI SS GAS AGENCY');
   const [subtitle, setSubtitle] = useState('Gas Agency Management System');
   const [phone, setPhone] = useState('+91 9876543210');
@@ -52,10 +60,10 @@ export const Settings: React.FC = () => {
   const [deposit21kg, setDeposit21kg] = useState<number>(3000);
 
   // Opening Stock Baseline Inventory (Full Cylinders Available Before Transactions)
-  const [openingStock4kg, setOpeningStock4kg] = useState<number>(40);
-  const [openingStock12kg, setOpeningStock12kg] = useState<number>(150);
-  const [openingStock17kg, setOpeningStock17kg] = useState<number>(60);
-  const [openingStock21kg, setOpeningStock21kg] = useState<number>(80);
+  const [openingStock4kg, setOpeningStock4kg] = useState<number>(0);
+  const [openingStock12kg, setOpeningStock12kg] = useState<number>(0);
+  const [openingStock17kg, setOpeningStock17kg] = useState<number>(0);
+  const [openingStock21kg, setOpeningStock21kg] = useState<number>(0);
 
   // Refill Reminder Rules
   const [reminderAutoEnabled, setReminderAutoEnabled] = useState<boolean>(true);
@@ -91,7 +99,12 @@ export const Settings: React.FC = () => {
 
   const loadSettings = async () => {
     try {
-      const data = await getAgencySettings();
+      const [data, balances, types] = await Promise.all([
+        getAgencySettings(),
+        getInventoryOpeningBalances().catch(() => []),
+        getCylinderTypes().catch(() => []),
+      ]);
+      setCylinderTypes(types);
       setSettingsId(data.id);
       setAgencyName(data.agency_name || 'SRI SS GAS AGENCY');
       setSubtitle(data.subtitle || 'Gas Agency Management System');
@@ -117,11 +130,28 @@ export const Settings: React.FC = () => {
       setDeposit17kg(data.default_deposit_17kg ?? 2500);
       setDeposit21kg(data.default_deposit_21kg ?? 3000);
 
-      // Opening Stock Baseline
-      setOpeningStock4kg(data.opening_stock_4kg ?? 40);
-      setOpeningStock12kg(data.opening_stock_12kg ?? 150);
-      setOpeningStock17kg(data.opening_stock_17kg ?? 60);
-      setOpeningStock21kg(data.opening_stock_21kg ?? 80);
+      // Authoritative Opening Stock Balances from inventory_opening_balances
+      const b4 = balances.find((b) => {
+        const t = types.find((ct) => ct.id === b.cylinder_type_id);
+        return t ? Math.round(t.weight_kg) === 4 : false;
+      });
+      const b12 = balances.find((b) => {
+        const t = types.find((ct) => ct.id === b.cylinder_type_id);
+        return t ? Math.round(t.weight_kg) === 12 : false;
+      });
+      const b17 = balances.find((b) => {
+        const t = types.find((ct) => ct.id === b.cylinder_type_id);
+        return t ? Math.round(t.weight_kg) === 17 : false;
+      });
+      const b21 = balances.find((b) => {
+        const t = types.find((ct) => ct.id === b.cylinder_type_id);
+        return t ? Math.round(t.weight_kg) === 21 : false;
+      });
+
+      setOpeningStock4kg(b4 ? b4.opening_full_quantity : 0);
+      setOpeningStock12kg(b12 ? b12.opening_full_quantity : 0);
+      setOpeningStock17kg(b17 ? b17.opening_full_quantity : 0);
+      setOpeningStock21kg(b21 ? b21.opening_full_quantity : 0);
 
       // Reminders
       setReminderAutoEnabled(data.reminder_auto_enabled ?? true);
@@ -187,39 +217,49 @@ export const Settings: React.FC = () => {
     setErrorMsg('');
 
     try {
-      await updateAgencySettings({
-        id: settingsId,
-        agency_name: agencyName.trim(),
-        subtitle: subtitle.trim(),
-        phone: phone.trim(),
-        email: email.trim(),
-        address: address.trim(),
-        default_price_4kg: Number(price4kg),
-        default_price_12kg: Number(price12kg),
-        default_price_17kg: Number(price17kg),
-        default_price_21kg: Number(price21kg),
-        default_buying_price_4kg: Number(buyingPrice4kg),
-        default_buying_price_12kg: Number(buyingPrice12kg),
-        default_buying_price_17kg: Number(buyingPrice17kg),
-        default_buying_price_21kg: Number(buyingPrice21kg),
-        default_deposit_4kg: Number(deposit4kg),
-        default_deposit_12kg: Number(deposit12kg),
-        default_deposit_17kg: Number(deposit17kg),
-        default_deposit_21kg: Number(deposit21kg),
-        opening_stock_4kg: Number(openingStock4kg),
-        opening_stock_12kg: Number(openingStock12kg),
-        opening_stock_17kg: Number(openingStock17kg),
-        opening_stock_21kg: Number(openingStock21kg),
-        reminder_auto_enabled: reminderAutoEnabled,
-        reminder_interval_4kg: Number(reminderInterval4kg),
-        reminder_interval_12kg: Number(reminderInterval12kg),
-        reminder_interval_17kg: Number(reminderInterval17kg),
-        reminder_interval_21kg: Number(reminderInterval21kg),
-        reminder_lead_days_4kg: Number(reminderLeadDays4kg),
-        reminder_lead_days_12kg: Number(reminderLeadDays12kg),
-        reminder_lead_days_17kg: Number(reminderLeadDays17kg),
-        reminder_lead_days_21kg: Number(reminderLeadDays21kg),
-      });
+      const t4 = cylinderTypes.find((t) => Math.round(t.weight_kg) === 4);
+      const t12 = cylinderTypes.find((t) => Math.round(t.weight_kg) === 12);
+      const t17 = cylinderTypes.find((t) => Math.round(t.weight_kg) === 17);
+      const t21 = cylinderTypes.find((t) => Math.round(t.weight_kg) === 21);
+
+      const openingPayload: { cylinder_type_id: string; opening_full_quantity: number }[] = [];
+      if (t4) openingPayload.push({ cylinder_type_id: t4.id, opening_full_quantity: Number(openingStock4kg) });
+      if (t12) openingPayload.push({ cylinder_type_id: t12.id, opening_full_quantity: Number(openingStock12kg) });
+      if (t17) openingPayload.push({ cylinder_type_id: t17.id, opening_full_quantity: Number(openingStock17kg) });
+      if (t21) openingPayload.push({ cylinder_type_id: t21.id, opening_full_quantity: Number(openingStock21kg) });
+
+      await Promise.all([
+        updateAgencySettings({
+          id: settingsId,
+          agency_name: agencyName.trim(),
+          subtitle: subtitle.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
+          address: address.trim(),
+          default_price_4kg: Number(price4kg),
+          default_price_12kg: Number(price12kg),
+          default_price_17kg: Number(price17kg),
+          default_price_21kg: Number(price21kg),
+          default_buying_price_4kg: Number(buyingPrice4kg),
+          default_buying_price_12kg: Number(buyingPrice12kg),
+          default_buying_price_17kg: Number(buyingPrice17kg),
+          default_buying_price_21kg: Number(buyingPrice21kg),
+          default_deposit_4kg: Number(deposit4kg),
+          default_deposit_12kg: Number(deposit12kg),
+          default_deposit_17kg: Number(deposit17kg),
+          default_deposit_21kg: Number(deposit21kg),
+          reminder_auto_enabled: reminderAutoEnabled,
+          reminder_interval_4kg: Number(reminderInterval4kg),
+          reminder_interval_12kg: Number(reminderInterval12kg),
+          reminder_interval_17kg: Number(reminderInterval17kg),
+          reminder_interval_21kg: Number(reminderInterval21kg),
+          reminder_lead_days_4kg: Number(reminderLeadDays4kg),
+          reminder_lead_days_12kg: Number(reminderLeadDays12kg),
+          reminder_lead_days_17kg: Number(reminderLeadDays17kg),
+          reminder_lead_days_21kg: Number(reminderLeadDays21kg),
+        }),
+        openingPayload.length > 0 ? updateInventoryOpeningBalances(openingPayload) : Promise.resolve(),
+      ]);
 
       await loadSettings();
       setSuccessMsg('Agency configuration, prices, deposits, opening stock, and refill rules saved successfully!');
