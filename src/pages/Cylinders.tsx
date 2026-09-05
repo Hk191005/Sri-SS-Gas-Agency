@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import type { CylinderStockSummary } from '../types/database.types';
 import { getCylinderStockSummary } from '../lib/db';
 import { CylinderReturnModal } from '../components/cylinders/CylinderReturnModal';
-import { Database, RotateCcw, PackageCheck, Truck, RefreshCw, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { EditOpeningStockModal } from '../components/cylinders/EditOpeningStockModal';
+import { Database, RotateCcw, PackageCheck, Truck, RefreshCw, ShieldCheck, AlertTriangle, SlidersHorizontal } from 'lucide-react';
 
 export const Cylinders: React.FC = () => {
   const [stockSummaries, setStockSummaries] = useState<CylinderStockSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [isOpeningStockModalOpen, setIsOpeningStockModalOpen] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -40,12 +42,20 @@ export const Cylinders: React.FC = () => {
             Real-time stock management across 4 kg, 12 kg, 17 kg and 21 kg cylinders
           </p>
         </div>
-        <button
-          onClick={() => setIsReturnModalOpen(true)}
-          className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4.5 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 shrink-0"
-        >
-          <RotateCcw className="w-4 h-4" /> Record Cylinder Return
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            onClick={() => setIsOpeningStockModalOpen(true)}
+            className="flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] text-[#171717] dark:text-white font-bold text-xs px-4 py-2.5 rounded-[12px] border border-[#E5E5E5] dark:border-[#2A2A2A] transition-all active:scale-98 min-h-[44px]"
+          >
+            <SlidersHorizontal className="w-4 h-4 text-[#E31B23]" /> Edit Opening Stock
+          </button>
+          <button
+            onClick={() => setIsReturnModalOpen(true)}
+            className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4.5 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 shrink-0 min-h-[44px]"
+          >
+            <RotateCcw className="w-4 h-4" /> Record Cylinder Return
+          </button>
+        </div>
       </div>
 
       {/* Stock Cards Grid per Size */}
@@ -125,6 +135,13 @@ export const Cylinders: React.FC = () => {
       <CylinderReturnModal
         isOpen={isReturnModalOpen}
         onClose={() => setIsReturnModalOpen(false)}
+        onSuccess={loadData}
+      />
+
+      {/* Edit Opening Stock Modal */}
+      <EditOpeningStockModal
+        isOpen={isOpeningStockModalOpen}
+        onClose={() => setIsOpeningStockModalOpen(false)}
         onSuccess={loadData}
       />
     </div>

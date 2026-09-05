@@ -55,6 +55,11 @@ export const DEFAULT_AGENCY_SETTINGS: AgencySettings = {
   reminder_lead_days_12kg: 3,
   reminder_lead_days_17kg: 5,
   reminder_lead_days_21kg: 5,
+  // Opening Stock Baseline Inventory (Full Cylinders Available Before Transactions)
+  opening_stock_4kg: 40,
+  opening_stock_12kg: 150,
+  opening_stock_17kg: 60,
+  opening_stock_21kg: 80,
   // Legacy alias (read-only from existing database column)
   default_price_5kg: 650,
 };
@@ -151,8 +156,27 @@ export function getDefaultDepositForWeight(weightKg: number, settings: AgencySet
   }
 }
 
+/**
+ * Authoritative helper: returns the configured baseline opening stock for a cylinder weight.
+ */
+export function getOpeningStockForWeight(weightKg: number, settings: AgencySettings): number {
+  switch (Math.round(weightKg)) {
+    case 4:
+    case 5: // Legacy fallback mapped to canonical 4 kg
+      return settings.opening_stock_4kg ?? 40;
+    case 12:
+      return settings.opening_stock_12kg ?? 150;
+    case 17:
+      return settings.opening_stock_17kg ?? 60;
+    case 21:
+      return settings.opening_stock_21kg ?? 80;
+    default:
+      return 0;
+  }
+}
+
 // -------------------------------------------------------------
-// AGENCY SETTINGS & AUTHORITATIVE CYLINDER PRICING
+// AGENCY SETTINGS & AUTHORITATIVE CYLINDER PRICING & INVENTORY
 // -------------------------------------------------------------
 
 /**
@@ -189,6 +213,10 @@ export async function getAgencySettings(): Promise<AgencySettings> {
         default_deposit_12kg: 2000,
         default_deposit_17kg: 2500,
         default_deposit_21kg: 3000,
+        opening_stock_4kg: 40,
+        opening_stock_12kg: 150,
+        opening_stock_17kg: 60,
+        opening_stock_21kg: 80,
       })
       .select()
       .single();
@@ -205,7 +233,7 @@ export async function getAgencySettings(): Promise<AgencySettings> {
 }
 
 /**
- * Persists updated agency settings, selling prices, buying prices, and deposits to Supabase.
+ * Persists updated agency settings, selling prices, buying prices, deposits, and opening stock to Supabase.
  */
 export async function updateAgencySettings(settings: Partial<AgencySettings>): Promise<AgencySettings> {
   assertBackendAccess();
@@ -225,6 +253,10 @@ export async function updateAgencySettings(settings: Partial<AgencySettings>): P
     'default_deposit_12kg',
     'default_deposit_17kg',
     'default_deposit_21kg',
+    'opening_stock_4kg',
+    'opening_stock_12kg',
+    'opening_stock_17kg',
+    'opening_stock_21kg',
     'default_price_5kg', // Real column in Postgres schema, kept for legacy compatibility
   ];
 
@@ -318,6 +350,10 @@ export async function updateAgencySettings(settings: Partial<AgencySettings>): P
         default_deposit_12kg: updatePayload.default_deposit_12kg ?? 2000,
         default_deposit_17kg: updatePayload.default_deposit_17kg ?? 2500,
         default_deposit_21kg: updatePayload.default_deposit_21kg ?? 3000,
+        opening_stock_4kg: updatePayload.opening_stock_4kg ?? 40,
+        opening_stock_12kg: updatePayload.opening_stock_12kg ?? 150,
+        opening_stock_17kg: updatePayload.opening_stock_17kg ?? 60,
+        opening_stock_21kg: updatePayload.opening_stock_21kg ?? 80,
         ...updatePayload,
       })
       .select()
@@ -1086,9 +1122,12 @@ export async function recordCylinderReturn(payload: {
 
 // Dynamic breakdown of cylinder stock across canonical sizes (4 kg, 12 kg, 17 kg, 21 kg)
 export async function getCylinderStockSummary(): Promise<CylinderStockSummary[]> {
-  const types = await getCylinderTypes();
-  const purchases = await getPurchases();
-  const deliveries = await getDeliveries();
+  const [types, purchases, deliveries, settings] = await Promise.all([
+    getCylinderTypes(),
+    getPurchases(),
+    getDeliveries(),
+    getAgencySettings(),
+  ]);
 
   // Aggregate supplier stock intake
   const supplierIntakeMap: Record<string, number> = {};
@@ -1160,7 +1199,7 @@ export async function getCylinderStockSummary(): Promise<CylinderStockSummary[]>
     const empty = returnedCount;
 
     const supplierIntake = supplierIntakeMap[type.id] || 0;
-    const baseInitial = type.weight_kg === 12 ? 150 : type.weight_kg === 21 ? 80 : type.weight_kg === 17 ? 60 : 40;
+    const baseInitial = getOpeningStockForWeight(type.weight_kg, settings);
     const baseTotal = baseInitial + supplierIntake;
 
     // Available Full Stock = Total Owned - In Delivery - Pending Allocated - With Customer - Empty in Warehouse
@@ -1172,9 +1211,64 @@ export async function getCylinderStockSummary(): Promise<CylinderStockSummary[]>
       withCustomer,
       empty,
       inDelivery,
-      total: available + withCustomer + empty + inDelivery, // Conserved total equal to baseTotal
+      total: baseTotal, // Total inventory owned = opening baseline + confirmed supplier intakes
     };
   });
+}
+
+/**
+ * Updates opening stock baseline configuration in agency_settings with validation and audit logging.
+ */
+export async function updateOpeningStock(stock: {
+  opening_stock_4kg: number;
+  opening_stock_12kg: number;
+  opening_stock_17kg: number;
+  opening_stock_21kg: number;
+}): Promise<AgencySettings> {
+  assertBackendAccess();
+
+  const entries: Array<{ label: string; key: keyof typeof stock; val: number }> = [
+    { label: '4 kg Domestic', key: 'opening_stock_4kg', val: stock.opening_stock_4kg },
+    { label: '12 kg Commercial', key: 'opening_stock_12kg', val: stock.opening_stock_12kg },
+    { label: '17 kg Commercial', key: 'opening_stock_17kg', val: stock.opening_stock_17kg },
+    { label: '21 kg Industrial', key: 'opening_stock_21kg', val: stock.opening_stock_21kg },
+  ];
+
+  for (const item of entries) {
+    if (typeof item.val !== 'number' || isNaN(item.val) || !isFinite(item.val) || item.val < 0 || !Number.isInteger(item.val)) {
+      throw new Error(`Opening stock for ${item.label} must be a valid non-negative whole integer.`);
+    }
+    if (item.val > 100000) {
+      throw new Error(`Opening stock for ${item.label} exceeds maximum allowed limit (100,000 units).`);
+    }
+  }
+
+  // Fetch previous settings for audit trail
+  const oldSettings = await getAgencySettings();
+
+  const updated = await updateAgencySettings({
+    opening_stock_4kg: stock.opening_stock_4kg,
+    opening_stock_12kg: stock.opening_stock_12kg,
+    opening_stock_17kg: stock.opening_stock_17kg,
+    opening_stock_21kg: stock.opening_stock_21kg,
+  });
+
+  await logAudit('Opening Stock Updated', 'agency_settings', updated.id, {
+    previous: {
+      opening_stock_4kg: oldSettings.opening_stock_4kg ?? 40,
+      opening_stock_12kg: oldSettings.opening_stock_12kg ?? 150,
+      opening_stock_17kg: oldSettings.opening_stock_17kg ?? 60,
+      opening_stock_21kg: oldSettings.opening_stock_21kg ?? 80,
+    },
+    updated: {
+      opening_stock_4kg: stock.opening_stock_4kg,
+      opening_stock_12kg: stock.opening_stock_12kg,
+      opening_stock_17kg: stock.opening_stock_17kg,
+      opening_stock_21kg: stock.opening_stock_21kg,
+    },
+  });
+
+  return updated;
 }
 
 // -------------------------------------------------------------

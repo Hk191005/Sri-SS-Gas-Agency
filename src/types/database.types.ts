@@ -42,6 +42,11 @@ export interface AgencySettings {
   reminder_lead_days_12kg?: number;
   reminder_lead_days_17kg?: number;
   reminder_lead_days_21kg?: number;
+  // Opening Stock Inventory Defaults (Baseline Full Cylinders in stock)
+  opening_stock_4kg?: number;
+  opening_stock_12kg?: number;
+  opening_stock_17kg?: number;
+  opening_stock_21kg?: number;
   // Legacy alias for backward compatibility (read-only from existing database column)
   default_price_5kg?: number;
   created_at?: string;

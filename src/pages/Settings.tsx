@@ -21,6 +21,7 @@ import {
   Eye,
   EyeOff,
   Lock,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 export const Settings: React.FC = () => {
@@ -49,6 +50,12 @@ export const Settings: React.FC = () => {
   const [deposit12kg, setDeposit12kg] = useState<number>(2000);
   const [deposit17kg, setDeposit17kg] = useState<number>(2500);
   const [deposit21kg, setDeposit21kg] = useState<number>(3000);
+
+  // Opening Stock Baseline Inventory (Full Cylinders Available Before Transactions)
+  const [openingStock4kg, setOpeningStock4kg] = useState<number>(40);
+  const [openingStock12kg, setOpeningStock12kg] = useState<number>(150);
+  const [openingStock17kg, setOpeningStock17kg] = useState<number>(60);
+  const [openingStock21kg, setOpeningStock21kg] = useState<number>(80);
 
   // Refill Reminder Rules
   const [reminderAutoEnabled, setReminderAutoEnabled] = useState<boolean>(true);
@@ -110,6 +117,12 @@ export const Settings: React.FC = () => {
       setDeposit17kg(data.default_deposit_17kg ?? 2500);
       setDeposit21kg(data.default_deposit_21kg ?? 3000);
 
+      // Opening Stock Baseline
+      setOpeningStock4kg(data.opening_stock_4kg ?? 40);
+      setOpeningStock12kg(data.opening_stock_12kg ?? 150);
+      setOpeningStock17kg(data.opening_stock_17kg ?? 60);
+      setOpeningStock21kg(data.opening_stock_21kg ?? 80);
+
       // Reminders
       setReminderAutoEnabled(data.reminder_auto_enabled ?? true);
       setReminderInterval4kg(data.reminder_interval_4kg ?? 14);
@@ -151,6 +164,24 @@ export const Settings: React.FC = () => {
       return;
     }
 
+    const openingStockInputs = [
+      { label: '4 kg Domestic Opening Stock', val: openingStock4kg },
+      { label: '12 kg Commercial Opening Stock', val: openingStock12kg },
+      { label: '17 kg Commercial Opening Stock', val: openingStock17kg },
+      { label: '21 kg Industrial Opening Stock', val: openingStock21kg },
+    ];
+
+    for (const item of openingStockInputs) {
+      if (isNaN(item.val) || !isFinite(item.val) || item.val < 0 || !Number.isInteger(item.val)) {
+        setErrorMsg(`${item.label} must be a valid non-negative whole integer.`);
+        return;
+      }
+      if (item.val > 100000) {
+        setErrorMsg(`${item.label} cannot exceed 100,000 units.`);
+        return;
+      }
+    }
+
     setSaving(true);
     setSuccessMsg('');
     setErrorMsg('');
@@ -175,6 +206,10 @@ export const Settings: React.FC = () => {
         default_deposit_12kg: Number(deposit12kg),
         default_deposit_17kg: Number(deposit17kg),
         default_deposit_21kg: Number(deposit21kg),
+        opening_stock_4kg: Number(openingStock4kg),
+        opening_stock_12kg: Number(openingStock12kg),
+        opening_stock_17kg: Number(openingStock17kg),
+        opening_stock_21kg: Number(openingStock21kg),
         reminder_auto_enabled: reminderAutoEnabled,
         reminder_interval_4kg: Number(reminderInterval4kg),
         reminder_interval_12kg: Number(reminderInterval12kg),
@@ -187,7 +222,7 @@ export const Settings: React.FC = () => {
       });
 
       await loadSettings();
-      setSuccessMsg('Agency configuration, selling prices, buying prices, deposits, and refill rules saved successfully!');
+      setSuccessMsg('Agency configuration, prices, deposits, opening stock, and refill rules saved successfully!');
       showSuccess('Settings saved and synchronized to database successfully!');
     } catch (e: any) {
       setErrorMsg(e.message || 'Failed to save settings');
@@ -599,7 +634,74 @@ export const Settings: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 6: Customer Refill Reminder Rules */}
+        {/* Section 6: Opening Stock Baseline Configuration (Units) */}
+        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 rounded-2xl shadow-xs space-y-4">
+          <div className="flex items-center gap-3 border-b border-[#F1F5F9] dark:border-[#262626] pb-3">
+            <div className="w-8 h-8 rounded-lg bg-[#EEF2FF] dark:bg-indigo-950/40 text-[#4F46E5] flex items-center justify-center shrink-0 border border-indigo-200/60">
+              <SlidersHorizontal className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-[#111111] dark:text-white">Opening Stock Baseline Configuration (Units)</h3>
+              <p className="text-[11px] font-semibold text-[#737373]">Initial full cylinders available before recorded transactions (authoritative warehouse baseline)</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">4 kg Domestic (Units)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                required
+                value={openingStock4kg}
+                onChange={(e) => setOpeningStock4kg(parseInt(e.target.value) || 0)}
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/10"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">12 kg Commercial (Units)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                required
+                value={openingStock12kg}
+                onChange={(e) => setOpeningStock12kg(parseInt(e.target.value) || 0)}
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/10"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">17 kg Commercial (Units)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                required
+                value={openingStock17kg}
+                onChange={(e) => setOpeningStock17kg(parseInt(e.target.value) || 0)}
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/10"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">21 kg Industrial (Units)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                required
+                value={openingStock21kg}
+                onChange={(e) => setOpeningStock21kg(parseInt(e.target.value) || 0)}
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/10"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 7: Customer Refill Reminder Rules */}
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 rounded-2xl shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#262626] pb-3">
             <div className="flex items-center gap-3">
@@ -722,7 +824,7 @@ export const Settings: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 7: Multi-Administrator Access Control */}
+        {/* Section 8: Multi-Administrator Access Control */}
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 rounded-2xl shadow-xs space-y-4">
           <div className="flex items-center gap-3 border-b border-[#F1F5F9] dark:border-[#262626] pb-3">
             <div className="w-8 h-8 rounded-lg bg-[#EEF2FF] dark:bg-indigo-950/40 text-[#4F46E5] flex items-center justify-center shrink-0 border border-indigo-200/60">
@@ -755,12 +857,12 @@ export const Settings: React.FC = () => {
             className="flex items-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] active:bg-[#A90F16] text-white font-black text-xs px-6 py-3 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all disabled:opacity-50 active:scale-98"
           >
             <Save className="w-4 h-4" />
-            {saving ? 'Saving Settings...' : 'Save Settings, Prices & Rules'}
+            {saving ? 'Saving Settings...' : 'Save Settings, Prices, Opening Stock & Rules'}
           </button>
         </div>
       </form>
 
-      {/* Section 8: Change Administrator Password */}
+      {/* Section 9: Change Administrator Password */}
       <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 rounded-2xl shadow-xs space-y-4">
         <div className="flex items-center gap-3 border-b border-[#F1F5F9] dark:border-[#262626] pb-3">
           <div className="w-8 h-8 rounded-lg bg-[#FFF1F2] dark:bg-red-950/40 text-[#E31B23] flex items-center justify-center shrink-0 border border-[#FECDD3]">
