@@ -24,7 +24,54 @@ import {
   MessageSquare,
   Trash2,
   AlertTriangle,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from 'lucide-react';
+
+/**
+ * Compares two customer codes / IDs numerically based on the numeric portion of the ID.
+ * Handles formats like CUST-1, CUST-001, CUST-010, CUST-100, SSG-001, etc.
+ * Avoids lexicographical sorting errors (e.g. CUST-001 -> CUST-010 -> CUST-002).
+ */
+export function compareCustomerCodes(
+  codeA: string = '',
+  codeB: string = '',
+  direction: 'asc' | 'desc' = 'asc'
+): number {
+  const cleanA = (codeA || '').trim();
+  const cleanB = (codeB || '').trim();
+
+  const matchA = cleanA.match(/\d+/);
+  const matchB = cleanB.match(/\d+/);
+
+  let result = 0;
+  if (matchA && matchB) {
+    const prefixA = cleanA.substring(0, matchA.index);
+    const prefixB = cleanB.substring(0, matchB.index);
+    const prefixCmp = prefixA.localeCompare(prefixB, undefined, { sensitivity: 'base' });
+
+    if (prefixCmp !== 0) {
+      result = prefixCmp;
+    } else {
+      const valA = parseInt(matchA[0], 10);
+      const valB = parseInt(matchB[0], 10);
+      if (valA !== valB) {
+        result = valA - valB;
+      } else {
+        result = cleanA.localeCompare(cleanB, undefined, { numeric: true, sensitivity: 'base' });
+      }
+    }
+  } else if (matchA && !matchB) {
+    result = -1;
+  } else if (!matchA && matchB) {
+    result = 1;
+  } else {
+    result = cleanA.localeCompare(cleanB, undefined, { numeric: true, sensitivity: 'base' });
+  }
+
+  return direction === 'asc' ? result : -result;
+}
 
 export const Customers: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -34,10 +81,11 @@ export const Customers: React.FC = () => {
 
   const { showSuccess, showError } = useToast();
 
-  // Tabs & Filters
+  // Tabs & Filters (Customer ID is default sort)
   const [activeTab, setActiveTab] = useState<'all' | 'individual' | 'company' | 'followup' | 'inactive'>('all');
   const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState<'name' | 'code'>('name');
+  const [sortField, setSortField] = useState<'name' | 'code'>('code');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [page, setPage] = useState(1);
   const limit = 20;
@@ -76,9 +124,13 @@ export const Customers: React.FC = () => {
       }
 
       if (sortField === 'name') {
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        filtered.sort((a, b) =>
+          sortDirection === 'asc'
+            ? a.name.localeCompare(b.name)
+            : b.name.localeCompare(a.name)
+        );
       } else {
-        filtered.sort((a, b) => a.customer_code.localeCompare(b.customer_code));
+        filtered.sort((a, b) => compareCustomerCodes(a.customer_code, b.customer_code, sortDirection));
       }
 
       setCustomers(filtered);
@@ -93,7 +145,17 @@ export const Customers: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [search, activeTab, sortField, page]);
+  }, [search, activeTab, sortField, sortDirection, page]);
+
+  const handleSortToggle = (field: 'code' | 'name') => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setPage(1);
+  };
 
   const handleToggleActive = async (cust: Customer, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -193,12 +255,19 @@ export const Customers: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
             <select
-              value={sortField}
-              onChange={(e) => setSortField(e.target.value as any)}
-              className="bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs text-[#171717] dark:text-white px-3 py-2 rounded-xl focus:outline-none font-bold"
+              value={`${sortField}_${sortDirection}`}
+              onChange={(e) => {
+                const [field, dir] = e.target.value.split('_') as ['code' | 'name', 'asc' | 'desc'];
+                setSortField(field);
+                setSortDirection(dir);
+                setPage(1);
+              }}
+              className="bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs text-[#171717] dark:text-white px-3 py-2 rounded-xl focus:outline-none font-bold cursor-pointer"
             >
-              <option value="name">Sort: Name (A-Z)</option>
-              <option value="code">Sort: Customer ID</option>
+              <option value="code_asc">Sort: Customer ID (Asc 1 → 9)</option>
+              <option value="code_desc">Sort: Customer ID (Desc 9 → 1)</option>
+              <option value="name_asc">Sort: Name (A → Z)</option>
+              <option value="name_desc">Sort: Name (Z → A)</option>
             </select>
 
             <div className="flex items-center bg-[#FAFAFA] dark:bg-[#1F1F1F] p-1 rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A]">
@@ -355,8 +424,42 @@ export const Customers: React.FC = () => {
             <table className="w-full min-w-[750px] text-left border-collapse text-xs font-semibold">
               <thead>
                 <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E5E5] dark:border-[#2A2A2A] font-extrabold text-[#525252] uppercase text-[10px] tracking-wider">
-                  <th className="py-3.5 px-4">Customer ID</th>
-                  <th className="py-3.5 px-4">Name / Company</th>
+                  <th
+                    onClick={() => handleSortToggle('code')}
+                    className="py-3.5 px-4 cursor-pointer select-none hover:text-[#C9151C] transition-colors group"
+                    title="Click to sort by Customer ID"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className={sortField === 'code' ? 'text-[#C9151C] font-black' : ''}>Customer ID</span>
+                      {sortField === 'code' ? (
+                        sortDirection === 'asc' ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-[#C9151C] stroke-[2.5]" />
+                        ) : (
+                          <ArrowDown className="w-3.5 h-3.5 text-[#C9151C] stroke-[2.5]" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3.5 h-3.5 text-[#737373] opacity-40 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSortToggle('name')}
+                    className="py-3.5 px-4 cursor-pointer select-none hover:text-[#C9151C] transition-colors group"
+                    title="Click to sort by Name"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className={sortField === 'name' ? 'text-[#C9151C] font-black' : ''}>Name / Company</span>
+                      {sortField === 'name' ? (
+                        sortDirection === 'asc' ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-[#C9151C] stroke-[2.5]" />
+                        ) : (
+                          <ArrowDown className="w-3.5 h-3.5 text-[#C9151C] stroke-[2.5]" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3.5 h-3.5 text-[#737373] opacity-40 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </div>
+                  </th>
                   <th className="py-3.5 px-4">Phone</th>
                   <th className="py-3.5 px-4">Area / Location</th>
                   <th className="py-3.5 px-4">Status</th>
