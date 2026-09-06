@@ -351,8 +351,8 @@ export const Customers: React.FC = () => {
         </div>
       ) : (
         <div className="saas-card bg-white dark:bg-[#171717] rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs font-semibold">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[750px] text-left border-collapse text-xs font-semibold">
               <thead>
                 <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E5E5] dark:border-[#2A2A2A] font-extrabold text-[#525252] uppercase text-[10px] tracking-wider">
                   <th className="py-3.5 px-4">Customer ID</th>

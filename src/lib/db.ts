@@ -915,6 +915,42 @@ export async function createPurchase(payload: {
   throw new Error('Purchase creation failed.');
 }
 
+/**
+ * Safely updates the business purchase_date of an existing purchase.
+ * Preserves the purchase ID, purchase code, and immutable created_at timestamp.
+ */
+export async function updatePurchaseDate(purchaseId: string, newPurchaseDate: string): Promise<Purchase> {
+  assertBackendAccess();
+  if (!purchaseId || !isValidUUID(purchaseId)) {
+    throw new Error('Valid Purchase ID is required.');
+  }
+  if (!newPurchaseDate || !/^\d{4}-\d{2}-\d{2}$/.test(newPurchaseDate)) {
+    throw new Error('Valid purchase date in YYYY-MM-DD format is required.');
+  }
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('purchases')
+    .update({
+      purchase_date: newPurchaseDate,
+      updated_at: now,
+    })
+    .eq('id', purchaseId)
+    .select('*, customer:customers(*), items:purchase_items(*, cylinder_type:cylinder_types(*))')
+    .single();
+
+  if (error) throw new Error('Failed to update purchase date in Supabase: ' + error.message);
+  if (!data) throw new Error('Purchase record not found.');
+
+  await logAudit('Purchase Date Updated', 'purchases', purchaseId, {
+    purchase_code: data.purchase_code,
+    old_purchase_date: (data as any).purchase_date,
+    new_purchase_date: newPurchaseDate,
+  });
+
+  return data as Purchase;
+}
+
 // -------------------------------------------------------------
 // DEPOSITS (TRACKED SEPARATELY FROM GAS REVENUE)
 // -------------------------------------------------------------

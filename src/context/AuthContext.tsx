@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase, isSupabaseConfigured, getAuthRedirectUrl } from '../lib/supabase';
 import { AGENCY_BRANDING, formatUsernameToEmail } from '../lib/constants';
+import { SessionTimeoutWarning } from '../components/auth/SessionTimeoutWarning';
 
 interface UserSession {
   id: string;
@@ -19,7 +20,15 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (emailInput: string) => Promise<{ error?: string; success?: string }>;
   updatePassword: (newPassword: string) => Promise<{ error?: string; success?: string }>;
+  resetInactivityTimer: () => void;
 }
+
+// 30 Minutes Default Inactivity Timeout (1800000 ms)
+const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000;
+// Warning shows 2 minutes before logout (120000 ms)
+const WARNING_LEAD_MS = 2 * 60 * 1000;
+const STORAGE_ACTIVITY_KEY = 'srissgas_last_activity';
+const STORAGE_LOGOUT_KEY = 'srissgas_session_logout';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -27,6 +36,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+
+  // Inactivity State
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [remainingSeconds, setRemainingSeconds] = useState(120);
+
+  const lastActivityRef = useRef<number>(Date.now());
+  const throttleRef = useRef<number>(0);
 
   const isSupabaseActive = isSupabaseConfigured();
 
@@ -45,10 +61,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { fullName: 'SRI SS GAS Admin', role: 'Administrator' };
   };
 
+  const logout = useCallback(async () => {
+    try {
+      if (isSupabaseActive) {
+        await supabase.auth.signOut();
+      }
+    } catch (e) {
+      console.warn('Supabase signOut warning:', e);
+    }
+    setUser(null);
+    setIsPasswordRecovery(false);
+    setShowWarningModal(false);
+    localStorage.removeItem(STORAGE_ACTIVITY_KEY);
+    localStorage.setItem(STORAGE_LOGOUT_KEY, Date.now().toString());
+  }, [isSupabaseActive]);
+
+  const resetInactivityTimer = useCallback(() => {
+    const now = Date.now();
+    lastActivityRef.current = now;
+    setShowWarningModal(false);
+    try {
+      localStorage.setItem(STORAGE_ACTIVITY_KEY, now.toString());
+    } catch (e) {
+      // Non-blocking
+    }
+  }, []);
+
+  // Initial session check & auth listener
   useEffect(() => {
     const checkSession = async () => {
       if (isSupabaseActive) {
-        // Check if current URL contains recovery hash or query
         if (
           window.location.hash.includes('type=recovery') ||
           window.location.search.includes('type=recovery') ||
@@ -68,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fullName,
             role,
           });
+          resetInactivityTimer();
         } else {
           setUser(null);
         }
@@ -95,13 +138,104 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fullName,
             role,
           });
+          resetInactivityTimer();
         } else {
           setUser(null);
         }
       });
       return () => listener.subscription.unsubscribe();
     }
-  }, [isSupabaseActive]);
+  }, [isSupabaseActive, resetInactivityTimer]);
+
+  // Inactivity tracking & multi-tab synchronization
+  useEffect(() => {
+    if (!user) {
+      setShowWarningModal(false);
+      return;
+    }
+
+    // Record initial activity timestamp
+    const initialActivity = Date.now();
+    lastActivityRef.current = initialActivity;
+    try {
+      localStorage.setItem(STORAGE_ACTIVITY_KEY, initialActivity.toString());
+    } catch (e) {}
+
+    // Throttled activity handler for meaningful user interactions
+    const handleUserActivity = () => {
+      const now = Date.now();
+      // Throttle activity updates to once every 3 seconds to avoid performance overhead
+      if (now - throttleRef.current > 3000) {
+        throttleRef.current = now;
+        lastActivityRef.current = now;
+        try {
+          localStorage.setItem(STORAGE_ACTIVITY_KEY, now.toString());
+        } catch (e) {}
+        if (showWarningModal) {
+          setShowWarningModal(false);
+        }
+      }
+    };
+
+    // Cross-tab synchronization via storage event
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_ACTIVITY_KEY && e.newValue) {
+        const remoteTime = parseInt(e.newValue, 10);
+        if (!isNaN(remoteTime) && remoteTime > lastActivityRef.current) {
+          lastActivityRef.current = remoteTime;
+          setShowWarningModal(false);
+        }
+      } else if (e.key === STORAGE_LOGOUT_KEY) {
+        // Another tab initiated logout
+        setUser(null);
+        setShowWarningModal(false);
+      }
+    };
+
+    // Attach interaction listeners across desktop, tablet, and mobile
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    events.forEach((ev) => window.addEventListener(ev, handleUserActivity, { passive: true }));
+    window.addEventListener('storage', handleStorageChange);
+
+    // Inactivity ticker checking every 1 second
+    const interval = setInterval(() => {
+      const now = Date.now();
+      // Check if another tab recorded more recent activity
+      try {
+        const storedStr = localStorage.getItem(STORAGE_ACTIVITY_KEY);
+        if (storedStr) {
+          const storedTime = parseInt(storedStr, 10);
+          if (!isNaN(storedTime) && storedTime > lastActivityRef.current) {
+            lastActivityRef.current = storedTime;
+          }
+        }
+      } catch (e) {}
+
+      const elapsed = now - lastActivityRef.current;
+      const timeoutThreshold = DEFAULT_TIMEOUT_MS;
+      const warningThreshold = DEFAULT_TIMEOUT_MS - WARNING_LEAD_MS;
+
+      if (elapsed >= timeoutThreshold) {
+        // Timeout reached -> Auto logout
+        console.warn('Inactivity timeout reached (30 mins). Signing out user...');
+        clearInterval(interval);
+        logout();
+      } else if (elapsed >= warningThreshold) {
+        // Warning threshold reached -> Show warning countdown modal
+        const remaining = Math.max(0, Math.ceil((timeoutThreshold - elapsed) / 1000));
+        setRemainingSeconds(remaining);
+        setShowWarningModal(true);
+      } else {
+        setShowWarningModal(false);
+      }
+    }, 1000);
+
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, handleUserActivity));
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [user, logout, showWarningModal]);
 
   const login = async (emailInput: string, password?: string): Promise<{ error?: string }> => {
     setLoading(true);
@@ -119,18 +253,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         return { error: error.message };
       }
+      resetInactivityTimer();
       return {};
     } finally {
       setLoading(false);
     }
-  };
-
-  const logout = async () => {
-    if (isSupabaseActive) {
-      await supabase.auth.signOut();
-    }
-    setUser(null);
-    setIsPasswordRecovery(false);
   };
 
   const resetPassword = async (emailInput: string): Promise<{ error?: string; success?: string }> => {
@@ -162,8 +289,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     if (error) return { error: error.message };
     setIsPasswordRecovery(false);
-    await supabase.auth.signOut();
-    setUser(null);
+    await logout();
     return { success: 'Password updated successfully. You can now login with your new credentials.' };
   };
 
@@ -178,9 +304,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         resetPassword,
         updatePassword,
+        resetInactivityTimer,
       }}
     >
       {children}
+
+      {/* Global Inactivity Warning Modal */}
+      <SessionTimeoutWarning
+        isOpen={showWarningModal && !!user}
+        remainingSeconds={remainingSeconds}
+        onContinue={resetInactivityTimer}
+        onLogout={logout}
+      />
     </AuthContext.Provider>
   );
 };

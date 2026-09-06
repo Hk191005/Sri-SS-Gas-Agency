@@ -17,6 +17,7 @@ const Purchases = lazy(() => import('./pages/Purchases').then(m => ({ default: m
 const SupplierPurchases = lazy(() => import('./pages/SupplierPurchases').then(m => ({ default: m.SupplierPurchases })));
 const Deliveries = lazy(() => import('./pages/Deliveries').then(m => ({ default: m.Deliveries })));
 const Cylinders = lazy(() => import('./pages/Cylinders').then(m => ({ default: m.Cylinders })));
+const Billing = lazy(() => import('./pages/Billing').then(m => ({ default: m.Billing })));
 const Payments = lazy(() => import('./pages/Payments').then(m => ({ default: m.Payments })));
 const Messages = lazy(() => import('./pages/Messages').then(m => ({ default: m.Messages })));
 const Reports = lazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })));
@@ -56,6 +57,7 @@ export const App: React.FC = () => {
                   <Route path="/customers/:id" element={<CustomerProfile />} />
                   <Route path="/purchases" element={<Purchases />} />
                   <Route path="/supplier-purchases" element={<SupplierPurchases />} />
+                  <Route path="/billing" element={<Billing />} />
                   <Route path="/deliveries" element={<Deliveries />} />
                   <Route path="/cylinders" element={<Cylinders />} />
                   <Route path="/payments" element={<Payments />} />

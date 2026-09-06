@@ -1,8 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Direct static Vite environment variable access for client bundling
-const supabaseUrl: string = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey: string = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Direct static Vite environment variable access with safe fallback
+const safeEnv = (key: string): string => {
+  if (typeof import.meta !== 'undefined' && import.meta.env && typeof import.meta.env[key] === 'string') {
+    return import.meta.env[key];
+  }
+  const globalProc = (globalThis as Record<string, any>)?.process?.env;
+  if (globalProc && typeof globalProc[key] === 'string') {
+    return globalProc[key];
+  }
+  return '';
+};
+
+const supabaseUrl: string = safeEnv('VITE_SUPABASE_URL');
+const supabaseAnonKey: string = safeEnv('VITE_SUPABASE_ANON_KEY');
 
 export class SupabaseNotConfiguredError extends Error {
   constructor(message?: string) {

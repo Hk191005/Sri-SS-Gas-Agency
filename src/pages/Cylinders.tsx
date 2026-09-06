@@ -124,7 +124,7 @@ export const Cylinders: React.FC = () => {
       <div className="saas-card bg-white dark:bg-[#171717] text-[#171717] dark:text-[#F5F5F5] p-6 rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] flex items-start gap-4 shadow-xs">
         <ShieldCheck className="w-8 h-8 text-[#16A34A] shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <h3 className="text-sm font-black text-[#171717] dark:text-white">SUPERGAS Safety & Inventory Compliance Standards</h3>
+          <h3 className="text-sm font-black text-[#171717] dark:text-white">Sri SS Gas Agency — Safety & Inventory Quality Standards</h3>
           <p className="text-xs font-semibold text-[#525252] dark:text-[#D4D4D4] leading-relaxed">
             All 4kg, 12kg, 17kg, and 21kg cylinders in stock undergo strict pressure testing and weight calibration before field dispatch across Tiruppur District.
           </p>

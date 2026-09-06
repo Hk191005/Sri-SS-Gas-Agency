@@ -14,6 +14,7 @@ import { useToast } from '../context/ToastContext';
 import { CustomerDocuments } from '../components/customers/CustomerDocuments';
 import { CustomerFormModal } from '../components/customers/CustomerFormModal';
 import { DeleteCustomerModal } from '../components/customers/DeleteCustomerModal';
+import { EditPurchaseDateModal } from '../components/purchases/EditPurchaseDateModal';
 import {
   ArrowLeft,
   Phone,
@@ -32,6 +33,8 @@ import {
   MessageSquare,
   Send,
   AlertTriangle,
+  Calendar,
+  Edit2,
 } from 'lucide-react';
 
 export const CustomerProfile: React.FC = () => {
@@ -57,6 +60,7 @@ export const CustomerProfile: React.FC = () => {
   // Modals
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
 
   const loadCustomerData = async () => {
     if (!id) return;
@@ -450,28 +454,49 @@ export const CustomerProfile: React.FC = () => {
 
       {activeTab === 'purchases' && (
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs font-semibold">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[650px] text-left border-collapse text-xs font-semibold">
               <thead>
                 <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E5E5] dark:border-[#2A2A2A] font-extrabold text-[#525252] uppercase text-[10px] tracking-wider">
                   <th className="py-3.5 px-4">Purchase Code</th>
                   <th className="py-3.5 px-4">Date</th>
                   <th className="py-3.5 px-4">Total Amount</th>
                   <th className="py-3.5 px-4">Notes</th>
+                  <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F1F1F1] dark:divide-[#262626] text-[#171717] dark:text-[#F5F5F5]">
                 {purchases.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-[#737373]">No purchases recorded yet.</td>
+                    <td colSpan={5} className="py-8 text-center text-[#737373]">No purchases recorded yet.</td>
                   </tr>
                 ) : (
                   purchases.map((p) => (
                     <tr key={p.id} className="hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F]">
                       <td className="py-3.5 px-4 font-mono font-black text-[#E31B23]">{p.purchase_code}</td>
-                      <td className="py-3.5 px-4 font-bold">{p.purchase_date}</td>
+                      <td className="py-3.5 px-4 font-bold">
+                        <div className="flex items-center gap-1.5">
+                          <span>{p.purchase_date}</span>
+                          <button
+                            onClick={() => setEditingPurchase(p)}
+                            title="Edit purchase date"
+                            className="p-1 text-[#737373] hover:text-[#E31B23] hover:bg-[#FFF1F2] dark:hover:bg-red-950/30 rounded-md transition-colors"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </td>
                       <td className="py-3.5 px-4 font-black text-[#171717] dark:text-white">₹{p.total_gas_amount.toLocaleString('en-IN')}</td>
                       <td className="py-3.5 px-4 text-[#737373]">{p.notes || '-'}</td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={() => setEditingPurchase(p)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-[#222] border border-[#E5E5E5] dark:border-[#333] hover:border-[#E31B23] text-[#171717] dark:text-white hover:text-[#E31B23] text-[11px] font-bold rounded-lg transition-colors shadow-2xs"
+                        >
+                          <Calendar className="w-3 h-3 text-[#E31B23]" />
+                          <span>Edit Date</span>
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -483,12 +508,12 @@ export const CustomerProfile: React.FC = () => {
 
       {activeTab === 'payments' && (
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs font-semibold">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[650px] text-left border-collapse text-xs font-semibold">
               <thead>
                 <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E5E5] dark:border-[#2A2A2A] font-extrabold text-[#525252] uppercase text-[10px] tracking-wider">
                   <th className="py-3.5 px-4">Receipt ID</th>
-                  <th className="py-3.5 px-4">Date</th>
+                  <th className="py-3.5 px-4">Payment Date</th>
                   <th className="py-3.5 px-4">Payment Method</th>
                   <th className="py-3.5 px-4">Amount Paid</th>
                   <th className="py-3.5 px-4">Notes</th>
@@ -534,6 +559,14 @@ export const CustomerProfile: React.FC = () => {
         onDeleted={() => {
           navigate('/customers');
         }}
+      />
+
+      {/* Edit Purchase Date Modal */}
+      <EditPurchaseDateModal
+        isOpen={Boolean(editingPurchase)}
+        purchase={editingPurchase}
+        onClose={() => setEditingPurchase(null)}
+        onSuccess={loadCustomerData}
       />
     </div>
   );

@@ -87,6 +87,7 @@ export const SupplierPurchases: React.FC = () => {
   // Bill Entry Form State
   const [uploadStep, setUploadStep] = useState<'select' | 'analyzing' | 'review'>('select');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [extractedData, setExtractedData] = useState<ExtractedBillData | null>(null);
   const [supplierName, setSupplierName] = useState('SUPERGAS');
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [isAddingNewSupplier, setIsAddingNewSupplier] = useState(false);
@@ -431,9 +432,11 @@ export const SupplierPurchases: React.FC = () => {
     setSelectedFile(file);
     setUploadStep('analyzing');
     setExtractError('');
+    setDuplicateWarning('');
 
     try {
       const extracted: ExtractedBillData = await analyzeSupplierBill(file);
+      setExtractedData(extracted);
 
       // Build editable items array using loaded cylinder types with Buying Price
       const mappedItems: PurchaseLineItem[] = extracted.items.map((it) => {
@@ -452,17 +455,40 @@ export const SupplierPurchases: React.FC = () => {
         mappedItems.push(createDefaultLineItem(cylinderTypes));
       }
 
-      setSupplierName(extracted.supplier_name || 'SUPERGAS');
-      setInvoiceNumber(extracted.invoice_number || '');
-      setInvoiceDate(extracted.invoice_date || new Date().toISOString().split('T')[0]);
-      setTaxAmount(extracted.tax_amount || 0);
+      const extractedSuppName = extracted.supplier_name.value.trim();
+      const extractedInvNum = extracted.invoice_number.value.trim();
+      const extractedInvDate = extracted.invoice_date.value || new Date().toISOString().split('T')[0];
+      const extractedTax = extracted.tax_amount.value || 0;
+
+      if (extractedSuppName) {
+        setSupplierName(extractedSuppName);
+        // Check if supplier exists in existing companies
+        const matchedComp = supplierCompanies.find(
+          (c) => c.company_name.toLowerCase() === extractedSuppName.toLowerCase()
+        );
+        if (matchedComp) {
+          setSelectedCompanyId(matchedComp.id);
+        } else {
+          setSelectedCompanyId('');
+          setIsAddingNewSupplier(true);
+        }
+      }
+
+      if (extracted.supplier_gstin?.value) {
+        setNewSupplierGstin(extracted.supplier_gstin.value);
+      }
+
+      setInvoiceNumber(extractedInvNum);
+      setInvoiceDate(extractedInvDate);
+      setTaxAmount(extractedTax);
       setItems(mappedItems);
 
-      // Check duplicate invoice
-      if (extracted.invoice_number) {
-        const isDuplicate = await checkDuplicateInvoice(extracted.supplier_name, extracted.invoice_number);
+      // Check duplicate invoice detection
+      if (extractedInvNum && (extractedSuppName || supplierName)) {
+        const checkName = extractedSuppName || supplierName;
+        const isDuplicate = await checkDuplicateInvoice(checkName, extractedInvNum);
         if (isDuplicate) {
-          setDuplicateWarning(`Invoice #${extracted.invoice_number} from ${extracted.supplier_name} is already recorded!`);
+          setDuplicateWarning(`Invoice #${extractedInvNum} from ${checkName} is already recorded in the system!`);
         }
       }
 
@@ -810,8 +836,8 @@ export const SupplierPurchases: React.FC = () => {
         </div>
       ) : (
         <div className="saas-card bg-white dark:bg-[#171717] rounded-2xl border border-[#E5E7EB] dark:border-[#2A2A2A] shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs font-semibold">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[850px] text-left border-collapse text-xs font-semibold">
               <thead>
                 <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E7EB] dark:border-[#2A2A2A] font-bold text-[#525252] dark:text-[#A3A3A3] text-xs">
                   <th className="py-3.5 px-4 font-bold">Purchase Code</th>
@@ -1005,6 +1031,54 @@ export const SupplierPurchases: React.FC = () => {
             {/* Common Form: Review / Manual Entry Form */}
             {uploadStep === 'review' && (
               <form onSubmit={handleConfirmSupplierPurchase} className="space-y-4 text-xs font-semibold">
+                {/* Document Type Detection & Confidence Header Banner (For OCR Upload Mode) */}
+                {entryMode === 'upload' && extractedData && (
+                  <div className="p-4 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-2xl border border-[#E5E7EB] dark:border-[#2A2A2A] space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${
+                            extractedData.document_type === 'supplier_tax_invoice'
+                              ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-900'
+                              : extractedData.document_type === 'supplier_dc_memo'
+                              ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200 dark:border-purple-900'
+                              : 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-900'
+                          }`}
+                        >
+                          {extractedData.document_type_label}
+                        </span>
+                        <span className="text-[11px] font-bold text-[#737373]">
+                          {Math.round(extractedData.document_type_confidence * 100)}% detection confidence
+                        </span>
+                      </div>
+
+                      {/* Confidence Score Badge */}
+                      <span
+                        className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md ${
+                          extractedData.overall_level === 'HIGH'
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200'
+                            : extractedData.overall_level === 'MEDIUM'
+                            ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200'
+                            : 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border border-red-200'
+                        }`}
+                      >
+                        Confidence: {extractedData.overall_level} ({Math.round(extractedData.overall_confidence * 100)}%)
+                      </span>
+                    </div>
+
+                    {extractedData.document_type === 'unknown' ? (
+                      <p className="text-xs text-amber-700 dark:text-amber-400 font-bold flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        <span>Document type could not be confidently identified. Please review and fill required fields manually.</span>
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-[#737373] dark:text-[#A3A3A3]">
+                        {extractedData.message || 'Please review and adjust extracted fields below before confirming.'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {duplicateWarning && (
                   <div className="p-3 bg-[#FFF1F2] dark:bg-rose-950/30 border border-[#FECDD3] dark:border-rose-900/50 text-[#DC2626] dark:text-rose-400 font-bold rounded-xl flex items-center gap-2 text-xs">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
