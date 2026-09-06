@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import type { Customer, CylinderType } from '../../types/database.types';
+import type { Customer, CylinderType, CustomerDocument, DocumentType } from '../../types/database.types';
 import {
   createCustomerWithInitialGas,
   updateCustomer,
   getCylinderTypes,
   uploadCustomerDocument,
+  getCustomerDocuments,
+  deleteCustomerDocument,
 } from '../../lib/db';
 import { useToast } from '../../context/ToastContext';
 import { GPSLocationPicker } from './GPSLocationPicker';
@@ -18,6 +20,11 @@ import {
   Save,
   AlertCircle,
   ShoppingBag,
+  Lock,
+  ExternalLink,
+  Trash2,
+  Upload,
+  Loader2,
 } from 'lucide-react';
 
 interface CustomerFormModalProps {
@@ -68,9 +75,12 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'bank_transfer' | 'other'>('cash');
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Document Upload
+  // Document Upload & Existing Documents State
   const [docFile, setDocFile] = useState<File | null>(null);
-  const [docType, setDocType] = useState<'aadhaar' | 'other'>('aadhaar');
+  const [docType, setDocType] = useState<DocumentType>('aadhaar');
+  const [existingDocuments, setExistingDocuments] = useState<CustomerDocument[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
 
   // Operational State
   const [cylinderTypes, setCylinderTypes] = useState<CylinderType[]>([]);
@@ -80,11 +90,42 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const [altPhoneError, setAltPhoneError] = useState('');
   const [pincodeError, setPincodeError] = useState('');
 
+  const loadExistingDocuments = async (customerId: string) => {
+    setLoadingDocs(true);
+    try {
+      const docs = await getCustomerDocuments(customerId);
+      setExistingDocuments(docs);
+    } catch (err: any) {
+      console.error('Failed to load existing customer documents:', err);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  const handleDeleteExistingDoc = async (doc: CustomerDocument) => {
+    const confirmed = window.confirm(`Delete document "${doc.original_filename}"? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    setDeletingDocId(doc.id);
+    try {
+      await deleteCustomerDocument(doc.id, doc.storage_path);
+      showSuccess(`Document "${doc.original_filename}" removed successfully.`);
+      if (customerToEdit) {
+        await loadExistingDocuments(customerToEdit.id);
+      }
+    } catch (err: any) {
+      showError(err.message || 'Failed to delete document');
+    } finally {
+      setDeletingDocId(null);
+    }
+  };
+
   const loadInitialData = async () => {
     setErrorMsg('');
     setPhoneError('');
     setAltPhoneError('');
     setPincodeError('');
+    setDocFile(null);
 
     try {
       const types = await getCylinderTypes();
@@ -111,7 +152,11 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         setEmailEnabled(customerToEdit.email_enabled !== false);
         setMarketingEnabled(customerToEdit.marketing_enabled !== false);
         setIncludeInitialGas(false);
+
+        // Fetch existing documents from Supabase private storage
+        loadExistingDocuments(customerToEdit.id);
       } else {
+        setExistingDocuments([]);
         // Reset defaults
         setCustomerType('individual');
         setName('');
@@ -727,8 +772,8 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           )}
 
           {/* Section 5: Documents & Notes */}
-          <div className="space-y-4">
-            <h3 className="text-xs font-black text-[#525252] uppercase tracking-wider flex items-center gap-1.5 border-b border-[#F1F1F1] dark:border-[#262626] pb-1">
+          <div className="space-y-4 pt-2 border-t border-[#F1F1F1] dark:border-[#262626]">
+            <h3 className="text-xs font-black text-[#525252] dark:text-[#A3A3A3] uppercase tracking-wider flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-[#E31B23]" /> Documents & Notes
             </h3>
 
@@ -738,24 +783,128 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Special delivery instructions..."
-                className="w-full px-3.5 py-2 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs text-[#171717] dark:text-white focus:border-[#E31B23] focus:outline-none"
+                placeholder="Special delivery instructions or customer notes..."
+                className="w-full px-3.5 py-2 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs text-[#171717] dark:text-white focus:border-[#E31B23] focus:outline-none font-semibold"
               />
             </div>
 
+            {/* Existing Documents Section (Shown when editing customer) */}
+            {isEditing && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-[#171717] dark:text-white flex items-center gap-1.5">
+                    <span>Existing Documents</span>
+                    <span className="text-[10px] bg-[#FFF1F2] dark:bg-red-950/40 text-[#E31B23] px-2 py-0.5 rounded-full font-extrabold border border-[#FFD6D8] dark:border-red-900/40">
+                      {existingDocuments.length}
+                    </span>
+                  </h4>
+                  <span className="text-[10px] font-bold text-[#16A34A] flex items-center gap-1 bg-[#F0FDF4] dark:bg-emerald-950/30 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                    <Lock className="w-3 h-3" /> Private Storage Vault
+                  </span>
+                </div>
+
+                {loadingDocs ? (
+                  <div className="p-4 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] text-center text-xs text-[#737373] flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#E31B23]" />
+                    <span>Loading customer documents...</span>
+                  </div>
+                ) : existingDocuments.length === 0 ? (
+                  <div className="p-4 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] text-center text-xs text-[#737373]">
+                    <p className="font-bold text-[#525252] dark:text-[#D4D4D4]">No documents uploaded yet.</p>
+                    <p className="text-[11px] text-[#737373] mt-0.5">Attach Aadhaar or verification files below.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {existingDocuments.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="p-3 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] flex items-center justify-between gap-3 hover:border-[#D4D4D4] transition-all"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${
+                              doc.document_type === 'aadhaar'
+                                ? 'bg-[#F0FDF4] text-[#16A34A] border-emerald-200/60'
+                                : 'bg-white dark:bg-[#262626] text-[#E31B23] border-[#E5E5E5] dark:border-[#333]'
+                            }`}
+                          >
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black text-[#171717] dark:text-white truncate">
+                                {doc.original_filename}
+                              </span>
+                              <span
+                                className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase border shrink-0 ${
+                                  doc.document_type === 'aadhaar'
+                                    ? 'bg-[#F0FDF4] text-[#16A34A] border-emerald-200/60'
+                                    : 'bg-[#FAFAFA] text-[#737373] border-[#E5E5E5]'
+                                }`}
+                              >
+                                {doc.document_type === 'aadhaar' ? 'Aadhaar Card' : doc.document_type}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-[#737373] mt-0.5">
+                              Uploaded {new Date(doc.uploaded_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              {doc.file_size ? ` • ${(doc.file_size / 1024).toFixed(0)} KB` : ''}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {doc.signed_url ? (
+                            <a
+                              href={doc.signed_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#262626] border border-[#E5E5E5] dark:border-[#333] hover:border-[#E31B23] text-[#171717] dark:text-white hover:text-[#E31B23] text-[11px] font-bold rounded-lg transition-colors shadow-2xs"
+                              title="View document in new tab"
+                            >
+                              <ExternalLink className="w-3 h-3 text-[#E31B23]" />
+                              <span>View</span>
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-[#737373] font-bold">Encrypted</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteExistingDoc(doc)}
+                            disabled={deletingDocId === doc.id}
+                            className="p-1.5 text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-red-950/40 rounded-lg transition-colors disabled:opacity-50"
+                            title="Delete this document"
+                          >
+                            {deletingDocId === doc.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Upload New Document Box */}
             <div className="p-4 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-3">
               <label className="block text-xs font-black text-[#171717] dark:text-white flex items-center justify-between">
-                <span>Upload Document</span>
-                <span className="text-[11px] font-semibold text-[#737373]">Private Storage (JPG, PNG, PDF)</span>
+                <span className="flex items-center gap-1.5">
+                  <Upload className="w-3.5 h-3.5 text-[#E31B23]" />
+                  {isEditing ? 'Upload New Document' : 'Upload Document'}
+                </span>
+                <span className="text-[10px] font-semibold text-[#737373]">Private Storage (JPG, PNG, PDF)</span>
               </label>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <select
                   value={docType}
                   onChange={(e: any) => setDocType(e.target.value)}
                   className="px-3 py-2 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs font-bold text-[#171717] dark:text-white"
                 >
                   <option value="aadhaar">Aadhaar Card</option>
-                  <option value="other">Other Document</option>
+                  <option value="other">Other Document / License</option>
                 </select>
                 <input
                   type="file"
@@ -764,6 +913,11 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                   className="block w-full text-xs text-[#525252] dark:text-[#D4D4D4] file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#FFF1F2] file:text-[#C9151C] hover:file:bg-[#FFD6D8]"
                 />
               </div>
+              {isEditing && (
+                <p className="text-[11px] text-[#737373]">
+                  Attach an additional document. Existing documents will remain intact.
+                </p>
+              )}
             </div>
           </div>
 
