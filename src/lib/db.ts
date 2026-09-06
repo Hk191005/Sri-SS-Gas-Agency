@@ -926,7 +926,21 @@ export async function updatePurchaseDate(purchaseId: string, newPurchaseDate: st
     throw new Error('Valid purchase date in YYYY-MM-DD format is required.');
   }
 
+  // 1. Fetch current purchase to record previous business date
+  const { data: existing, error: fetchErr } = await supabase
+    .from('purchases')
+    .select('purchase_code, purchase_date, created_at')
+    .eq('id', purchaseId)
+    .single();
+
+  if (fetchErr || !existing) {
+    throw new Error('Purchase record not found.');
+  }
+
+  const oldPurchaseDate = existing.purchase_date;
   const now = new Date().toISOString();
+
+  // 2. Update only purchase_date and updated_at (preserving created_at, id, purchase_code, customer_id, etc.)
   const { data, error } = await supabase
     .from('purchases')
     .update({
@@ -940,10 +954,12 @@ export async function updatePurchaseDate(purchaseId: string, newPurchaseDate: st
   if (error) throw new Error('Failed to update purchase date in Supabase: ' + error.message);
   if (!data) throw new Error('Purchase record not found.');
 
+  // 3. Log audit entry with old and new date
   await logAudit('Purchase Date Updated', 'purchases', purchaseId, {
     purchase_code: data.purchase_code,
-    old_purchase_date: (data as any).purchase_date,
+    old_purchase_date: oldPurchaseDate,
     new_purchase_date: newPurchaseDate,
+    created_at: existing.created_at,
   });
 
   return data as Purchase;
