@@ -3,7 +3,9 @@ import type { Purchase } from '../types/database.types';
 import { getPurchases } from '../lib/db';
 import { AddPurchaseModal } from '../components/purchases/AddPurchaseModal';
 import { EditPurchaseDateModal } from '../components/purchases/EditPurchaseDateModal';
-import { ShoppingBag, Search, Plus, AlertTriangle, Calendar, Edit2 } from 'lucide-react';
+import { DeletePurchaseModal } from '../components/purchases/DeletePurchaseModal';
+import { useToast } from '../context/ToastContext';
+import { ShoppingBag, Search, Plus, AlertTriangle, Calendar, Edit2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Purchases: React.FC = () => {
@@ -13,6 +15,9 @@ export const Purchases: React.FC = () => {
   const [search, setSearch] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
+  const [deletingPurchase, setDeletingPurchase] = useState<Purchase | null>(null);
+
+  const { showSuccess } = useToast();
 
   const loadData = async () => {
     setLoading(true);
@@ -147,13 +152,24 @@ export const Purchases: React.FC = () => {
                     </td>
                     <td className="py-3.5 px-4 text-[#737373]">{p.notes || '-'}</td>
                     <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => setEditingPurchase(p)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-[#222] border border-[#E5E5E5] dark:border-[#333] hover:border-[#E31B23] text-[#171717] dark:text-white hover:text-[#E31B23] text-[11px] font-bold rounded-lg transition-colors shadow-2xs"
-                      >
-                        <Calendar className="w-3 h-3 text-[#E31B23]" />
-                        <span>Edit Date</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setEditingPurchase(p)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-[#222] border border-[#E5E5E5] dark:border-[#333] hover:border-[#E31B23] text-[#171717] dark:text-white hover:text-[#E31B23] text-[11px] font-bold rounded-lg transition-colors shadow-2xs"
+                          title="Edit purchase transaction date"
+                        >
+                          <Calendar className="w-3 h-3 text-[#E31B23]" />
+                          <span>Edit Date</span>
+                        </button>
+                        <button
+                          onClick={() => setDeletingPurchase(p)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-[#222] border border-red-200 dark:border-red-900/40 hover:bg-[#FFF1F2] dark:hover:bg-red-950/30 text-[#DC2626] text-[11px] font-bold rounded-lg transition-colors shadow-2xs"
+                          title="Delete purchase record"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -176,6 +192,17 @@ export const Purchases: React.FC = () => {
         purchase={editingPurchase}
         onClose={() => setEditingPurchase(null)}
         onSuccess={loadData}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeletePurchaseModal
+        isOpen={Boolean(deletingPurchase)}
+        purchase={deletingPurchase}
+        onClose={() => setDeletingPurchase(null)}
+        onSuccess={(msg) => {
+          showSuccess(msg || 'Purchase deleted successfully.');
+          loadData();
+        }}
       />
     </div>
   );

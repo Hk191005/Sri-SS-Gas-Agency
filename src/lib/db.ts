@@ -951,6 +951,70 @@ export async function updatePurchaseDate(purchaseId: string, newPurchaseDate: st
   return data as Purchase;
 }
 
+/**
+ * Safely deletes a customer purchase record and its associated items.
+ * Cleans up linked delivery and transaction records created for this purchase.
+ */
+export async function deletePurchase(purchaseId: string): Promise<{ success: boolean; message: string }> {
+  assertBackendAccess();
+  if (!purchaseId || !isValidUUID(purchaseId)) {
+    throw new Error('Valid Purchase ID is required.');
+  }
+
+  // 1. Fetch existing purchase record for verification and audit logging
+  const { data: purchase, error: fetchErr } = await supabase
+    .from('purchases')
+    .select('*, customer:customers(name)')
+    .eq('id', purchaseId)
+    .single();
+
+  if (fetchErr || !purchase) {
+    throw new Error('Purchase record not found or already deleted.');
+  }
+
+  const purchaseCode = purchase.purchase_code || 'Unknown';
+  const customerName = (purchase.customer as any)?.name || 'Unknown Customer';
+
+  // 2. Delete purchase_items first to ensure child records are removed
+  const { error: itemsErr } = await supabase
+    .from('purchase_items')
+    .delete()
+    .eq('purchase_id', purchaseId);
+
+  if (itemsErr) {
+    console.warn('Warning deleting purchase items:', itemsErr.message);
+  }
+
+  // 3. Clean up linked deposits, payments, and deliveries created specifically for this purchase
+  await supabase.from('deposits').delete().eq('purchase_id', purchaseId);
+  await supabase.from('payments').delete().eq('purchase_id', purchaseId);
+  await supabase.from('deliveries').delete().eq('purchase_id', purchaseId);
+
+  // 4. Delete the purchase record
+  const { error: delErr } = await supabase
+    .from('purchases')
+    .delete()
+    .eq('id', purchaseId);
+
+  if (delErr) {
+    throw new Error('Failed to delete purchase from Supabase: ' + delErr.message);
+  }
+
+  // 5. Record audit log
+  await logAudit('Purchase Deleted', 'purchases', purchaseId, {
+    purchase_code: purchaseCode,
+    customer_id: purchase.customer_id,
+    customer_name: customerName,
+    total_gas_amount: purchase.total_gas_amount,
+    purchase_date: purchase.purchase_date,
+  });
+
+  return {
+    success: true,
+    message: `Purchase ${purchaseCode} deleted successfully.`,
+  };
+}
+
 // -------------------------------------------------------------
 // DEPOSITS (TRACKED SEPARATELY FROM GAS REVENUE)
 // -------------------------------------------------------------
