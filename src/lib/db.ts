@@ -491,8 +491,6 @@ export async function getCustomers(params?: {
   const { search = '', type = 'all', activeOnly = false, page = 1, limit = 50 } = params || {};
 
   let query = supabase.from('customers').select('*', { count: 'exact' });
-  // Exclude soft-deleted records by default
-  query = query.is('deleted_at', null);
 
   if (activeOnly) query = query.eq('is_active', true);
   if (type !== 'all') query = query.eq('customer_type', type);

@@ -103,24 +103,27 @@ export const Customers: React.FC = () => {
     setLoadError('');
     try {
       let type: CustomerType | 'all' = 'all';
-      let activeOnly = true;
 
       if (activeTab === 'individual') type = 'individual';
       else if (activeTab === 'company') type = 'company';
-      else if (activeTab === 'inactive') activeOnly = false;
 
+      // activeOnly: false ensures inactive customer accounts are not excluded from All Customers
       const res = await getCustomers({
         search,
         type,
-        activeOnly,
+        activeOnly: false,
         page,
-        limit,
+        limit: 100,
       });
 
       let filtered = [...res.customers];
 
       if (activeTab === 'inactive') {
         filtered = filtered.filter((c) => !c.is_active);
+      } else if (activeTab === 'individual') {
+        filtered = filtered.filter((c) => c.customer_type === 'individual');
+      } else if (activeTab === 'company') {
+        filtered = filtered.filter((c) => c.customer_type === 'company');
       }
 
       if (sortField === 'name') {
@@ -134,7 +137,7 @@ export const Customers: React.FC = () => {
       }
 
       setCustomers(filtered);
-      setTotalCount(res.total);
+      setTotalCount(activeTab === 'all' && !search.trim() ? res.total : filtered.length);
     } catch (e: any) {
       console.error(e);
       setLoadError(e.message || 'Failed to load customers from database');
