@@ -21,6 +21,8 @@ import type {
   CustomerNote,
   ActivityTimelineItem,
   CylinderFinancialDefaults,
+  CustomerMergeStats,
+  CustomerMergeResult,
 } from '../types/database.types';
 
 // Default initial Agency Settings
@@ -492,11 +494,17 @@ export async function getCustomers(params?: {
 
   let query = supabase.from('customers').select('*', { count: 'exact' });
 
-  if (activeOnly) query = query.eq('is_active', true);
-  if (type !== 'all') query = query.eq('customer_type', type);
+  if (activeOnly) {
+    query = query.eq('is_active', true).is('deleted_at', null);
+  }
+  if (type !== 'all') {
+    query = query.eq('customer_type', type);
+  }
   if (search.trim()) {
     const term = `%${search.trim()}%`;
-    query = query.or(`customer_code.ilike.${term},name.ilike.${term},company_name.ilike.${term},phone.ilike.${term}`);
+    query = query.or(
+      `customer_code.ilike.${term},name.ilike.${term},company_name.ilike.${term},contact_person_name.ilike.${term},phone.ilike.${term},alternate_phone.ilike.${term},street.ilike.${term},area1.ilike.${term},city.ilike.${term},landmark.ilike.${term}`
+    );
   }
   const from = (page - 1) * limit;
   const to = from + limit - 1;
@@ -508,6 +516,76 @@ export async function getCustomers(params?: {
   if (error) throw new Error('Supabase query customers failed: ' + error.message);
 
   return { customers: [], total: 0 };
+}
+
+/**
+ * Retrieves side-by-side comparison metrics for a customer prior to merging.
+ */
+export async function getCustomerStatsForMerge(customerId: string): Promise<CustomerMergeStats> {
+  assertBackendAccess();
+  const customer = await getCustomerById(customerId);
+  if (!customer) throw new Error('Customer record not found.');
+
+  const [pRes, pyRes, dRes, delRes, docRes, cylRes, nRes, fRes, fin] = await Promise.all([
+    supabase.from('purchases').select('id', { count: 'exact', head: true }).eq('customer_id', customerId),
+    supabase.from('payments').select('id', { count: 'exact', head: true }).eq('customer_id', customerId),
+    supabase.from('deposits').select('id', { count: 'exact', head: true }).eq('customer_id', customerId),
+    supabase.from('deliveries').select('id', { count: 'exact', head: true }).eq('customer_id', customerId),
+    supabase.from('customer_documents').select('id', { count: 'exact', head: true }).eq('customer_id', customerId),
+    supabase.from('cylinders').select('id', { count: 'exact', head: true }).eq('current_customer_id', customerId),
+    supabase.from('customer_notes').select('id', { count: 'exact', head: true }).eq('customer_id', customerId),
+    supabase.from('customer_followups').select('id', { count: 'exact', head: true }).eq('customer_id', customerId),
+    getCustomerFinancials(customerId),
+  ]);
+
+  return {
+    customer,
+    purchasesCount: pRes.count || 0,
+    paymentsCount: pyRes.count || 0,
+    depositsCount: dRes.count || 0,
+    deliveriesCount: delRes.count || 0,
+    documentsCount: docRes.count || 0,
+    cylindersCount: cylRes.count || 0,
+    notesCount: nRes.count || 0,
+    followupsCount: fRes.count || 0,
+    totalGasPurchases: fin.totalGasPurchases,
+    totalPayments: fin.totalPayments,
+    outstanding: fin.outstanding,
+  };
+}
+
+/**
+ * Atomically merges a duplicate customer account into a primary customer account.
+ * Transfers all transactions, payments, deposits, deliveries, documents, cylinders, notes, followups.
+ * Safe and rollback-protected via PostgreSQL RPC function.
+ */
+export async function mergeCustomers(
+  primaryId: string,
+  duplicateId: string,
+  userId?: string
+): Promise<CustomerMergeResult> {
+  assertBackendAccess();
+  if (!primaryId || !isValidUUID(primaryId)) {
+    throw new Error('Valid Primary Customer ID is required.');
+  }
+  if (!duplicateId || !isValidUUID(duplicateId)) {
+    throw new Error('Valid Duplicate Customer ID is required.');
+  }
+  if (primaryId === duplicateId) {
+    throw new Error('Primary Customer and Duplicate Customer cannot be the same account.');
+  }
+
+  const { data, error } = await supabase.rpc('merge_customers', {
+    p_primary_id: primaryId,
+    p_duplicate_id: duplicateId,
+    p_user_id: userId || null,
+  });
+
+  if (error) {
+    throw new Error('Customer merge operation failed: ' + error.message);
+  }
+
+  return data as CustomerMergeResult;
 }
 
 /**
@@ -762,12 +840,41 @@ export async function getCustomerDocuments(customerId: string): Promise<Customer
 
 export async function uploadCustomerDocument(customerId: string, file: File, docType: DocumentType): Promise<CustomerDocument> {
   assertBackendAccess();
+  if (!customerId || !isValidUUID(customerId)) {
+    throw new Error('Valid customer ID is required.');
+  }
+  if (!file) {
+    throw new Error('File to upload is required.');
+  }
 
-  const fileExt = file.name.split('.').pop();
-  const filePath = `${customerId}/${Date.now()}_${Math.random().toString(36).substring(2, 6)}.${fileExt}`;
+  // Validate allowed file formats & extensions (PDF, JPG, JPEG, PNG, WEBP)
+  const allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
+  const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+
+  const allowedMimes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'application/pdf',
+  ];
+
+  if (!allowedExts.includes(fileExt) && !allowedMimes.includes(file.type)) {
+    throw new Error(`Unsupported file type (.${fileExt}). Please upload a valid document or image (PDF, JPG, PNG, WEBP).`);
+  }
+
+  // Max 25 MB limit
+  if (file.size > 25 * 1024 * 1024) {
+    throw new Error('File size exceeds the 25MB limit.');
+  }
+
+  const filePath = `${customerId}/${Date.now()}_${Math.random().toString(36).substring(2, 6)}.${fileExt || 'bin'}`;
   const now = new Date().toISOString();
 
-  const { error: uploadErr } = await supabase.storage.from('customer-documents').upload(filePath, file, { upsert: true });
+  const { error: uploadErr } = await supabase.storage.from('customer-documents').upload(filePath, file, {
+    upsert: true,
+    contentType: file.type || undefined,
+  });
   if (uploadErr) throw new Error('Supabase Storage upload failed: ' + uploadErr.message);
 
   const { data, error } = await supabase
@@ -777,7 +884,7 @@ export async function uploadCustomerDocument(customerId: string, file: File, doc
       document_type: docType,
       storage_path: filePath,
       original_filename: file.name,
-      mime_type: file.type,
+      mime_type: file.type || 'application/octet-stream',
       file_size: file.size,
       uploaded_at: now,
     })
@@ -785,7 +892,12 @@ export async function uploadCustomerDocument(customerId: string, file: File, doc
     .single();
 
   if (!error && data) {
-    await logAudit('Document Uploaded', 'customer_documents', data.id, { filename: file.name, docType });
+    await logAudit('Document Uploaded', 'customer_documents', data.id, {
+      filename: file.name,
+      docType,
+      fileSize: file.size,
+      customerId,
+    });
     return data as CustomerDocument;
   }
   if (error) throw new Error('Supabase customer_documents insert failed: ' + error.message);
@@ -795,14 +907,25 @@ export async function uploadCustomerDocument(customerId: string, file: File, doc
 
 export async function deleteCustomerDocument(docId: string, storagePath: string): Promise<void> {
   assertBackendAccess();
+  if (!docId) throw new Error('Valid document ID is required.');
 
-  const { error: removeStorageErr } = await supabase.storage.from('customer-documents').remove([storagePath]);
-  if (removeStorageErr) console.warn('Storage remove object warning:', removeStorageErr.message);
+  // Verify document existence before removal
+  const { data: doc } = await supabase.from('customer_documents').select('*').eq('id', docId).single();
+
+  if (storagePath) {
+    const { error: removeStorageErr } = await supabase.storage.from('customer-documents').remove([storagePath]);
+    if (removeStorageErr) console.warn('Storage remove object warning:', removeStorageErr.message);
+  }
 
   const { error: deleteTableErr } = await supabase.from('customer_documents').delete().eq('id', docId);
-  if (deleteTableErr) throw new Error('Failed to delete document metadata from table: ' + deleteTableErr.message);
+  if (deleteTableErr) throw new Error('Failed to delete document record from table: ' + deleteTableErr.message);
 
-  await logAudit('Document Deleted', 'customer_documents', docId, { storagePath });
+  await logAudit('Document Deleted', 'customer_documents', docId, {
+    storagePath,
+    filename: doc?.original_filename,
+    docType: doc?.document_type,
+    customerId: doc?.customer_id,
+  });
 }
 
 // -------------------------------------------------------------
@@ -810,12 +933,26 @@ export async function deleteCustomerDocument(docId: string, storagePath: string)
 // -------------------------------------------------------------
 export async function getPurchases(params?: { customerId?: string; search?: string }): Promise<Purchase[]> {
   assertBackendAccess();
-  const { customerId } = params || {};
+  const { customerId, search } = params || {};
 
   let query = supabase.from('purchases').select('*, customer:customers(*), items:purchase_items(*, cylinder_type:cylinder_types(*))').order('purchase_date', { ascending: false });
   if (customerId) query = query.eq('customer_id', customerId);
   const { data, error } = await query;
-  if (!error && data) return data as Purchase[];
+  if (!error && data) {
+    let list = data as Purchase[];
+    if (search && search.trim()) {
+      const term = search.trim().toLowerCase();
+      list = list.filter((p) => {
+        const codeMatch = p.purchase_code?.toLowerCase().includes(term);
+        const nameMatch = p.customer?.name?.toLowerCase().includes(term);
+        const custCodeMatch = p.customer?.customer_code?.toLowerCase().includes(term);
+        const phoneMatch = p.customer?.phone?.toLowerCase().includes(term);
+        const notesMatch = p.notes?.toLowerCase().includes(term);
+        return codeMatch || nameMatch || custCodeMatch || phoneMatch || notesMatch;
+      });
+    }
+    return list;
+  }
   if (error) throw new Error('Supabase query purchases failed: ' + error.message);
 
   return [];

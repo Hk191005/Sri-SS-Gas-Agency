@@ -14,6 +14,7 @@ import { useToast } from '../context/ToastContext';
 import { CustomerDocuments } from '../components/customers/CustomerDocuments';
 import { CustomerFormModal } from '../components/customers/CustomerFormModal';
 import { DeleteCustomerModal } from '../components/customers/DeleteCustomerModal';
+import { MergeCustomerModal } from '../components/customers/MergeCustomerModal';
 import { EditPurchaseDateModal } from '../components/purchases/EditPurchaseDateModal';
 import { DeletePurchaseModal } from '../components/purchases/DeletePurchaseModal';
 import {
@@ -36,6 +37,7 @@ import {
   AlertTriangle,
   Calendar,
   Edit2,
+  GitMerge,
 } from 'lucide-react';
 
 export const CustomerProfile: React.FC = () => {
@@ -61,6 +63,7 @@ export const CustomerProfile: React.FC = () => {
   // Modals
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
   const [deletingPurchase, setDeletingPurchase] = useState<Purchase | null>(null);
 
@@ -199,6 +202,14 @@ export const CustomerProfile: React.FC = () => {
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#1F1F1F] text-[#171717] dark:text-white border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs font-black hover:bg-[#FAFAFA] transition-all shadow-xs"
           >
             <Edit className="w-3.5 h-3.5 text-[#525252] dark:text-[#D4D4D4]" /> Edit
+          </button>
+
+          <button
+            onClick={() => setIsMergeModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#1F1F1F] text-[#171717] dark:text-white border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs font-black hover:bg-[#FAFAFA] transition-all shadow-xs"
+            title="Merge duplicate customer account into this primary profile"
+          >
+            <GitMerge className="w-3.5 h-3.5 text-[#2563EB]" /> Merge
           </button>
 
           <button
@@ -564,13 +575,24 @@ export const CustomerProfile: React.FC = () => {
         onSuccess={loadCustomerData}
       />
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Customer Confirmation Modal */}
       <DeleteCustomerModal
         isOpen={isDeleteModalOpen}
         customer={customer}
         onClose={() => setIsDeleteModalOpen(false)}
         onDeleted={() => {
           navigate('/customers');
+        }}
+      />
+
+      {/* Merge Duplicate Customer Modal */}
+      <MergeCustomerModal
+        isOpen={isMergeModalOpen}
+        onClose={() => setIsMergeModalOpen(false)}
+        initialPrimaryCustomer={customer}
+        onSuccess={() => {
+          showSuccess('Duplicate customer successfully merged into this account!');
+          loadCustomerData();
         }}
       />
 

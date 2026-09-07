@@ -1,5 +1,12 @@
 export type CustomerType = 'individual' | 'company';
-export type DocumentType = 'aadhaar' | 'other' | 'gst';
+export type DocumentType =
+  | 'aadhaar'
+  | 'address_proof'
+  | 'gst'
+  | 'pan'
+  | 'business_reg'
+  | 'license'
+  | 'other';
 export type CylinderStatus = 'available' | 'full' | 'with_customer' | 'empty' | 'in_delivery' | 'damaged' | 'maintenance';
 export type DepositStatus = 'given' | 'held' | 'adjusted' | 'refunded';
 export type PaymentStatus = 'paid' | 'partial' | 'pending';
@@ -482,5 +489,41 @@ export interface ActivityTimelineItem {
   amount?: number;
   status?: string;
   metadata?: Record<string, any>;
+}
+
+export interface CustomerMergeStats {
+  customer: Customer;
+  purchasesCount: number;
+  paymentsCount: number;
+  depositsCount: number;
+  deliveriesCount: number;
+  documentsCount: number;
+  cylindersCount: number;
+  notesCount: number;
+  followupsCount: number;
+  totalGasPurchases: number;
+  totalPayments: number;
+  outstanding: number;
+}
+
+export interface CustomerMergeResult {
+  success: boolean;
+  primary_id: string;
+  primary_code: string;
+  primary_name: string;
+  duplicate_id: string;
+  duplicate_code: string;
+  duplicate_name: string;
+  transferred: {
+    purchases: number;
+    payments: number;
+    deposits: number;
+    deliveries: number;
+    documents: number;
+    cylinders: number;
+    movements: number;
+    notes: number;
+    followups: number;
+  };
 }
 

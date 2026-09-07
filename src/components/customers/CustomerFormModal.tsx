@@ -839,10 +839,19 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                                 className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase border shrink-0 ${
                                   doc.document_type === 'aadhaar'
                                     ? 'bg-[#F0FDF4] text-[#16A34A] border-emerald-200/60'
-                                    : 'bg-[#FAFAFA] text-[#737373] border-[#E5E5E5]'
+                                    : doc.document_type === 'gst' || doc.document_type === 'business_reg'
+                                    ? 'bg-[#EFF6FF] text-[#2563EB] border-blue-200/60'
+                                    : doc.document_type === 'pan'
+                                    ? 'bg-[#FAF5FF] text-[#9333EA] border-purple-200/60'
+                                    : 'bg-[#FAFAFA] dark:bg-[#262626] text-[#737373] border-[#E5E5E5] dark:border-[#333]'
                                 }`}
                               >
-                                {doc.document_type === 'aadhaar' ? 'Aadhaar Card' : doc.document_type}
+                                {doc.document_type === 'aadhaar' ? 'Aadhaar Card' :
+                                 doc.document_type === 'address_proof' ? 'Address Proof' :
+                                 doc.document_type === 'gst' ? 'GST Certificate' :
+                                 doc.document_type === 'pan' ? 'PAN Card' :
+                                 doc.document_type === 'business_reg' ? 'Business Reg' :
+                                 doc.document_type === 'license' ? 'License' : 'Other Document'}
                               </span>
                             </div>
                             <p className="text-[10px] text-[#737373] mt-0.5">
@@ -895,7 +904,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                   <Upload className="w-3.5 h-3.5 text-[#E31B23]" />
                   {isEditing ? 'Upload New Document' : 'Upload Document'}
                 </span>
-                <span className="text-[10px] font-semibold text-[#737373]">Private Storage (JPG, PNG, PDF)</span>
+                <span className="text-[10px] font-semibold text-[#737373]">Private Storage (PDF, JPG, JPEG, PNG, WEBP)</span>
               </label>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <select
@@ -904,11 +913,16 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                   className="px-3 py-2 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs font-bold text-[#171717] dark:text-white"
                 >
                   <option value="aadhaar">Aadhaar Card</option>
-                  <option value="other">Other Document / License</option>
+                  <option value="address_proof">Address Proof</option>
+                  <option value="gst">GST Certificate</option>
+                  <option value="pan">PAN Card</option>
+                  <option value="business_reg">Business Registration</option>
+                  <option value="license">License / Permit</option>
+                  <option value="other">Other Document</option>
                 </select>
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,application/pdf"
+                  accept="image/jpeg,image/png,image/webp,application/pdf,.pdf,.jpg,.jpeg,.png,.webp"
                   onChange={(e) => setDocFile(e.target.files ? e.target.files[0] : null)}
                   className="block w-full text-xs text-[#525252] dark:text-[#D4D4D4] file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#FFF1F2] file:text-[#C9151C] hover:file:bg-[#FFD6D8]"
                 />
