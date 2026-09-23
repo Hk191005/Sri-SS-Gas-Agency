@@ -75,7 +75,7 @@ export const Deliveries: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -89,13 +89,13 @@ export const Deliveries: React.FC = () => {
       </div>
 
       {/* Quick Date & Status Filter Bar */}
-      <div className="saas-card bg-white dark:bg-[#171717] p-4 rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 bg-[#FAFAFA] dark:bg-[#1F1F1F] p-1 rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A]">
+      <div className="saas-card bg-white dark:bg-[#171717] p-4 rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full min-w-0">
+        <div className="flex items-center gap-2 bg-[#FAFAFA] dark:bg-[#1F1F1F] p-1 rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] overflow-x-auto scrollbar-none">
           <button
             onClick={() => setDateFilter('today')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all border ${
+            className={`px-3.5 py-2 min-h-[44px] rounded-lg text-xs font-black transition-all border shrink-0 ${
               dateFilter === 'today'
-                ? 'bg-[#FFF1F2] text-[#C9151C] border-[#FFD6D8] shadow-2xs'
+                ? 'bg-[#FFF1F2] dark:bg-[#3B1214] text-[#C9151C] dark:text-[#FF8085] border-[#FFD6D8] dark:border-[#5C1D24] shadow-2xs'
                 : 'text-[#404040] dark:text-[#D4D4D4] border-transparent hover:text-[#171717]'
             }`}
           >
@@ -103,9 +103,9 @@ export const Deliveries: React.FC = () => {
           </button>
           <button
             onClick={() => setDateFilter('all')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all border ${
+            className={`px-3.5 py-2 min-h-[44px] rounded-lg text-xs font-black transition-all border shrink-0 ${
               dateFilter === 'all'
-                ? 'bg-[#FFF1F2] text-[#C9151C] border-[#FFD6D8] shadow-2xs'
+                ? 'bg-[#FFF1F2] dark:bg-[#3B1214] text-[#C9151C] dark:text-[#FF8085] border-[#FFD6D8] dark:border-[#5C1D24] shadow-2xs'
                 : 'text-[#404040] dark:text-[#D4D4D4] border-transparent hover:text-[#171717]'
             }`}
           >
@@ -116,7 +116,7 @@ export const Deliveries: React.FC = () => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs font-black text-[#171717] dark:text-white px-3 py-2 rounded-xl focus:outline-none"
+          className="bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs font-black text-[#171717] dark:text-white px-3 py-2 min-h-[44px] rounded-xl focus:outline-none"
         >
           <option value="all">All Statuses</option>
           <option value="pending">Pending Field Dispatch</option>
@@ -151,14 +151,14 @@ export const Deliveries: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {deliveries.map((del) => {
+          {deliveries.map((del, idx) => {
             const isDelivered = del.status === 'delivered';
             const isOut = del.status === 'out_for_delivery';
 
             return (
               <div
                 key={del.id}
-                className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl p-5 space-y-4 shadow-xs"
+                className={`saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl p-5 space-y-4 shadow-xs animate-card-enter stagger-${(idx % 6) + 1} hover:-translate-y-0.5 transition-all duration-200`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">

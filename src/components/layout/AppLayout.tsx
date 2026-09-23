@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { SupabaseSetupBanner } from '../SupabaseSetupBanner';
 import { isSupabaseConfigured } from '../../lib/supabase';
@@ -121,7 +121,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
   };
 
   return (
-    <div className="min-h-screen app-ambient-bg text-[#111111] dark:text-[#F5F5F5] flex flex-col font-sans antialiased transition-colors duration-200">
+    <div className="min-h-screen app-ambient-bg text-[#111111] dark:text-[#F5F5F5] flex flex-col font-sans antialiased transition-colors duration-200 w-full max-w-full overflow-x-clip min-w-0">
       {/* Setup banner if active */}
       <div className="w-full">
         <SupabaseSetupBanner />
@@ -136,19 +136,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
         {/* Sidebar Header & Brand */}
         <div className="space-y-3.5">
           <div className="flex items-center justify-between gap-2 px-1 py-1">
-            <div className="flex items-center gap-3 overflow-hidden">
+            <Link
+              to="/"
+              className="flex items-center gap-3 overflow-hidden hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] rounded-lg p-1 -m-1"
+              title={`${AGENCY_BRANDING.NAME} Dashboard`}
+              aria-label={`${AGENCY_BRANDING.NAME} Dashboard`}
+            >
               <AgencyLogo size="md" />
               {!sidebarCollapsed && (
                 <div className="min-w-0 transition-opacity duration-200">
                   <span className="text-xs font-black text-[#111111] dark:text-white leading-tight tracking-tight whitespace-nowrap block">
                     {AGENCY_BRANDING.NAME}
                   </span>
-                  <p className="text-[10px] text-[#E31B23] font-black tracking-wide uppercase whitespace-nowrap">
-                    MANAGEMENT SYSTEM
-                  </p>
                 </div>
               )}
-            </div>
+            </Link>
 
             {/* Sidebar Collapse Toggle Button */}
             <button
@@ -188,7 +190,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
                 title="Add New Customer"
               >
                 <Plus className="w-4 h-4 text-[#E31B23] dark:text-red-400 shrink-0" />
-                <span>+ Customer</span>
+                <span>Customer</span>
               </button>
             )}
           </div>
@@ -204,7 +206,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
                   to={item.path}
                   className={`relative flex items-center ${
                     sidebarCollapsed ? 'justify-center px-0 py-3' : 'gap-3 px-3 py-2.5'
-                  } transition-all ${
+                  } transition-all duration-150 btn-press ${
                     active
                       ? 'nav-item-active font-bold shadow-xs'
                       : 'text-[#525252] dark:text-[#A3A3A3] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] hover:text-[#111111] dark:hover:text-white font-medium rounded-xl'
@@ -216,7 +218,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
                     <span className="absolute left-0 top-1.5 bottom-1.5 w-[3.5px] bg-[#E31B23] rounded-r-full" />
                   )}
 
-                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[#E31B23] dark:text-[#E31B23]' : 'text-[#525252] dark:text-[#A3A3A3]'}`} />
+                  <Icon className={`w-4 h-4 shrink-0 transition-transform duration-150 ${active ? 'text-[#E31B23] dark:text-[#E31B23]' : 'text-[#525252] dark:text-[#A3A3A3]'}`} />
                   {!sidebarCollapsed && <span className="text-xs truncate">{item.name}</span>}
                 </NavLink>
               );
@@ -244,7 +246,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
               onClick={handleLogout}
               title="Sign Out"
               aria-label="Sign Out"
-              className="p-1.5 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-[#262626] rounded-lg transition-colors shrink-0 cursor-pointer"
+              className="p-1.5 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-[#262626] rounded-lg transition-colors shrink-0 cursor-pointer btn-press"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -254,32 +256,38 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
 
       {/* MOBILE TOP HEADER */}
       <header className="lg:hidden bg-white/95 dark:bg-[#171717]/95 backdrop-blur-md text-[#111111] dark:text-white border-b border-[#E5E7EB] dark:border-[#2A2A2A] sticky top-0 z-30 shadow-xs">
-        <div className="flex items-center justify-between px-4 py-2.5">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2 min-h-[56px]">
+          {/* Accessible Clickable Brand to Dashboard Route */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 sm:gap-2.5 hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] rounded-lg p-1 -m-1"
+            title={`${AGENCY_BRANDING.NAME} Dashboard`}
+            aria-label={`${AGENCY_BRANDING.NAME} Dashboard`}
+          >
             <AgencyLogo size="sm" />
-            <div>
-              <span className="text-xs font-black text-[#111111] dark:text-white leading-none tracking-tight block">{AGENCY_BRANDING.NAME}</span>
-              <span className="text-[10px] text-[#E31B23] font-black uppercase">Management System</span>
-            </div>
-          </div>
+            <span className="text-xs sm:text-sm font-black text-[#111111] dark:text-white leading-none tracking-tight">
+              {AGENCY_BRANDING.NAME}
+            </span>
+          </Link>
 
-          <div className="flex items-center gap-1.5">
+          {/* Clean Controls (≥44px touch targets) */}
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#525252] dark:text-[#D4D4D4] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] rounded-xl transition-colors cursor-pointer"
-              title="Search (Ctrl+K)"
-              aria-label="Search"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#525252] dark:text-[#D4D4D4] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] rounded-xl transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23]"
+              title="Search System (Ctrl+K)"
+              aria-label="Search System"
             >
               <Search className="w-5 h-5 text-[#E31B23]" />
             </button>
-            <ThemeToggle />
+            <ThemeToggle variant="compact" />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#525252] dark:text-[#D4D4D4] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] rounded-xl transition-colors cursor-pointer"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#525252] dark:text-[#D4D4D4] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] rounded-xl transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23]"
               aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
               aria-expanded={mobileMenuOpen}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6 text-[#E31B23]" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5 text-[#E31B23]" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
@@ -296,60 +304,49 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
           {/* Backdrop overlay */}
           <div
             onClick={() => setMobileMenuOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs backdrop-enter"
           />
 
           {/* Slide-over Drawer Panel */}
-          <div className="relative w-[85vw] max-w-[340px] h-full bg-white dark:bg-[#171717] border-r border-[#E5E7EB] dark:border-[#2A2A2A] shadow-2xl flex flex-col justify-between p-4 z-10 overflow-y-auto animate-in slide-in-from-left duration-300">
+          <div className="relative w-[85vw] max-w-[340px] h-full bg-white dark:bg-[#171717] border-r border-[#E5E7EB] dark:border-[#2A2A2A] shadow-2xl flex flex-col justify-between p-4 z-10 overflow-y-auto drawer-enter">
             {/* Drawer Header */}
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#E5E7EB] dark:border-[#2A2A2A]">
-                <div className="flex items-center gap-2.5">
+                <Link
+                  to="/"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2.5 hover:opacity-90 transition-opacity"
+                  title="Sri SS Gas Agency - Dashboard"
+                >
                   <AgencyLogo size="md" />
-                  <div>
-                    <span className="text-xs font-black text-[#111111] dark:text-white leading-tight block">
-                      {AGENCY_BRANDING.NAME}
-                    </span>
-                    <span className="text-[10px] text-[#E31B23] font-black uppercase">
-                      MANAGEMENT SYSTEM
-                    </span>
-                  </div>
-                </div>
+                  <span className="text-xs font-black text-[#111111] dark:text-white leading-tight block">
+                    {AGENCY_BRANDING.NAME}
+                  </span>
+                </Link>
 
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#A3A3A3] hover:text-[#E31B23] dark:hover:text-red-400 border border-[#E5E7EB] dark:border-[#2A2A2A] transition-colors cursor-pointer"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#A3A3A3] hover:text-[#E31B23] dark:hover:text-red-400 border border-[#E5E7EB] dark:border-[#2A2A2A] transition-colors cursor-pointer btn-press"
                   aria-label="Close menu"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Quick Actions in Drawer */}
+              {/* Quick Actions in Drawer (Single Primary '+' Action rule: duplicate '+ Customer' removed) */}
               <div className="space-y-2">
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
                     setIsSearchOpen(true);
                   }}
-                  className="w-full min-h-[44px] flex items-center justify-between px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] rounded-xl text-xs font-bold border border-[#E5E7EB] dark:border-[#2A2A2A] hover:border-[#E31B23] transition-all cursor-pointer"
+                  className="w-full min-h-[44px] flex items-center justify-between px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] rounded-xl text-xs font-bold border border-[#E5E7EB] dark:border-[#2A2A2A] hover:border-[#E31B23] transition-all cursor-pointer btn-press"
                 >
                   <div className="flex items-center gap-2.5">
                     <Search className="w-4 h-4 text-[#E31B23]" />
                     <span>Search System</span>
                   </div>
                   <span className="text-[10px] text-[#737373] font-mono">Ctrl+K</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handleQuickAction('customer');
-                  }}
-                  className="w-full min-h-[44px] flex items-center justify-center gap-2 bg-[#FFF1F2] dark:bg-rose-950/30 text-[#E31B23] dark:text-red-400 border border-[#FECDD3] dark:border-red-900/40 text-xs font-black py-2.5 px-3.5 rounded-xl transition-all active:scale-98 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>+ Register New Customer</span>
                 </button>
               </div>
 
@@ -363,7 +360,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
                       key={item.path}
                       to={item.path}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`min-h-[48px] w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all text-xs ${
+                      className={`min-h-[48px] w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all text-xs btn-press ${
                         active
                           ? 'bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] dark:text-red-400 font-black border border-[#FECDD3] dark:border-red-900/40 shadow-xs'
                           : 'text-[#525252] dark:text-[#A3A3A3] hover:bg-[#F8FAFC] dark:hover:bg-[#1F1F1F] hover:text-[#111111] dark:hover:text-white font-bold'
@@ -394,7 +391,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-[#262626] rounded-xl transition-colors shrink-0 cursor-pointer"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-[#262626] rounded-xl transition-colors shrink-0 cursor-pointer btn-press"
                   title="Sign Out"
                   aria-label="Sign Out"
                 >
@@ -406,13 +403,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
         </div>
       )}
 
-      {/* MAIN CONTENT AREA WITH DYNAMIC LEFT MARGIN */}
+      {/* MAIN CONTENT AREA WITH DYNAMIC LEFT MARGIN & SMOOTH PAGE TRANSITIONS */}
       <div
-        className={`flex-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`flex-1 min-w-0 w-full max-w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           sidebarCollapsed ? 'lg:pl-[108px]' : 'lg:pl-[300px]'
         }`}
       >
-        <main className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-28 lg:pb-12">
+        <main
+          key={location.pathname}
+          className="max-w-[1400px] w-full min-w-0 mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 sm:pb-32 lg:pb-12 animate-page-enter"
+        >
           <Outlet context={{ onOpenQuickAction: handleQuickAction }} />
         </main>
       </div>

@@ -61,19 +61,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { fullName: 'SRI SS GAS Admin', role: 'Administrator' };
   };
 
+  const clearLocalAuth = () => {
+    setUser(null);
+    setIsPasswordRecovery(false);
+    setShowWarningModal(false);
+    try {
+      localStorage.removeItem(STORAGE_ACTIVITY_KEY);
+      localStorage.setItem(STORAGE_LOGOUT_KEY, Date.now().toString());
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (e) {
+      // Non-blocking
+    }
+  };
+
   const logout = useCallback(async () => {
+    clearLocalAuth();
     try {
       if (isSupabaseActive) {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {
+          return supabase.auth.signOut();
+        });
       }
     } catch (e) {
       console.warn('Supabase signOut warning:', e);
     }
-    setUser(null);
-    setIsPasswordRecovery(false);
-    setShowWarningModal(false);
-    localStorage.removeItem(STORAGE_ACTIVITY_KEY);
-    localStorage.setItem(STORAGE_LOGOUT_KEY, Date.now().toString());
   }, [isSupabaseActive]);
 
   const resetInactivityTimer = useCallback(() => {
@@ -90,6 +105,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Initial session check & auth listener
   useEffect(() => {
     const checkSession = async () => {
+      // 1. Inactivity check before restoring session
+      const storedActivity = localStorage.getItem(STORAGE_ACTIVITY_KEY);
+      if (storedActivity) {
+        const lastActive = parseInt(storedActivity, 10);
+        if (!isNaN(lastActive) && Date.now() - lastActive >= DEFAULT_TIMEOUT_MS) {
+          console.warn('Inactivity timeout elapsed while away. Signing out session...');
+          clearLocalAuth();
+          if (isSupabaseActive) {
+            supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+          }
+          setLoading(false);
+          return;
+        }
+      }
+
       if (isSupabaseActive) {
         if (
           window.location.hash.includes('type=recovery') ||
@@ -128,7 +158,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsPasswordRecovery(true);
         }
 
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          localStorage.removeItem(STORAGE_ACTIVITY_KEY);
+          return;
+        }
+
         if (session?.user) {
+          if (event !== 'SIGNED_IN') {
+            const currentActivity = localStorage.getItem(STORAGE_ACTIVITY_KEY);
+            if (!currentActivity) {
+              setUser(null);
+              return;
+            }
+            const lastActive = parseInt(currentActivity, 10);
+            if (!isNaN(lastActive) && Date.now() - lastActive >= DEFAULT_TIMEOUT_MS) {
+              console.warn('Inactivity timeout elapsed during auth state event. Clearing session...');
+              setUser(null);
+              localStorage.removeItem(STORAGE_ACTIVITY_KEY);
+              return;
+            }
+          }
+
           const email = session.user.email || AGENCY_BRANDING.ADMIN_EMAIL;
           const { fullName, role } = resolveAdminProfile(email);
           setUser({

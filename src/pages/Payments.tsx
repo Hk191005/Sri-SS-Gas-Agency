@@ -77,7 +77,7 @@ export const Payments: React.FC = () => {
     .filter((rc) => rc.outstanding > 0);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -90,7 +90,7 @@ export const Payments: React.FC = () => {
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4.5 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 shrink-0"
+          className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4.5 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 shrink-0 min-h-[44px]"
         >
           <Plus className="w-4 h-4" /> Record Customer Payment
         </button>
@@ -100,7 +100,7 @@ export const Payments: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-5 rounded-2xl shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#525252] dark:text-[#A3A3A3] block">Customer Collections Logged</span>
+            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">Customer Collections Logged</span>
             <span className="text-2xl font-black text-[#16A34A] dark:text-emerald-400 mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-[#F0FDF4] dark:bg-emerald-950/30 text-[#16A34A] flex items-center justify-center border border-emerald-200/60 dark:border-emerald-900/40">
@@ -110,7 +110,7 @@ export const Payments: React.FC = () => {
 
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-5 rounded-2xl shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#525252] dark:text-[#A3A3A3] block">Active Held Deposits</span>
+            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">Active Held Deposits</span>
             <span className="text-2xl font-black text-[#171717] dark:text-white mt-1 block">₹{totalDeposits.toLocaleString('en-IN')}</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-[#FAFAFA] dark:bg-[#222] text-[#171717] dark:text-white flex items-center justify-center border border-[#E5E5E5] dark:border-[#333]">
@@ -120,7 +120,7 @@ export const Payments: React.FC = () => {
 
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-5 rounded-2xl shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#525252] dark:text-[#A3A3A3] block">Supplier Payables Balance</span>
+            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">Supplier Payables Balance</span>
             <span className="text-2xl font-black text-[#D97706] dark:text-amber-400 mt-1 block">₹{totalSupplierPayable.toLocaleString('en-IN')}</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-[#FFFBEB] dark:bg-amber-950/30 text-[#D97706] flex items-center justify-center border border-amber-200/60 dark:border-amber-900/40">
@@ -130,7 +130,7 @@ export const Payments: React.FC = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#F1F1F1] dark:border-[#262626] pb-2 overflow-x-auto text-xs font-extrabold">
+      <div className="flex items-center gap-2 border-b border-[#F1F1F1] dark:border-[#262626] pb-2 overflow-x-auto w-full max-w-full scrollbar-none text-xs font-extrabold">
         {[
           { id: 'receivables', label: `Customer Receivables (${receivablesCustomers.length})` },
           { id: 'payments', label: `Payment History (${payments.length})` },
@@ -140,10 +140,10 @@ export const Payments: React.FC = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all border ${
+            className={`px-4 py-2.5 min-h-[44px] rounded-xl whitespace-nowrap transition-all border shrink-0 ${
               activeTab === tab.id
-                ? 'bg-[#FFF1F2] text-[#C9151C] border-[#FFD6D8] font-black shadow-2xs'
-                : 'bg-white dark:bg-[#171717] text-[#525252] dark:text-[#D4D4D4] border-[#E5E5E5] dark:border-[#2A2A2A] hover:bg-[#FAFAFA]'
+                ? 'bg-[#FFF1F2] dark:bg-[#3B1214] text-[#C9151C] dark:text-[#FF8085] border-[#FFD6D8] dark:border-[#5C1D24] font-black shadow-2xs'
+                : 'bg-white dark:bg-[#171717] text-[#525252] dark:text-[#D4D4D4] border-[#E5E5E5] dark:border-[#2A2A2A] hover:bg-[#FAFAFA] dark:hover:bg-[#222]'
             }`}
           >
             {tab.label}
@@ -170,9 +170,9 @@ export const Payments: React.FC = () => {
         </div>
       ) : activeTab === 'receivables' ? (
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto w-full">
+          <div className="overflow-x-auto w-full max-w-full min-w-0">
             <table className="w-full min-w-[650px] text-left text-xs font-semibold">
-              <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] uppercase text-[10px] font-extrabold tracking-wider border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
+              <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] text-xs font-bold border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
                 <tr>
                   <th className="py-3.5 px-4">Customer Code</th>
                   <th className="py-3.5 px-4">Customer Name</th>
@@ -189,9 +189,9 @@ export const Payments: React.FC = () => {
                 ) : (
                   receivablesCustomers.map(({ customer, outstanding }) => (
                     <tr key={customer.id} className="hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-black text-[#C9151C]">{customer.customer_code}</td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">{customer.customer_code}</td>
                       <td className="py-3.5 px-4 font-black">
-                        <Link to={`/customers/${customer.id}`} className="hover:text-[#E31B23] transition-colors">
+                        <Link to={`/customers/${customer.id}`} className="hover:underline hover:text-[#E31B23] transition-colors">
                           {customer.name}
                         </Link>
                       </td>
@@ -214,9 +214,9 @@ export const Payments: React.FC = () => {
         </div>
       ) : activeTab === 'payments' ? (
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto w-full">
+          <div className="overflow-x-auto w-full max-w-full min-w-0">
             <table className="w-full min-w-[650px] text-left text-xs font-semibold">
-              <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] uppercase text-[10px] font-extrabold tracking-wider border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
+              <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] text-xs font-bold border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
                 <tr>
                   <th className="py-3.5 px-4">Receipt ID</th>
                   <th className="py-3.5 px-4">Payment Date</th>
@@ -234,12 +234,12 @@ export const Payments: React.FC = () => {
                   payments.map((p) => {
                     const cust = customerMap[p.customer_id];
                     return (
-                      <tr key={p.id} className="hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F]">
+                      <tr key={p.id} className="table-row-enter hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] transition-colors">
                         <td className="py-3.5 px-4 font-mono font-black text-[#16A34A]">RCP-{(p.id || '').slice(0, 8).toUpperCase()}</td>
                         <td className="py-3.5 px-4 font-bold">{p.payment_date}</td>
                         <td className="py-3.5 px-4">
                           {cust ? (
-                            <Link to={`/customers/${cust.id}`} className="font-black text-[#171717] dark:text-white hover:text-[#E31B23]">
+                            <Link to={`/customers/${cust.id}`} className="font-black text-[#171717] dark:text-white hover:underline hover:text-[#E31B23] transition-colors">
                               {cust.name}
                             </Link>
                           ) : (
@@ -258,9 +258,9 @@ export const Payments: React.FC = () => {
         </div>
       ) : activeTab === 'deposits' ? (
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto w-full">
+          <div className="overflow-x-auto w-full max-w-full min-w-0">
             <table className="w-full min-w-[650px] text-left text-xs font-semibold">
-              <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] uppercase text-[10px] font-extrabold tracking-wider border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
+              <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] text-xs font-bold border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
                 <tr>
                   <th className="py-3.5 px-4">Deposit ID</th>
                   <th className="py-3.5 px-4">Customer</th>
@@ -282,7 +282,7 @@ export const Payments: React.FC = () => {
                         <td className="py-3.5 px-4 font-mono font-black text-[#171717] dark:text-white">DEP-{(d.id || '').slice(0, 8).toUpperCase()}</td>
                         <td className="py-3.5 px-4">
                           {cust ? (
-                            <Link to={`/customers/${cust.id}`} className="font-black text-[#171717] dark:text-white hover:text-[#E31B23]">
+                            <Link to={`/customers/${cust.id}`} className="font-black text-[#171717] dark:text-white hover:underline hover:text-[#E31B23] transition-colors">
                               {cust.name}
                             </Link>
                           ) : (
@@ -292,7 +292,7 @@ export const Payments: React.FC = () => {
                         <td className="py-3.5 px-4 font-bold">{d.notes || 'Cylinder Security Deposit'}</td>
                         <td className="py-3.5 px-4 font-black text-[#171717] dark:text-white">₹{d.amount.toLocaleString('en-IN')}</td>
                         <td className="py-3.5 px-4">
-                          <span className="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#F0FDF4] text-[#16A34A] border border-emerald-200/60">
+                          <span className="inline-block text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#F0FDF4] text-[#16A34A] border border-emerald-200/60">
                             {d.status.toUpperCase()}
                           </span>
                         </td>
@@ -306,9 +306,9 @@ export const Payments: React.FC = () => {
         </div>
       ) : (
         <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto w-full">
+          <div className="overflow-x-auto w-full max-w-full min-w-0">
             <table className="w-full min-w-[650px] text-left text-xs font-semibold">
-              <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] uppercase text-[10px] font-extrabold tracking-wider border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
+              <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] text-xs font-bold border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
                 <tr>
                   <th className="py-3.5 px-4">Purchase Code</th>
                   <th className="py-3.5 px-4">Supplier</th>
@@ -325,7 +325,7 @@ export const Payments: React.FC = () => {
                 ) : (
                   supplierPayables.map((sp) => (
                     <tr key={sp.id} className="hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F]">
-                      <td className="py-3.5 px-4 font-mono font-black text-[#E31B23]">{sp.purchase_code}</td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">{sp.purchase_code}</td>
                       <td className="py-3.5 px-4 font-black">{sp.supplier_name}</td>
                       <td className="py-3.5 px-4 font-mono font-bold text-[#737373]">#{sp.invoice_number}</td>
                       <td className="py-3.5 px-4 font-black text-[#171717] dark:text-white">₹{(sp.total_amount || 0).toLocaleString('en-IN')}</td>

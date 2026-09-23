@@ -314,7 +314,7 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto w-full min-w-0">
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-black text-[#111111] dark:text-white tracking-tight flex items-center gap-2.5">
@@ -894,10 +894,10 @@ export const Settings: React.FC = () => {
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] active:bg-[#A90F16] text-white font-black text-xs px-6 py-3 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all disabled:opacity-50 active:scale-98"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] active:bg-[#A90F16] text-white font-black text-xs px-6 py-3 min-h-[44px] rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all disabled:opacity-50 active:scale-98"
           >
             <Save className="w-4 h-4" />
-            {saving ? 'Saving Settings...' : 'Save Settings, Prices, Opening Stock & Rules'}
+            <span>{saving ? 'Saving Settings...' : 'Save Settings, Prices, Opening Stock & Rules'}</span>
           </button>
         </div>
       </form>
@@ -985,7 +985,7 @@ export const Settings: React.FC = () => {
             <button
               type="submit"
               disabled={passwordLoading || !newPassword}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#111111] dark:bg-white text-white dark:text-[#111111] text-xs font-black rounded-xl hover:bg-black dark:hover:bg-slate-100 transition-all disabled:opacity-50"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] bg-[#111111] dark:bg-white text-white dark:text-[#111111] text-xs font-black rounded-xl hover:bg-black dark:hover:bg-slate-100 transition-all disabled:opacity-50"
             >
               <KeyRound className="w-4 h-4" />
               <span>{passwordLoading ? 'Updating...' : 'Update Password'}</span>

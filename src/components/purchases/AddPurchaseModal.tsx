@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Customer, CylinderType } from '../../types/database.types';
 import { getCustomers, getCylinderTypes, createPurchase } from '../../lib/db';
 import { useToast } from '../../context/ToastContext';
-import { X, ShoppingBag, Plus, Trash2, Save, AlertCircle, Calculator } from 'lucide-react';
+import { X, ShoppingBag, Plus, Trash2, Save, AlertCircle, Calculator, FileText } from 'lucide-react';
 
 interface AddPurchaseModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
   preselectedCustomerId,
 }) => {
   const { showSuccess, showError } = useToast();
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [cylinderTypes, setCylinderTypes] = useState<CylinderType[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState(preselectedCustomerId || '');
@@ -27,6 +29,10 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
   const [items, setItems] = useState<{ cylinder_type_id: string; quantity: number; unit_price: number }[]>([
     { cylinder_type_id: '', quantity: 1, unit_price: 0 },
   ]);
+
+  // Empty cylinder return (Refill exchange - ₹0)
+  const [emptyReturnedQty, setEmptyReturnedQty] = useState<number>(0);
+  const [emptyReturnedTypeId, setEmptyReturnedTypeId] = useState<string>('');
 
   // Financial options
   const [depositAmount, setDepositAmount] = useState<number>(0);
@@ -57,6 +63,7 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
             unit_price: default12kg.default_price,
           },
         ]);
+        setEmptyReturnedTypeId(default12kg.id);
       }
 
       if (preselectedCustomerId) {
@@ -112,7 +119,7 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
 
   const totalGasAmount = items.reduce((acc, item) => acc + item.quantity * item.unit_price, 0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, andViewBill: boolean = false) => {
     e.preventDefault();
     if (submitting) return;
     setErrorMsg('');
@@ -129,7 +136,8 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
     setSubmitting(true);
 
     try {
-      await createPurchase({
+      const selectedEmptyType = cylinderTypes.find((t) => t.id === emptyReturnedTypeId);
+      const created = await createPurchase({
         customer_id: selectedCustomerId,
         purchase_date: purchaseDate,
         items,
@@ -139,11 +147,17 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
         payment_method: paymentMethod,
         delivery_status: deliveryStatus,
         notes: notes.trim() || undefined,
+        empty_return_quantity: Number(emptyReturnedQty) || 0,
+        empty_return_type_id: emptyReturnedTypeId || undefined,
+        empty_return_type_name: selectedEmptyType?.name,
       });
 
       onSuccess();
       onClose();
       showSuccess('Customer gas sale transaction recorded successfully!');
+      if (andViewBill && created?.id) {
+        navigate(`/billing?saleId=${created.id}`);
+      }
     } catch (err: any) {
       setErrorMsg(err.message || 'Unable to record purchase. Please try again.');
       showError(err.message || 'Failed to record purchase transaction');
@@ -153,8 +167,8 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto backdrop-enter">
+      <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden modal-enter">
         {/* Modal Header */}
         <div className="bg-white dark:bg-[#171717] text-[#171717] dark:text-white px-6 py-4 flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626]">
           <div>
@@ -287,6 +301,49 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
               </span>
               <span className="text-xl font-black text-[#E31B23]">₹{totalGasAmount.toLocaleString('en-IN')}</span>
             </div>
+
+            {/* Empty Cylinder Return Section (Refill Exchange - ₹0 to Total) */}
+            <div className="p-3.5 bg-slate-50 dark:bg-[#1E1E1E] rounded-xl border border-[#E5E5E5] dark:border-[#333] space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-black text-[#171717] dark:text-white uppercase">
+                  Empty Cylinder Return (Refill Exchange)
+                </label>
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200/50">
+                  Operational Record · ₹0 to Bill Total
+                </span>
+              </div>
+              <p className="text-[11px] text-[#737373] font-medium">
+                Returned empty cylinders are logged for inventory tracking and appear on the customer bill as informational only.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-[#737373] mb-1">Returned Cylinder Type</label>
+                  <select
+                    value={emptyReturnedTypeId}
+                    onChange={(e) => setEmptyReturnedTypeId(e.target.value)}
+                    className="w-full px-2.5 py-2 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#333] rounded-lg text-xs font-bold text-[#171717] dark:text-white"
+                  >
+                    <option value="">-- No Empty Return --</option>
+                    {cylinderTypes.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.weight_kg} kg)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-[#737373] mb-1">Returned Quantity</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={emptyReturnedQty || ''}
+                    onChange={(e) => setEmptyReturnedQty(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    placeholder="0"
+                    className="w-full px-2.5 py-2 bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#333] rounded-lg text-xs font-bold text-[#171717] dark:text-white"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Separate Deposit & Payment Section */}
@@ -370,18 +427,27 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
           </div>
 
           {/* Modal Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#F1F1F1] dark:border-[#262626]">
+          <div className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t border-[#F1F1F1] dark:border-[#262626]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A]"
+              className="px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A]"
             >
               Cancel
             </button>
             <button
+              type="button"
+              onClick={(e) => handleSubmit(e, true)}
+              disabled={submitting}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] bg-white dark:bg-[#222] border border-[#E5E5E5] dark:border-[#333] hover:border-[#E31B23] text-[#E31B23] font-bold text-xs rounded-xl shadow-2xs transition-all active:scale-98 disabled:opacity-50"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Save & View Bill</span>
+            </button>
+            <button
               type="submit"
               disabled={submitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black text-white bg-[#E31B23] hover:bg-[#C9151C] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 min-h-[44px] rounded-xl text-xs font-black text-white bg-[#E31B23] hover:bg-[#C9151C] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               {submitting ? 'Recording Sale...' : 'Save Gas Sale'}

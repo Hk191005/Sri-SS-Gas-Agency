@@ -82,8 +82,8 @@ export const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs backdrop-enter">
+      <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-xl w-full max-w-md overflow-hidden modal-enter">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[#F1F5F9] dark:border-[#262626] flex items-center justify-between bg-[#FFF1F2] dark:bg-red-950/20">
           <div className="flex items-center gap-3">
@@ -175,7 +175,7 @@ export const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={deleting}
-            className="px-4 py-2.5 rounded-xl border border-[#D1D5DB] dark:border-[#2A2A2A] text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:bg-white dark:hover:bg-[#262626] transition-all disabled:opacity-50"
+            className="px-4 py-2.5 min-h-[44px] rounded-xl border border-[#D1D5DB] dark:border-[#2A2A2A] text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:bg-white dark:hover:bg-[#262626] transition-all disabled:opacity-50"
           >
             Cancel
           </button>
@@ -184,7 +184,7 @@ export const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
             type="button"
             onClick={handleDelete}
             disabled={deleting || loadingDependencies}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-black shadow-xs transition-all disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-black shadow-xs transition-all disabled:opacity-50"
           >
             {deleting ? (
               <>

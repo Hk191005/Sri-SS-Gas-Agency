@@ -3,7 +3,7 @@ import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface MetricCardProps {
   title: string;
-  value: string | number;
+  value: React.ReactNode;
   subtitle?: string;
   icon?: React.ReactNode;
   trend?: {
@@ -37,10 +37,10 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   return (
-    <div className={`saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-5 relative flex flex-col justify-between ${className}`}>
+    <div className={`saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-5 relative flex flex-col justify-between transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 ${className}`}>
       <div className="flex items-start justify-between gap-3 mb-2">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-wider text-[#525252] dark:text-[#A3A3A3]">{title}</p>
+          <p className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3]">{title}</p>
           <div className="text-2xl sm:text-3xl font-black text-[#111111] dark:text-white mt-1 tracking-tight">{value}</div>
         </div>
 
@@ -57,7 +57,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
           {trend && (
             <span
-              className={`inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full text-[11px] ${
+              className={`inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-full text-xs ${
                 trend.isPositive
                   ? 'bg-[#ECFDF5] text-[#059669] border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900'
                   : 'bg-[#FFF1F2] text-[#DC2626] border border-[#FECDD3] dark:bg-red-950/40 dark:text-red-400 dark:border-red-900'

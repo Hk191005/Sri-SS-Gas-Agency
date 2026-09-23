@@ -111,6 +111,8 @@ export function getDefaultPriceForWeight(weightKg: number, settings: AgencySetti
       return settings.default_price_17kg ?? 2552;
     case 21:
       return settings.default_price_21kg ?? 3152;
+    case 33:
+      return settings.default_price_33kg ?? 4850;
     default:
       return 1700;
   }
@@ -130,6 +132,8 @@ export function getDefaultBuyingPriceForWeight(weightKg: number, settings: Agenc
       return settings.default_buying_price_17kg ?? 2380;
     case 21:
       return settings.default_buying_price_21kg ?? 2940;
+    case 33:
+      return settings.default_buying_price_33kg ?? 4500;
     default:
       return 1625;
   }
@@ -149,6 +153,8 @@ export function getDefaultDepositForWeight(weightKg: number, settings: AgencySet
       return settings.default_deposit_17kg ?? 2500;
     case 21:
       return settings.default_deposit_21kg ?? 3000;
+    case 33:
+      return settings.default_deposit_33kg ?? 4000;
     default:
       return 2000;
   }
@@ -417,12 +423,20 @@ export async function getCurrentCylinderFinancialDefaults(): Promise<CylinderFin
       buyingPrice: settings.default_buying_price_21kg ?? 2940,
       securityDeposit: settings.default_deposit_21kg ?? 3000,
     },
+    33: {
+      sellingPrice: settings.default_price_33kg ?? 4850,
+      buyingPrice: settings.default_buying_price_33kg ?? 4500,
+      securityDeposit: settings.default_deposit_33kg ?? 4000,
+    },
   };
 }
+
+export const SUPPORTED_CYLINDER_WEIGHTS = [4, 12, 17, 21, 33] as const;
 
 /**
  * Central Current Selling Prices Resolver:
  * Joins cylinder metadata with selling prices from agency_settings.
+ * Restricts to ONLY authoritative supported sizes: 4KG, 12KG, 17KG, 21KG, 33KG.
  */
 export async function getCurrentCylinderPrices(): Promise<{
   cylinderTypes: CylinderType[];
@@ -439,14 +453,33 @@ export async function getCurrentCylinderPrices(): Promise<{
     12: settings.default_price_12kg ?? 1700,
     17: settings.default_price_17kg ?? 2552,
     21: settings.default_price_21kg ?? 3152,
+    33: settings.default_price_33kg ?? 4850,
   };
 
-  const resolvedTypes: CylinderType[] = types.map((t) => ({
-    ...t,
-    default_price: getDefaultPriceForWeight(t.weight_kg, settings),
-    default_buying_price: getDefaultBuyingPriceForWeight(t.weight_kg, settings),
-    default_deposit: getDefaultDepositForWeight(t.weight_kg, settings),
-  }));
+  // Authoritative restriction: ONLY 4KG, 12KG, 17KG, 21KG, 33KG
+  const canonicalWeights = [4, 12, 17, 21, 33];
+  const resolvedTypes: CylinderType[] = canonicalWeights.map((w) => {
+    const matched = types.find((t) => Math.round(t.weight_kg) === w);
+    if (matched) {
+      return {
+        ...matched,
+        name: `${w}KG`,
+        weight_kg: w,
+        default_price: getDefaultPriceForWeight(w, settings),
+        default_buying_price: getDefaultBuyingPriceForWeight(w, settings),
+        default_deposit: getDefaultDepositForWeight(w, settings),
+      };
+    }
+    return {
+      id: `cyl-type-${w}kg`,
+      name: `${w}KG`,
+      weight_kg: w,
+      default_price: getDefaultPriceForWeight(w, settings),
+      default_buying_price: getDefaultBuyingPriceForWeight(w, settings),
+      default_deposit: getDefaultDepositForWeight(w, settings),
+      is_active: true,
+    };
+  });
 
   return {
     cylinderTypes: resolvedTypes,
@@ -838,6 +871,12 @@ export async function getCustomerDocuments(customerId: string): Promise<Customer
   return [];
 }
 
+export async function getDocumentSignedUrl(storagePath: string): Promise<string | null> {
+  assertBackendAccess();
+  const { data } = await supabase.storage.from('customer-documents').createSignedUrl(storagePath, 3600);
+  return data?.signedUrl || null;
+}
+
 export async function uploadCustomerDocument(customerId: string, file: File, docType: DocumentType): Promise<CustomerDocument> {
   assertBackendAccess();
   if (!customerId || !isValidUUID(customerId)) {
@@ -958,6 +997,19 @@ export async function getPurchases(params?: { customerId?: string; search?: stri
   return [];
 }
 
+export async function getPurchaseById(id: string): Promise<Purchase | null> {
+  assertBackendAccess();
+  if (!id || !isValidUUID(id)) return null;
+  const { data, error } = await supabase
+    .from('purchases')
+    .select('*, customer:customers(*), items:purchase_items(*, cylinder_type:cylinder_types(*)), payments(*), deposits(*)')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) throw new Error('Supabase query purchase by ID failed: ' + error.message);
+  return data as Purchase | null;
+}
+
 export async function createPurchase(payload: {
   customer_id: string;
   purchase_date: string;
@@ -968,6 +1020,9 @@ export async function createPurchase(payload: {
   payment_method?: 'cash' | 'upi' | 'bank_transfer' | 'other';
   delivery_status?: 'pending' | 'delivered';
   notes?: string;
+  empty_return_quantity?: number;
+  empty_return_type_id?: string;
+  empty_return_type_name?: string;
 }): Promise<Purchase> {
   assertBackendAccess();
 
@@ -985,13 +1040,23 @@ export async function createPurchase(payload: {
 
   const customer = await getCustomerById(payload.customer_id);
 
+  // Combine notes with empty return info if provided
+  let combinedNotes = (payload.notes || '').trim();
+  if (payload.empty_return_quantity && payload.empty_return_quantity > 0) {
+    const sizeClean = (payload.empty_return_type_name || '12KG').toUpperCase().replace(/\s+/g, '');
+    const emptyTag = `Empty - ${payload.empty_return_quantity} (${sizeClean})`;
+    if (!combinedNotes.includes(emptyTag)) {
+      combinedNotes = combinedNotes ? `${combinedNotes} | ${emptyTag}` : emptyTag;
+    }
+  }
+
   const { data: purData, error: purErr } = await supabase
     .from('purchases')
     .insert({
       customer_id: payload.customer_id,
       purchase_date: payload.purchase_date,
       total_gas_amount: totalGas,
-      notes: payload.notes,
+      notes: combinedNotes || null,
     })
     .select()
     .single();
@@ -1041,6 +1106,24 @@ export async function createPurchase(payload: {
       notes: 'Delivery for purchase ' + purData.purchase_code,
       items: itemsPrepared.map((i) => ({ cylinder_type_id: i.cylinder_type_id, quantity: i.quantity })),
     });
+
+    // Record returned empty cylinders into cylinder_movements if provided
+    if (payload.empty_return_quantity && payload.empty_return_quantity > 0) {
+      try {
+        const returnTypeId = payload.empty_return_type_id || itemsPrepared[0]?.cylinder_type_id;
+        if (returnTypeId) {
+          const typeName = payload.empty_return_type_name || '12 kg';
+          await supabase.from('cylinder_movements').insert({
+            customer_id: payload.customer_id,
+            movement_type: 'returned',
+            movement_date: new Date().toISOString(),
+            notes: `Returned ${payload.empty_return_quantity} cylinders (${typeName}): Refill return for purchase ${purData.purchase_code}`,
+          });
+        }
+      } catch (movErr) {
+        console.warn('Non-blocking: could not insert cylinder return movement:', movErr);
+      }
+    }
 
     await logAudit('Purchase Created', 'purchases', purData.id, { code: purData.purchase_code, totalGas });
     return purData as Purchase;

@@ -15,6 +15,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { MetricCard } from '../components/ui/MetricCard';
+import { AnimatedNumber } from '../components/ui/AnimatedNumber';
 import { CustomerFollowUpSystem } from '../components/crm/CustomerFollowUpSystem';
 import { CustomerFormModal } from '../components/customers/CustomerFormModal';
 import { AddPurchaseModal } from '../components/purchases/AddPurchaseModal';
@@ -128,11 +129,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
       };
     });
 
-    const maxVal = Math.max(...daysData.map((d) => d.value), 0);
-    return daysData.map((d) => ({
-      ...d,
-      height: maxVal > 0 && d.value > 0 ? `${Math.max(8, Math.round((d.value / maxVal) * 95))}%` : '4%',
-    }));
+    return daysData;
   };
 
   // Dynamically compute live monthly sales chart from Supabase purchases
@@ -166,17 +163,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
       }
     });
 
-    const maxVal = Math.max(...weeks.map((w) => w.value), 0);
-    return weeks.map((w) => ({
-      day: w.day,
-      value: w.value,
-      height: maxVal > 0 && w.value > 0 ? `${Math.max(8, Math.round((w.value / maxVal) * 95))}%` : '4%',
-    }));
+    return weeks;
   };
 
-  const weeklyBars = computeWeeklyChartData();
-  const monthlyBars = computeMonthlyChartData();
-  const chartBars = timeRange === 'week' ? weeklyBars : monthlyBars;
+  const rawWeeklyBars = computeWeeklyChartData();
+  const rawMonthlyBars = computeMonthlyChartData();
+  const rawChartBars = timeRange === 'week' ? rawWeeklyBars : rawMonthlyBars;
+
+  // Real numeric scaling calculations (prevents visual exaggeration and handles 0 values gracefully)
+  const maxVal = Math.max(...rawChartBars.map((d) => d.value), 0);
+  const yMax = maxVal === 0 ? 10 : Math.max(4, Math.ceil(maxVal / 4) * 4);
+  const yTicks = [
+    yMax,
+    Math.round(yMax * 0.75),
+    Math.round(yMax * 0.5),
+    Math.round(yMax * 0.25),
+    0,
+  ];
+
+  const chartBars = rawChartBars.map((d) => ({
+    ...d,
+    height: d.value > 0 ? `${Math.min(100, Math.round((d.value / yMax) * 100))}%` : '0%',
+  }));
 
   // Chart summary metrics computed from live database records
   const totalPeriodCyls = chartBars.reduce((sum, b) => sum + b.value, 0);
@@ -185,12 +193,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
   const bestPeriodText = bestPeriodObj && bestPeriodObj.value > 0 ? `${bestPeriodObj.day} (${bestPeriodObj.value} Cyls)` : 'None';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-w-0">
       {/* Hero Executive Welcome Section */}
       <div className="space-y-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#FFF1F2] dark:bg-red-950/30 border border-[#FECDD3] dark:border-red-900/40 rounded-full text-[11px] font-black text-[#C9151C] dark:text-red-400">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#FFF1F2] dark:bg-red-950/30 border border-[#FECDD3] dark:border-red-900/40 rounded-full text-xs font-bold text-[#C9151C] dark:text-red-400">
           <ShieldCheck className="w-3.5 h-3.5 text-[#E31B23]" />
-          <span>SRI SS GAS AGENCY · TIRUPPUR DISTRICT</span>
+          <span>Sri SS Gas Agency · Tiruppur District</span>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -199,7 +207,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
               {greeting}, Harikanth & Selvaraj
             </h1>
             <p className="text-xs sm:text-sm font-semibold text-[#525252] dark:text-[#A3A3A3] mt-1">
-              Here's what's happening with SRI SS GAS AGENCY today in Tiruppur District, Tamil Nadu.
+              Here's what's happening with Sri SS Gas Agency today in Tiruppur District, Tamil Nadu.
             </p>
           </div>
 
@@ -207,86 +215,92 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => handleOpenAction('customer')}
-              className="flex items-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] active:bg-[#A90F16] text-white text-xs font-black py-2.5 px-4 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 cursor-pointer min-h-[44px]"
+              className="flex items-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] active:bg-[#A90F16] text-white text-xs font-extrabold py-2.5 px-4 rounded-xl shadow-[0_4px_14px_rgba(227,27,35,0.2)] transition-all btn-press cursor-pointer min-h-[44px]"
             >
               <Plus className="w-4 h-4 text-white" />
               <span>Customer</span>
             </button>
             <button
               onClick={() => handleOpenAction('purchase')}
-              className="flex items-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#F8FAFC] dark:hover:bg-[#262626] text-[#111111] dark:text-white border border-[#E5E7EB] dark:border-[#2A2A2A] text-xs font-black py-2.5 px-4 rounded-[12px] shadow-2xs transition-all active:scale-98 cursor-pointer min-h-[44px]"
+              className="flex items-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#FAFAFA] dark:hover:bg-[#262626] text-[#111111] dark:text-white border border-[#E5E7EB] dark:border-[#2A2A2A] text-xs font-bold py-2.5 px-4 rounded-xl shadow-2xs transition-all btn-press cursor-pointer min-h-[44px]"
             >
-              <Plus className="w-4 h-4 text-[#E31B23]" />
+              <Plus className="w-4 h-4 text-[#525252] dark:text-[#D4D4D4]" />
               <span>Sale</span>
             </button>
             <button
               onClick={() => handleOpenAction('payment')}
-              className="flex items-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#F8FAFC] dark:hover:bg-[#262626] text-[#111111] dark:text-white border border-[#E5E7EB] dark:border-[#2A2A2A] text-xs font-black py-2.5 px-4 rounded-[12px] shadow-2xs transition-all active:scale-98 cursor-pointer min-h-[44px]"
+              className="flex items-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#FAFAFA] dark:hover:bg-[#262626] text-[#111111] dark:text-white border border-[#E5E7EB] dark:border-[#2A2A2A] text-xs font-bold py-2.5 px-4 rounded-xl shadow-2xs transition-all btn-press cursor-pointer min-h-[44px]"
             >
-              <Plus className="w-4 h-4 text-[#E31B23]" />
+              <Plus className="w-4 h-4 text-[#525252] dark:text-[#D4D4D4]" />
               <span>Payment</span>
             </button>
             <Link
               to="/supplier-purchases"
-              className="flex items-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#F8FAFC] dark:hover:bg-[#262626] text-[#111111] dark:text-[#D4D4D4] border border-[#E5E7EB] dark:border-[#2A2A2A] text-xs font-bold py-2.5 px-4 rounded-[12px] shadow-2xs transition-all min-h-[44px]"
+              className="flex items-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#FAFAFA] dark:hover:bg-[#262626] text-[#111111] dark:text-white border border-[#E5E7EB] dark:border-[#2A2A2A] text-xs font-bold py-2.5 px-4 rounded-xl shadow-2xs transition-all btn-press min-h-[44px]"
             >
-              <Building2 className="w-3.5 h-3.5 text-[#E31B23]" />
+              <Plus className="w-4 h-4 text-[#525252] dark:text-[#D4D4D4]" />
               <span>Supplier Bill</span>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* 6 Clean KPI Metric Cards (100% Supabase-Authoritative) */}
+      {/* 6 Clean KPI Metric Cards (100% Supabase-Authoritative with Staggered Entrance) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard
           title="Total Customers"
-          value={stats.totalCustomers}
+          value={<AnimatedNumber value={stats.totalCustomers} />}
           subtitle="Registered gas accounts"
           icon={<Users className="w-5 h-5" />}
           variant="brand"
+          className="animate-card-enter stagger-1"
         />
         <MetricCard
           title="Active Customers"
-          value={stats.activeCustomers}
+          value={<AnimatedNumber value={stats.activeCustomers} />}
           subtitle="Active refill accounts"
           icon={<CheckCircle2 className="w-5 h-5" />}
           variant="green"
+          className="animate-card-enter stagger-2"
         />
         <MetricCard
           title="Today's Deliveries"
-          value={stats.todaysDeliveries}
+          value={<AnimatedNumber value={stats.todaysDeliveries} />}
           subtitle="Field dispatches today"
           icon={<Truck className="w-5 h-5" />}
           variant="cyan"
+          className="animate-card-enter stagger-3"
         />
         <MetricCard
           title="Available Stock"
-          value={`${stats.availableCylinders} Cyls`}
+          value={<AnimatedNumber value={stats.availableCylinders} suffix=" Cyls" />}
           subtitle="Filled ready stock"
           icon={<Database className="w-5 h-5" />}
           variant="green"
+          className="animate-card-enter stagger-4"
         />
         <MetricCard
           title="Customer Balance"
-          value={`₹${stats.outstandingPayments.toLocaleString('en-IN')}`}
+          value={<AnimatedNumber value={stats.outstandingPayments} prefix="₹" />}
           subtitle="Customer receivables"
           icon={<CreditCard className="w-5 h-5" />}
           variant="red"
+          className="animate-card-enter stagger-5"
         />
         <MetricCard
           title="Supplier Balance"
-          value={`₹${stats.supplierOutstanding.toLocaleString('en-IN')}`}
+          value={<AnimatedNumber value={stats.supplierOutstanding} prefix="₹" />}
           subtitle="SUPERGAS payables"
           icon={<Building2 className="w-5 h-5" />}
           variant="orange"
+          className="animate-card-enter stagger-6"
         />
       </div>
 
       {/* Sales Overview Chart + Real Cylinder Stock Snapshot */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Sales Velocity Chart (100% Dynamic from Supabase Purchases) */}
-        <div className="lg:col-span-2 saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 rounded-2xl space-y-6 flex flex-col justify-between shadow-xs">
+        <div className="lg:col-span-7 xl:col-span-8 saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 rounded-2xl space-y-6 flex flex-col justify-between shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-black text-[#111111] dark:text-white tracking-tight flex items-center gap-2">
@@ -325,12 +339,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
           {/* Plot Area with Y-axis & SUPERGAS Red bars */}
           <div className="relative w-full h-52 flex items-end gap-3 pt-4 pb-2">
             {/* Y-axis Labels & Grid Lines */}
-            <div className="flex flex-col justify-between h-full text-[10px] font-bold text-[#737373] pr-2 select-none">
-              <span>Max</span>
-              <span>75%</span>
-              <span>50%</span>
-              <span>25%</span>
-              <span>0</span>
+            <div className="flex flex-col justify-between h-full text-xs font-semibold text-[#737373] pr-2 select-none min-w-[28px] text-right">
+              {yTicks.map((t, idx) => (
+                <span key={idx}>{t}</span>
+              ))}
             </div>
 
             {/* Bars Area with Horizontal Grid Lines */}
@@ -344,64 +356,70 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
                 <div className="w-full h-0"></div>
               </div>
 
-              {/* Red Bars */}
+              {/* Red Bars (Zero sales = 0 height, no nubs) */}
               {chartBars.map((item) => (
                 <div key={item.day} className="relative z-10 flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                  <div
-                    className={`w-full max-w-[48px] ${
-                      item.value > 0 ? 'bg-[#E31B23] hover:bg-[#C9151C]' : 'bg-[#E5E7EB] dark:bg-[#2A2A2A]'
-                    } rounded-t-md transition-all duration-300 relative group-hover:scale-y-[1.02] origin-bottom shadow-2xs`}
-                    style={{ height: item.height }}
-                  >
-                    {/* Hover tooltip */}
-                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-[#111111] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow whitespace-nowrap pointer-events-none z-20">
-                      {item.value} Cyls
+                  {item.value > 0 ? (
+                    <div
+                      className="w-full max-w-[48px] bg-[#E31B23] hover:bg-[#C9151C] rounded-t-md transition-all duration-300 relative group-hover:scale-y-[1.02] origin-bottom shadow-2xs"
+                      style={{ height: item.height }}
+                    >
+                      {/* Hover tooltip */}
+                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-[#111111] text-white text-xs font-bold px-2 py-0.5 rounded shadow whitespace-nowrap pointer-events-none z-20">
+                        {item.value} Cyls
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-[11px] font-bold text-[#737373] dark:text-[#A3A3A3] mt-1">{item.day}</span>
+                  ) : (
+                    <div className="w-full max-w-[48px] h-0 relative">
+                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-[#111111] text-white text-xs font-bold px-2 py-0.5 rounded shadow whitespace-nowrap pointer-events-none z-20">
+                        0 Cyls
+                      </div>
+                    </div>
+                  )}
+                  <span className="text-xs font-semibold text-[#737373] dark:text-[#A3A3A3] mt-1">{item.day}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Chart Summary Sub-Bar with Live Aggregates */}
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#F1F5F9] dark:border-[#262626]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4 border-t border-[#F1F5F9] dark:border-[#262626]">
             <div>
-              <p className="text-[11px] font-bold text-[#737373]">
+              <p className="text-xs font-bold text-[#737373]">
                 {timeRange === 'week' ? 'Total This Week' : 'Total This Month'}
               </p>
-              <p className="text-sm sm:text-base font-black text-[#E31B23] mt-0.5">{totalPeriodCyls} Cyls</p>
-              <p className="text-[10px] font-semibold text-[#737373]">Realized cylinder sales</p>
+              <p className="text-sm sm:text-base font-black text-[#111111] dark:text-white mt-0.5">{totalPeriodCyls} Cyls</p>
+              <p className="text-xs font-medium text-[#737373]">Realized cylinder sales</p>
             </div>
             <div>
-              <p className="text-[11px] font-bold text-[#737373]">
+              <p className="text-xs font-bold text-[#737373]">
                 {timeRange === 'week' ? 'Daily Average' : 'Weekly Average'}
               </p>
-              <p className="text-sm sm:text-base font-black text-[#E31B23] mt-0.5">{avgPeriodCyls} Cyls</p>
-              <p className="text-[10px] font-semibold text-[#737373]">Velocity per active period</p>
+              <p className="text-sm sm:text-base font-black text-[#111111] dark:text-white mt-0.5">{avgPeriodCyls} Cyls</p>
+              <p className="text-xs font-medium text-[#737373]">Velocity per active period</p>
             </div>
             <div>
-              <p className="text-[11px] font-bold text-[#737373]">
+              <p className="text-xs font-bold text-[#737373]">
                 {timeRange === 'week' ? 'Best Day' : 'Best Week'}
               </p>
-              <p className="text-sm sm:text-base font-black text-[#E31B23] mt-0.5 truncate">{bestPeriodText}</p>
-              <p className="text-[10px] font-semibold text-[#737373]">Highest cylinder volume</p>
+              <p className="text-sm sm:text-base font-black text-[#111111] dark:text-white mt-0.5 truncate">{bestPeriodText}</p>
+              <p className="text-xs font-medium text-[#737373]">Highest cylinder volume</p>
             </div>
           </div>
         </div>
 
         {/* Real Inventory Stock Snapshot Panel (100% Dynamic from Supabase Stock) */}
-        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 rounded-2xl space-y-4 flex flex-col justify-between shadow-xs">
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-5 xl:col-span-4 saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 rounded-2xl space-y-4 shadow-xs">
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#262626] pb-3">
             <h2 className="text-base font-black text-[#111111] dark:text-white tracking-tight flex items-center gap-2">
               <Database className="w-5 h-5 text-[#E31B23]" /> Inventory Stock
             </h2>
-            <Link to="/cylinders" className="text-xs font-black text-[#E31B23] hover:underline flex items-center gap-1">
+            <Link to="/cylinders" className="text-xs font-bold text-[#E31B23] hover:underline flex items-center gap-1">
               View All <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {stockSummaries.length === 0 ? (
               <div className="py-8 text-center text-xs font-semibold text-[#737373]">
                 Loading inventory stock...
@@ -409,17 +427,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
             ) : (
               stockSummaries.map((stock) => {
                 const percentVal = stock.total > 0 ? Math.min(100, Math.round((stock.available / stock.total) * 100)) : 0;
+                const isOutOfStock = stock.available === 0;
+                const isLowStock = stock.available > 0 && stock.available <= 5;
                 return (
-                  <div key={stock.size} className="space-y-1.5 pb-3 border-b border-[#F1F5F9] dark:border-[#262626] last:border-none last:pb-0">
-                    <div className="flex items-center justify-between text-xs font-black text-[#111111] dark:text-white">
+                  <div key={stock.size} className="p-3 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#111111] dark:text-white">
                       <span>{stock.size}</span>
-                      <span className="text-[#059669] font-black">{stock.available} Available</span>
+                      {isOutOfStock ? (
+                        <span className="text-[#DC2626] dark:text-red-400 font-extrabold">
+                          0 Available (Out of Stock)
+                        </span>
+                      ) : isLowStock ? (
+                        <span className="text-[#D97706] dark:text-amber-400 font-extrabold">
+                          {stock.available} Available (Low Stock)
+                        </span>
+                      ) : (
+                        <span className="text-[#059669] dark:text-emerald-400 font-extrabold">
+                          {stock.available} Available
+                        </span>
+                      )}
                     </div>
                     {/* Thin progress track */}
-                    <div className="w-full bg-[#F1F5F9] dark:bg-[#262626] h-2 rounded-full overflow-hidden">
-                      <div className="bg-[#E31B23] h-full rounded-full transition-all duration-500" style={{ width: `${percentVal}%` }}></div>
+                    <div className="w-full bg-[#E5E7EB] dark:bg-[#2A2A2A] h-2 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          isOutOfStock ? 'bg-transparent' : isLowStock ? 'bg-[#D97706]' : 'bg-[#059669]'
+                        }`}
+                        style={{ width: `${percentVal}%` }}
+                      ></div>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] font-bold text-[#737373] pt-0.5">
+                    <div className="flex items-center justify-between text-xs font-semibold text-[#737373] pt-0.5">
                       <span className="text-[#D97706]">{stock.empty} Empty</span>
                       <span>{stock.withCustomer} With Customers</span>
                     </div>
@@ -442,7 +479,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
               <h2 className="text-base font-black text-[#111111] dark:text-white tracking-tight flex items-center gap-2">
                 Customer Refill Reminders & Messaging Hub
               </h2>
-              <p className="text-[11px] font-semibold text-[#737373]">
+              <p className="text-xs font-semibold text-[#737373]">
                 Automated cylinder replenishment tracker (4kg 14d, 12kg 30d, 17kg 60d, 21kg 60d)
               </p>
             </div>
@@ -450,7 +487,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
 
           <Link
             to="/messages"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#E31B23] hover:bg-[#C9151C] text-white text-xs font-black rounded-xl transition-all shadow-xs shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#E31B23] hover:bg-[#C9151C] text-white text-xs font-bold rounded-xl transition-all shadow-xs shrink-0"
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span>Open Messaging Center</span>
@@ -458,37 +495,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
-            <span className="text-[10px] font-bold text-[#737373] uppercase block">Due Today / Soon</span>
-            <span className="text-xl font-black text-[#DC2626]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-3.5 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
+            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">Due Today / Soon</span>
+            <span className="text-2xl font-black text-[#DC2626] mt-0.5 block">
               {reminderCycles.filter((c) => c.reminder_status === 'due').length}
             </span>
-            <span className="text-[10px] text-[#737373] block mt-0.5">Ready for refill</span>
+            <span className="text-xs text-[#737373] block mt-0.5">Ready for refill</span>
           </div>
 
-          <div className="p-3 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
-            <span className="text-[10px] font-bold text-[#737373] uppercase block">Overdue</span>
-            <span className="text-xl font-black text-amber-600">
+          <div className="p-3.5 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
+            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">Overdue</span>
+            <span className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-0.5 block">
               {reminderCycles.filter((c) => c.reminder_status === 'overdue').length}
             </span>
-            <span className="text-[10px] text-[#737373] block mt-0.5">Past expected cycle</span>
+            <span className="text-xs text-[#737373] block mt-0.5">Past expected cycle</span>
           </div>
 
-          <div className="p-3 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
-            <span className="text-[10px] font-bold text-[#737373] uppercase block">Upcoming</span>
-            <span className="text-xl font-black text-[#16A34A]">
+          <div className="p-3.5 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
+            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">Upcoming</span>
+            <span className="text-2xl font-black text-[#16A34A] dark:text-emerald-400 mt-0.5 block">
               {reminderCycles.filter((c) => c.reminder_status === 'upcoming').length}
             </span>
-            <span className="text-[10px] text-[#737373] block mt-0.5">Within lead window</span>
+            <span className="text-xs text-[#737373] block mt-0.5">Within lead window</span>
           </div>
 
-          <div className="p-3 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
-            <span className="text-[10px] font-bold text-[#737373] uppercase block">Monitored Cycles</span>
-            <span className="text-xl font-black text-[#111111] dark:text-white">
+          <div className="p-3.5 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
+            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">Monitored Cycles</span>
+            <span className="text-2xl font-black text-[#111111] dark:text-white mt-0.5 block">
               {reminderCycles.length}
             </span>
-            <span className="text-[10px] text-[#737373] block mt-0.5">Active customer accounts</span>
+            <span className="text-xs text-[#737373] block mt-0.5">Active customer accounts</span>
           </div>
         </div>
       </div>

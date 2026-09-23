@@ -340,7 +340,7 @@ export const Reports: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto w-full min-w-0">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -358,7 +358,7 @@ export const Reports: React.FC = () => {
             <button
               onClick={handleExportPurchasePDF}
               disabled={filteredPurchases.length === 0 || exportingPdf}
-              className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.2)] transition-all disabled:opacity-50 active:scale-98 shrink-0"
+              className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4 py-2.5 min-h-[44px] rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.2)] transition-all disabled:opacity-50 active:scale-98 shrink-0"
               title="Generate Professional A4 Purchase Report PDF"
             >
               <FileText className="w-4 h-4" />
@@ -369,69 +369,69 @@ export const Reports: React.FC = () => {
           <button
             onClick={handleExportCSV}
             disabled={currentDataList.length === 0}
-            className="flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#F5F5F5] dark:hover:bg-[#262626] text-[#171717] dark:text-white border border-[#E5E5E5] dark:border-[#2A2A2A] font-black text-xs px-4 py-2.5 rounded-[12px] shadow-xs transition-all disabled:opacity-50 active:scale-98 shrink-0"
+            className="flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#F5F5F5] dark:hover:bg-[#262626] text-[#171717] dark:text-white border border-[#E5E5E5] dark:border-[#2A2A2A] font-black text-xs px-4 py-2.5 min-h-[44px] rounded-[12px] shadow-xs transition-all disabled:opacity-50 active:scale-98 shrink-0"
           >
             <Download className="w-4 h-4 text-[#737373]" /> Export CSV
           </button>
         </div>
       </div>
 
-      {/* Segregated Financial & Period Overview KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      {/* Top 4 Performance Badges */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <div className="saas-card p-4 rounded-2xl bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs">
-          <span className="text-[10px] font-bold text-[#737373] uppercase tracking-wider block">
+          <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">
             Period Gas Sales
           </span>
           <span className="text-xl font-black text-[#111111] dark:text-white mt-1 block">
             ₹{activePeriodMetrics.gasRevenue.toLocaleString('en-IN')}
           </span>
-          <span className="text-[10px] font-semibold text-[#16A34A] block mt-0.5">
+          <span className="text-[11px] font-semibold text-[#16A34A] block mt-0.5">
             {activePeriodMetrics.totalPurchases} refill orders logged
           </span>
         </div>
 
         <div className="saas-card p-4 rounded-2xl bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs">
-          <span className="text-[10px] font-bold text-[#737373] uppercase tracking-wider block">
+          <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">
             Active Buyers
           </span>
           <span className="text-xl font-black text-[#4F46E5] mt-1 block">
             {activePeriodMetrics.uniquePurchasingCustomers} Customers
           </span>
-          <span className="text-[10px] font-semibold text-[#737373] block mt-0.5">
+          <span className="text-[11px] font-semibold text-[#737373] block mt-0.5">
             Avg: ₹{activePeriodMetrics.avgPurchase.toLocaleString('en-IN')} / purchase
           </span>
         </div>
 
         <div className="saas-card p-4 rounded-2xl bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs">
-          <span className="text-[10px] font-bold text-[#737373] uppercase tracking-wider block">
+          <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">
             Cash & UPI Collected
           </span>
           <span className="text-xl font-black text-[#16A34A] mt-1 block">
             ₹{activePeriodMetrics.collections.toLocaleString('en-IN')}
           </span>
-          <span className="text-[10px] font-semibold text-[#737373] block mt-0.5">
+          <span className="text-[11px] font-semibold text-[#737373] block mt-0.5">
             Receipts in {periodLabel}
           </span>
         </div>
 
         <div className="saas-card p-4 rounded-2xl bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs">
-          <span className="text-[10px] font-bold text-[#737373] uppercase tracking-wider block">
+          <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">
             Supplier Stock Cost
           </span>
           <span className="text-xl font-black text-[#DC2626] mt-1 block">
             ₹{activePeriodMetrics.supplierCosts.toLocaleString('en-IN')}
           </span>
-          <span className="text-[10px] font-semibold text-[#737373] block mt-0.5">
+          <span className="text-[11px] font-semibold text-[#737373] block mt-0.5">
             Plant inventory purchases
           </span>
         </div>
       </div>
 
       {/* Controls & Filter Bar */}
-      <div className="saas-card bg-white dark:bg-[#171717] p-4 rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs space-y-3">
+      <div className="saas-card bg-white dark:bg-[#171717] p-4 rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs space-y-3 w-full min-w-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Report Category Switcher */}
-          <div className="flex items-center gap-1.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] p-1 rounded-xl overflow-x-auto border border-[#E5E5E5] dark:border-[#2A2A2A]">
+          <div className="flex items-center gap-1.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] p-1 rounded-xl overflow-x-auto w-full max-w-full scrollbar-none border border-[#E5E5E5] dark:border-[#2A2A2A]">
             {[
               { id: 'sales', label: 'Gas Sales & Purchases', icon: ShoppingBag },
               { id: 'customers', label: 'Customer Registry', icon: Users },
@@ -445,9 +445,9 @@ export const Reports: React.FC = () => {
                 <button
                   key={t.id}
                   onClick={() => setReportType(t.id as any)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black whitespace-nowrap transition-all border ${
+                  className={`flex items-center gap-1.5 px-3.5 py-2 min-h-[44px] rounded-lg text-xs font-black whitespace-nowrap transition-all border shrink-0 ${
                     reportType === t.id
-                      ? 'bg-[#FFF1F2] text-[#C9151C] border-[#FFD6D8] shadow-2xs'
+                      ? 'bg-[#FFF1F2] dark:bg-[#3B1214] text-[#C9151C] dark:text-[#FF8085] border-[#FFD6D8] dark:border-[#5C1D24] shadow-2xs'
                       : 'text-[#404040] dark:text-[#D4D4D4] border-transparent hover:text-[#171717] dark:hover:text-white'
                   }`}
                 >
@@ -459,12 +459,12 @@ export const Reports: React.FC = () => {
           </div>
 
           {/* Date Filter Dropdown */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Calendar className="w-4 h-4 text-[#737373] shrink-0" />
             <select
               value={dateRange}
               onChange={(e: any) => setDateRange(e.target.value)}
-              className="px-3.5 py-2 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#171717] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#E31B23]/20"
+              className="px-3.5 py-2 min-h-[44px] bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#171717] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#E31B23]/20"
             >
               <option value="this_month">This Month ({new Date().toLocaleDateString('en-IN', { month: 'short' })})</option>
               <option value="this_week">This Week</option>
@@ -503,11 +503,11 @@ export const Reports: React.FC = () => {
           <div className="flex items-center gap-3">
             <AgencyLogo size="sm" />
             <div>
-              <h3 className="text-xs font-black text-[#171717] dark:text-white uppercase tracking-wider">
-                Official Business Statement — {reportType.toUpperCase()} ({currentDataList.length} Records)
+              <h3 className="text-xs font-black text-[#171717] dark:text-white">
+                Official Business Statement — {reportType.charAt(0).toUpperCase() + reportType.slice(1)} ({currentDataList.length} Records)
               </h3>
-              <p className="text-[10px] font-semibold text-[#737373]">
-                SRI SS GAS AGENCY · TIRUPPUR DISTRICT · PERIOD: {periodLabel.toUpperCase()}
+              <p className="text-[11px] font-semibold text-[#737373]">
+                Sri SS Gas Agency · Tiruppur District · Period: {periodLabel}
               </p>
             </div>
           </div>
@@ -543,11 +543,11 @@ export const Reports: React.FC = () => {
             <p className="text-[11px] text-[#737373]">Try selecting "All Historical Records" or adjusting the date range.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full max-w-full min-w-0">
             {/* 1. SALES REPORT TABLE */}
             {reportType === 'sales' && (
               <table className="w-full text-left text-xs min-w-[760px]">
-                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] uppercase text-[10px] font-extrabold tracking-wider border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
+                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] text-xs font-bold border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
                   <tr>
                     <th className="py-3.5 px-4 w-12">#</th>
                     <th className="py-3.5 px-4">Purchase Code</th>
@@ -606,7 +606,7 @@ export const Reports: React.FC = () => {
             {/* 2. CUSTOMER REGISTRY TABLE */}
             {reportType === 'customers' && (
               <table className="w-full text-left text-xs min-w-[760px]">
-                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] uppercase text-[10px] font-extrabold tracking-wider border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
+                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] text-xs font-bold border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
                   <tr>
                     <th className="py-3.5 px-4 w-12">#</th>
                     <th className="py-3.5 px-4">Code</th>
@@ -649,7 +649,7 @@ export const Reports: React.FC = () => {
             {/* 3. PAYMENTS TABLE */}
             {reportType === 'payments' && (
               <table className="w-full text-left text-xs min-w-[700px]">
-                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] uppercase text-[10px] font-extrabold tracking-wider border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
+                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] text-xs font-bold border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
                   <tr>
                     <th className="py-3.5 px-4 w-12">#</th>
                     <th className="py-3.5 px-4">Receipt ID</th>
@@ -682,7 +682,7 @@ export const Reports: React.FC = () => {
             {/* 4. DEPOSITS TABLE */}
             {reportType === 'deposits' && (
               <table className="w-full text-left text-xs min-w-[700px]">
-                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] uppercase text-[10px] font-extrabold tracking-wider border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
+                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] text-xs font-bold border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
                   <tr>
                     <th className="py-3.5 px-4 w-12">#</th>
                     <th className="py-3.5 px-4">Deposit ID</th>
@@ -715,7 +715,7 @@ export const Reports: React.FC = () => {
             {/* 5. SUPPLIER PURCHASES TABLE */}
             {reportType === 'supplier' && (
               <table className="w-full text-left text-xs min-w-[760px]">
-                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] uppercase text-[10px] font-extrabold tracking-wider border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
+                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] text-xs font-bold border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
                   <tr>
                     <th className="py-3.5 px-4 w-12">#</th>
                     <th className="py-3.5 px-4">Purchase Code</th>
@@ -749,7 +749,7 @@ export const Reports: React.FC = () => {
             {/* 6. DELIVERIES TABLE */}
             {reportType === 'deliveries' && (
               <table className="w-full text-left text-xs min-w-[700px]">
-                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] uppercase text-[10px] font-extrabold tracking-wider border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
+                <thead className="bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] text-xs font-bold border-b border-[#E5E5E5] dark:border-[#2A2A2A]">
                   <tr>
                     <th className="py-3.5 px-4 w-12">#</th>
                     <th className="py-3.5 px-4">Delivery Code</th>

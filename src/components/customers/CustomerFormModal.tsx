@@ -6,6 +6,7 @@ import {
   getCylinderTypes,
   uploadCustomerDocument,
   getCustomerDocuments,
+  getDocumentSignedUrl,
   deleteCustomerDocument,
 } from '../../lib/db';
 import { useToast } from '../../context/ToastContext';
@@ -25,6 +26,7 @@ import {
   Trash2,
   Upload,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 
 interface CustomerFormModalProps {
@@ -80,7 +82,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const [docType, setDocType] = useState<DocumentType>('aadhaar');
   const [existingDocuments, setExistingDocuments] = useState<CustomerDocument[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [docsError, setDocsError] = useState<string | null>(null);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
+  const [viewingDocId, setViewingDocId] = useState<string | null>(null);
 
   // Operational State
   const [cylinderTypes, setCylinderTypes] = useState<CylinderType[]>([]);
@@ -92,13 +96,35 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
   const loadExistingDocuments = async (customerId: string) => {
     setLoadingDocs(true);
+    setDocsError(null);
     try {
       const docs = await getCustomerDocuments(customerId);
       setExistingDocuments(docs);
     } catch (err: any) {
       console.error('Failed to load existing customer documents:', err);
+      setDocsError(err.message || 'Failed to load customer documents from storage');
     } finally {
       setLoadingDocs(false);
+    }
+  };
+
+  const handleViewDocument = async (doc: CustomerDocument) => {
+    if (doc.signed_url) {
+      window.open(doc.signed_url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    setViewingDocId(doc.id);
+    try {
+      const freshUrl = await getDocumentSignedUrl(doc.storage_path);
+      if (freshUrl) {
+        window.open(freshUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        showError('Unable to generate secure preview link for this document.');
+      }
+    } catch (err: any) {
+      showError(err.message || 'Failed to open document');
+    } finally {
+      setViewingDocId(null);
     }
   };
 
@@ -340,8 +366,8 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto backdrop-enter">
+      <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden modal-enter">
         {/* Modal Header */}
         <div className="bg-white dark:bg-[#171717] text-[#171717] dark:text-white px-6 py-4 flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626]">
           <div>
@@ -804,12 +830,26 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 </div>
 
                 {loadingDocs ? (
-                  <div className="p-4 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] text-center text-xs text-[#737373] flex items-center justify-center gap-2">
+                  <div className="p-5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] text-center text-xs text-[#737373] flex items-center justify-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin text-[#E31B23]" />
-                    <span>Loading customer documents...</span>
+                    <span className="font-semibold">Loading customer documents from vault...</span>
+                  </div>
+                ) : docsError ? (
+                  <div className="p-4 bg-[#FFF1F2] dark:bg-red-950/30 rounded-xl border border-[#FFD6D8] dark:border-red-900/40 text-center text-xs text-[#DC2626] dark:text-red-400 space-y-2">
+                    <div className="flex items-center justify-center gap-1.5 font-bold">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{docsError}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => customerToEdit && loadExistingDocuments(customerToEdit.id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E31B23] text-white text-xs font-bold rounded-lg hover:bg-[#C9151C] transition-colors"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Retry Fetching Documents
+                    </button>
                   </div>
                 ) : existingDocuments.length === 0 ? (
-                  <div className="p-4 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] text-center text-xs text-[#737373]">
+                  <div className="p-5 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] text-center text-xs text-[#737373]">
                     <p className="font-bold text-[#525252] dark:text-[#D4D4D4]">No documents uploaded yet.</p>
                     <p className="text-[11px] text-[#737373] mt-0.5">Attach Aadhaar or verification files below.</p>
                   </div>
@@ -836,7 +876,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                                 {doc.original_filename}
                               </span>
                               <span
-                                className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase border shrink-0 ${
+                                className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border shrink-0 ${
                                   doc.document_type === 'aadhaar'
                                     ? 'bg-[#F0FDF4] text-[#16A34A] border-emerald-200/60'
                                     : doc.document_type === 'gst' || doc.document_type === 'business_reg'
@@ -854,7 +894,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                                  doc.document_type === 'license' ? 'License' : 'Other Document'}
                               </span>
                             </div>
-                            <p className="text-[10px] text-[#737373] mt-0.5">
+                            <p className="text-[11px] text-[#737373] mt-0.5">
                               Uploaded {new Date(doc.uploaded_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                               {doc.file_size ? ` • ${(doc.file_size / 1024).toFixed(0)} KB` : ''}
                             </p>
@@ -862,20 +902,20 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                         </div>
 
                         <div className="flex items-center gap-1.5 shrink-0">
-                          {doc.signed_url ? (
-                            <a
-                              href={doc.signed_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#262626] border border-[#E5E5E5] dark:border-[#333] hover:border-[#E31B23] text-[#171717] dark:text-white hover:text-[#E31B23] text-[11px] font-bold rounded-lg transition-colors shadow-2xs"
-                              title="View document in new tab"
-                            >
-                              <ExternalLink className="w-3 h-3 text-[#E31B23]" />
-                              <span>View</span>
-                            </a>
-                          ) : (
-                            <span className="text-[10px] text-[#737373] font-bold">Encrypted</span>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleViewDocument(doc)}
+                            disabled={viewingDocId === doc.id}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#262626] border border-[#E5E5E5] dark:border-[#333] hover:border-[#E31B23] text-[#171717] dark:text-white hover:text-[#E31B23] text-xs font-bold rounded-lg transition-colors shadow-2xs disabled:opacity-50"
+                            title="View document"
+                          >
+                            {viewingDocId === doc.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E31B23]" />
+                            ) : (
+                              <ExternalLink className="w-3.5 h-3.5 text-[#E31B23]" />
+                            )}
+                            <span>View</span>
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteExistingDoc(doc)}
@@ -902,9 +942,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               <label className="block text-xs font-black text-[#171717] dark:text-white flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Upload className="w-3.5 h-3.5 text-[#E31B23]" />
-                  {isEditing ? 'Upload New Document' : 'Upload Document'}
+                  {isEditing ? 'Upload Additional Document' : 'Upload Document'}
                 </span>
-                <span className="text-[10px] font-semibold text-[#737373]">Private Storage (PDF, JPG, JPEG, PNG, WEBP)</span>
+                <span className="text-[11px] font-semibold text-[#737373]">Private Vault (PDF, JPG, JPEG, PNG, WEBP)</span>
               </label>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <select
@@ -924,9 +964,15 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                   type="file"
                   accept="image/jpeg,image/png,image/webp,application/pdf,.pdf,.jpg,.jpeg,.png,.webp"
                   onChange={(e) => setDocFile(e.target.files ? e.target.files[0] : null)}
-                  className="block w-full text-xs text-[#525252] dark:text-[#D4D4D4] file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#FFF1F2] file:text-[#C9151C] hover:file:bg-[#FFD6D8]"
+                  className="block w-full text-xs text-[#525252] dark:text-[#D4D4D4] file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#FFF1F2] file:text-[#C9151C] hover:file:bg-[#FFD6D8]"
                 />
               </div>
+              {docFile && (
+                <div className="flex items-center gap-2 p-2 bg-[#F0FDF4] dark:bg-emerald-950/30 text-[#16A34A] text-xs font-bold rounded-lg border border-emerald-200/60">
+                  <FileText className="w-3.5 h-3.5 shrink-0" />
+                  <span>Ready to attach: <strong>{docFile.name}</strong> ({(docFile.size / 1024).toFixed(0)} KB)</span>
+                </div>
+              )}
               {isEditing && (
                 <p className="text-[11px] text-[#737373]">
                   Attach an additional document. Existing documents will remain intact.
@@ -940,14 +986,14 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A]"
+              className="px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black text-white bg-[#E31B23] hover:bg-[#C9151C] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 min-h-[44px] rounded-xl text-xs font-black text-white bg-[#E31B23] hover:bg-[#C9151C] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               {submitting ? 'Saving Customer...' : isEditing ? 'Update Customer' : 'Save Customer'}

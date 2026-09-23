@@ -104,6 +104,12 @@
     --purple-soft: rgba(168, 85, 247, 0.12);
   }
   
+  html, body, #root {
+    max-width: 100%;
+    overflow-x: clip;
+    min-width: 0;
+  }
+  
   body {
     font-family: var(--font-sans);
     background-color: var(--background);
@@ -161,7 +167,7 @@
 .saas-card {
   background-color: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
   transition: transform var(--duration-normal) var(--ease-out-smooth), box-shadow var(--duration-normal) var(--ease-out-smooth), border-color var(--duration-normal) var(--ease-out-smooth);
 }
@@ -195,12 +201,210 @@
   background: rgba(115, 115, 115, 0.5);
 }
 
+/* ==========================================================
+   CENTRALIZED PREMIUM MOTION SYSTEM (60FPS GPU ACCELERATED)
+   ========================================================== */
+
+/* Page Transitions */
+@keyframes pageFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-enter {
+  animation: pageFadeSlideIn 240ms var(--ease-out-smooth) both;
+  will-change: opacity, transform;
+}
+
+/* Card Entrances & Staggers */
+@keyframes cardFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-card-enter {
+  animation: cardFadeSlideIn 220ms var(--ease-out-smooth) both;
+  will-change: opacity, transform;
+}
+
+.stagger-1 { animation-delay: 0ms; }
+.stagger-2 { animation-delay: 40ms; }
+.stagger-3 { animation-delay: 80ms; }
+.stagger-4 { animation-delay: 120ms; }
+.stagger-5 { animation-delay: 160ms; }
+.stagger-6 { animation-delay: 200ms; }
+
+/* Modal & Dialog Animations */
+@keyframes modalDialogEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-enter {
+  animation: modalDialogEnter 240ms var(--ease-out-smooth) both;
+  will-change: opacity, transform;
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.backdrop-enter {
+  animation: backdropFadeIn 200ms ease-out both;
+  will-change: opacity;
+}
+
+/* Drawer Animations */
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-enter {
+  animation: drawerSlideIn 260ms var(--ease-out-smooth) both;
+  will-change: transform;
+}
+
+/* Dropdown & Popover Animations */
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.dropdown-enter {
+  animation: dropdownSlideIn 160ms var(--ease-out-smooth) both;
+  will-change: opacity, transform;
+}
+
+/* Table Row Entrances */
+@keyframes rowFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.table-row-enter {
+  animation: rowFadeSlideIn 180ms var(--ease-out-smooth) both;
+  will-change: opacity, transform;
+}
+
+/* Toast Animations */
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-enter {
+  animation: toastSlideIn 220ms var(--ease-out-smooth) both;
+  will-change: opacity, transform;
+}
+
+/* Shimmer Loading State */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 231, 235, 0.6) 25%,
+    rgba(243, 244, 246, 0.9) 37%,
+    rgba(229, 231, 235, 0.6) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(38, 38, 38, 0.6) 25%,
+    rgba(50, 50, 50, 0.9) 37%,
+    rgba(38, 38, 38, 0.6) 63%
+  );
+  background-size: 200% 100%;
+}
+
+/* Interactive Element Micro-Interactions */
+.btn-press {
+  transition: transform var(--duration-fast) var(--ease-out-smooth),
+              background-color var(--duration-fast) ease,
+              box-shadow var(--duration-fast) ease,
+              border-color var(--duration-fast) ease;
+}
+
+.btn-press:active {
+  transform: scale(0.975);
+}
+
+.btn-press:disabled:active {
+  transform: none;
+}
+
+/* Input Smooth Focus */
+.input-focus-smooth {
+  transition: border-color var(--duration-fast) ease,
+              box-shadow var(--duration-fast) ease,
+              background-color var(--duration-fast) ease;
+}
+
 /* Reduced Motion Accessibility */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
+    animation: none !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+    transform: none !important;
   }
 }

@@ -165,8 +165,8 @@ export const MergeCustomerModal: React.FC<MergeCustomerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
-      <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto backdrop-enter">
+      <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden modal-enter my-6">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[#F1F5F9] dark:border-[#262626] flex items-center justify-between bg-[#FFF1F2] dark:bg-red-950/20">
           <div className="flex items-center gap-3">
@@ -463,7 +463,7 @@ export const MergeCustomerModal: React.FC<MergeCustomerModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={merging}
-            className="px-4 py-2 text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:bg-[#F1F1F1] dark:hover:bg-[#262626] rounded-xl transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 min-h-[44px] text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:bg-[#F1F1F1] dark:hover:bg-[#262626] rounded-xl transition-colors disabled:opacity-50 border border-[#E5E5E5] dark:border-[#2A2A2A]"
           >
             Cancel
           </button>
@@ -471,7 +471,7 @@ export const MergeCustomerModal: React.FC<MergeCustomerModalProps> = ({
             type="button"
             onClick={handleMergeSubmit}
             disabled={!duplicateStats || !primaryStats || !confirmedRisk || merging}
-            className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white text-xs font-black px-6 py-2.5 rounded-xl shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white text-xs font-black px-6 py-2.5 min-h-[44px] rounded-xl shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 disabled:opacity-50"
           >
             {merging ? (
               <>

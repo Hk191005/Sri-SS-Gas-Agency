@@ -25,9 +25,9 @@ export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="session-warning-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs backdrop-enter"
     >
-      <div className="bg-white dark:bg-[#1A1A1A] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5 text-center transform animate-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-[#1A1A1A] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5 text-center modal-enter">
         {/* Warning Icon Badge */}
         <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 flex items-center justify-center text-amber-600 dark:text-amber-400">
           <Clock className="w-7 h-7 stroke-[2.2] animate-pulse" />

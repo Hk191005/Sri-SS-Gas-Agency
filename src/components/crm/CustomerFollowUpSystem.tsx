@@ -1,10 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PhoneCall, MessageSquare, Clock, CheckCircle2, ChevronDown } from 'lucide-react';
+import { PhoneCall, MessageSquare, Clock, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Customer, FollowUpCategory, FollowUpStatus } from '../../types/database.types';
 import { getFollowUpCustomers, getCustomers, addCustomerNote } from '../../lib/db';
-
-const PAGE_SIZE = 9;
 
 type FollowUpItem = {
   customer: Customer;
@@ -17,7 +15,8 @@ type FollowUpItem = {
 export const CustomerFollowUpSystem: React.FC = () => {
   const [followUps, setFollowUps] = useState<FollowUpItem[]>([]);
   const [filterCategory, setFilterCategory] = useState<'all' | FollowUpCategory>('all');
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 6;
   const [loading, setLoading] = useState(true);
 
   const loadFollowUps = async () => {
@@ -69,81 +68,110 @@ export const CustomerFollowUpSystem: React.FC = () => {
     loadFollowUps();
   }, []);
 
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [filterCategory]);
+  const counts = useMemo(() => {
+    return {
+      all: followUps.length,
+      refill_30: followUps.filter((i) => i.category === 'refill_30').length,
+      important_60: followUps.filter((i) => i.category === 'important_60').length,
+      critical_90: followUps.filter((i) => i.category === 'critical_90').length,
+      payment_outstanding: followUps.filter((i) => i.category === 'payment_outstanding').length,
+    };
+  }, [followUps]);
 
-  const filteredItems = useMemo(
-    () => followUps.filter((item) => filterCategory === 'all' || item.category === filterCategory),
-    [followUps, filterCategory]
-  );
+  const filteredItems = useMemo(() => {
+    if (filterCategory === 'all') return followUps;
+    return followUps.filter((i) => i.category === filterCategory);
+  }, [followUps, filterCategory]);
 
-  const visibleItems = filteredItems.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredItems.length;
+  const totalPages = Math.ceil(filteredItems.length / PAGE_SIZE) || 1;
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredItems.slice(start, start + PAGE_SIZE);
+  }, [filteredItems, currentPage, PAGE_SIZE]);
+
+  const handleFilterChange = (cat: 'all' | FollowUpCategory) => {
+    setFilterCategory(cat);
+    setCurrentPage(1);
+  };
 
   const handleMarkDone = async (customer: Customer) => {
     try {
-      await addCustomerNote(customer.id, `Contacted customer ${customer.name} for refill reminder.`);
+      await addCustomerNote(
+        customer.id,
+        `Customer follow-up completed on ${new Date().toLocaleDateString('en-IN')}`,
+        'SRI SS Admin'
+      );
       setFollowUps((prev) =>
         prev.map((item) =>
           item.customer.id === customer.id ? { ...item, status: 'contacted' } : item
         )
       );
-    } catch (error) {
-      console.error('Unable to mark follow-up complete:', error);
+    } catch (err) {
+      console.error('Failed to log follow-up note:', err);
     }
   };
 
-  const getWhatsAppUrl = (phone: string, customerName: string, days: number) => {
-    const cleanPhone = phone.replace(/\D/g, '');
-    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-    const message = encodeURIComponent(
-      `Hello ${customerName}, Greetings from SRI SS GAS AGENCY! We noticed your last cylinder refill was ${days} days ago. Please let us know if you require a fresh gas cylinder refill delivery. Thank you!`
+  const getWhatsAppUrl = (phone: string, name: string, days: number) => {
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const phoneWithCountry = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    const msg = encodeURIComponent(
+      `Hello ${name}, this is Sri SS Gas Agency. Your LPG cylinder refill was last serviced ${days} days ago. Please let us know if you require a booking or cylinder delivery today. Thank you!`
     );
-    return `https://wa.me/${formattedPhone}?text=${message}`;
-  };
-
-  const getCategoryLabel = (category: FollowUpCategory) => {
-    if (category === 'critical_90') return '90+ days inactive';
-    if (category === 'important_60') return '60+ days inactive';
-    if (category === 'payment_outstanding') return 'Payment follow-up';
-    return '30+ days due';
+    return `https://wa.me/${phoneWithCountry}?text=${msg}`;
   };
 
   return (
-    <div className="follow-up-system saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-6 rounded-2xl shadow-xs space-y-6">
+    <div className="saas-card bg-white dark:bg-[#171717] rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] p-5 sm:p-6 space-y-5 shadow-xs">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F1F1F1] dark:border-[#262626] pb-4">
         <div>
-          <h3 className="text-base font-black text-[#171717] dark:text-white flex items-center gap-2">
-            <Clock className="w-5 h-5 text-[#E31B23]" /> Customer Follow-ups
-          </h3>
+          <h2 className="text-base font-black text-[#171717] dark:text-white flex items-center gap-2">
+            <Clock className="w-5 h-5 text-[#E31B23]" />
+            Customer Follow-Up & Refill Alerts
+          </h2>
           <p className="text-xs font-semibold text-[#525252] dark:text-[#D4D4D4] mt-0.5">
-            Refill reminders for 30+, 60+, and 90+ day inactive accounts, plus payment follow-ups
+            Automated notifications for customers due for commercial / retail LPG refills
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] p-1 rounded-lg overflow-x-auto text-xs font-extrabold border border-[#E5E5E5] dark:border-[#2A2A2A]">
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold scrollbar-none">
           <button
-            onClick={() => setFilterCategory('all')}
-            className={`follow-up-filter ${filterCategory === 'all' ? 'follow-up-filter-active' : ''}`}
+            onClick={() => handleFilterChange('all')}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all border btn-press ${
+              filterCategory === 'all'
+                ? 'bg-[#171717] dark:bg-white text-white dark:text-[#171717] border-transparent shadow-2xs font-extrabold'
+                : 'text-[#525252] dark:text-[#D4D4D4] border-transparent hover:text-[#171717]'
+            }`}
           >
-            All ({followUps.length})
+            All Alerts ({counts.all})
           </button>
           <button
-            onClick={() => setFilterCategory('refill_30')}
-            className={`follow-up-filter ${filterCategory === 'refill_30' ? 'follow-up-filter-active' : ''}`}
+            onClick={() => handleFilterChange('refill_30')}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all border btn-press ${
+              filterCategory === 'refill_30'
+                ? 'bg-[#FFFBEB] text-[#D97706] border-amber-200/60 shadow-2xs font-extrabold'
+                : 'text-[#525252] dark:text-[#D4D4D4] border-transparent hover:text-[#171717]'
+            }`}
           >
-            30+ days
+            30+ days due
           </button>
           <button
-            onClick={() => setFilterCategory('important_60')}
-            className={`follow-up-filter ${filterCategory === 'important_60' ? 'follow-up-filter-active' : ''}`}
+            onClick={() => handleFilterChange('important_60')}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all border btn-press ${
+              filterCategory === 'important_60'
+                ? 'bg-[#FFFBEB] text-[#D97706] border-amber-200/60 shadow-2xs font-extrabold'
+                : 'text-[#525252] dark:text-[#D4D4D4] border-transparent hover:text-[#171717]'
+            }`}
           >
-            60+ days
+            60+ days due
           </button>
           <button
-            onClick={() => setFilterCategory('critical_90')}
-            className={`follow-up-filter ${filterCategory === 'critical_90' ? 'follow-up-filter-active' : ''}`}
+            onClick={() => handleFilterChange('critical_90')}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all border btn-press ${
+              filterCategory === 'critical_90'
+                ? 'bg-[#FFF1F2] text-[#DC2626] border-red-200/60 shadow-2xs font-extrabold'
+                : 'text-[#525252] dark:text-[#D4D4D4] border-transparent hover:text-[#171717]'
+            }`}
           >
             90+ days urgent
           </button>
@@ -155,42 +183,57 @@ export const CustomerFollowUpSystem: React.FC = () => {
       ) : filteredItems.length === 0 ? (
         <div className="text-center py-8 text-xs text-[#737373] font-semibold">No active customer follow-ups required in this category.</div>
       ) : (
-        <>
+        <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {visibleItems.map(({ customer, daysSinceLastPurchase, category, status }) => (
+            {paginatedItems.map(({ customer, daysSinceLastPurchase, category, status }, idx) => (
               <div
                 key={customer.id}
-                className="follow-up-card p-4 rounded-2xl bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-3 relative flex flex-col justify-between shadow-2xs hover:border-[#D6D6D6] transition-all"
+                className={`p-4 rounded-xl bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] space-y-3 relative flex flex-col justify-between shadow-2xs hover:border-[#D6D6D6] hover:-translate-y-0.5 transition-all duration-200 animate-card-enter stagger-${(idx % 6) + 1}`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="min-w-0">
+                    <div>
                       <Link
                         to={`/customers/${customer.id}`}
-                        className="customer-profile-link text-sm font-black text-[#171717] dark:text-white hover:text-[#E31B23] transition-colors block truncate"
+                        className="text-sm font-bold text-[#171717] dark:text-white hover:text-[#E31B23] hover:underline transition-colors block truncate"
+                        title={`View ${customer.name} profile`}
                         aria-label={`Open ${customer.name} customer profile`}
                       >
                         {customer.name}
                       </Link>
-                      <span className="text-xs font-mono font-bold text-[#737373]">{customer.customer_code}</span>
+                      <span className="text-xs font-mono font-semibold text-[#737373]">{customer.customer_code}</span>
                     </div>
 
-                    <span className="text-xs font-extrabold px-2 py-1 rounded-lg border bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] border-[#E5E5E5] shrink-0">
-                      {getCategoryLabel(category)}
+                    <span
+                      className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                        category === 'critical_90'
+                          ? 'bg-[#FFF1F2] text-[#DC2626] border-[#FFD6D8]'
+                          : category === 'important_60'
+                          ? 'bg-[#FFFBEB] text-[#D97706] border-amber-200/60'
+                          : 'bg-[#F0FDF4] text-[#16A34A] border-emerald-200/60'
+                      }`}
+                    >
+                      {category === 'critical_90' ? '90+ Days Inactive' : category === 'important_60' ? '60+ Days Inactive' : '30+ Days Due'}
                     </span>
                   </div>
 
-                  <div className="text-sm font-semibold text-[#525252] dark:text-[#D4D4D4] space-y-1">
-                    <p>Phone: <strong className="text-[#171717] dark:text-white">{customer.phone}</strong></p>
+                  <div className="text-xs font-medium text-[#525252] dark:text-[#D4D4D4] space-y-1">
+                    <p>Phone: <strong className="text-[#171717] dark:text-white font-bold">{customer.phone}</strong></p>
                     <p>Area: {customer.area1 || 'Tiruppur'}</p>
+                    {status === 'contacted' && (
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-[#16A34A]">
+                        <CheckCircle2 className="w-3 h-3" /> Contacted recently
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#F1F1F1] dark:border-[#262626] grid grid-cols-3 gap-2">
+                {/* Action Toolbar Buttons */}
+                <div className="pt-3 border-t border-[#F1F1F1] dark:border-[#262626] flex items-center gap-2">
                   <a
                     href={`tel:${customer.phone}`}
-                    className="follow-up-action"
-                    title="Call customer"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 p-2 rounded-xl bg-[#F0FDF4] dark:bg-emerald-950/30 text-[#16A34A] dark:text-emerald-400 hover:bg-[#16A34A] hover:text-white text-xs font-bold border border-emerald-200/60 dark:border-emerald-900/40 transition-all min-h-[38px] btn-press"
+                    title="Call Customer"
                     aria-label={`Call ${customer.name}`}
                   >
                     <PhoneCall className="w-3.5 h-3.5" /> Call
@@ -200,8 +243,8 @@ export const CustomerFollowUpSystem: React.FC = () => {
                     href={getWhatsAppUrl(customer.phone, customer.name, daysSinceLastPurchase)}
                     target="_blank"
                     rel="noreferrer"
-                    className="follow-up-action"
-                    title="Send WhatsApp reminder"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 p-2 rounded-xl bg-[#F0FDF4] dark:bg-emerald-950/30 text-[#16A34A] dark:text-emerald-400 hover:bg-[#16A34A] hover:text-white text-xs font-bold border border-emerald-200/60 dark:border-emerald-900/40 transition-all min-h-[38px] btn-press"
+                    title="WhatsApp Reminder"
                     aria-label={`Send WhatsApp reminder to ${customer.name}`}
                   >
                     <MessageSquare className="w-3.5 h-3.5" /> WhatsApp
@@ -209,30 +252,46 @@ export const CustomerFollowUpSystem: React.FC = () => {
 
                   <button
                     onClick={() => handleMarkDone(customer)}
-                    className={`follow-up-action ${status === 'contacted' ? 'follow-up-action-done' : ''}`}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 p-2 rounded-xl bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#171717] dark:text-white hover:bg-[#F3F4F6] dark:hover:bg-[#262626] text-xs font-bold border border-[#E5E5E5] dark:border-[#2A2A2A] transition-all min-h-[38px] cursor-pointer btn-press"
                     title="Mark follow-up as done"
                     aria-label={`Mark ${customer.name} follow-up as done`}
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    {status === 'contacted' ? 'Done' : 'Done'}
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
+                    <span>Done</span>
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          {hasMore && (
-            <div className="flex justify-center pt-1">
-              <button
-                onClick={() => setVisibleCount((count) => Math.min(count + PAGE_SIZE, filteredItems.length))}
-                className="follow-up-load-more"
-              >
-                <ChevronDown className="w-4 h-4" />
-                Load more follow-ups ({filteredItems.length - visibleCount} remaining)
-              </button>
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-[#F1F1F1] dark:border-[#262626] text-xs">
+              <span className="font-semibold text-[#737373]">
+                Showing {(currentPage - 1) * PAGE_SIZE + 1} to {Math.min(currentPage * PAGE_SIZE, filteredItems.length)} of {filteredItems.length} follow-ups
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FAFAFA] transition-colors btn-press"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                </button>
+                <span className="px-2 font-bold text-[#171717] dark:text-white">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FAFAFA] transition-colors btn-press"
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

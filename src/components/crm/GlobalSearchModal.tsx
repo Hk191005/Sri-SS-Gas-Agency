@@ -111,8 +111,8 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
     matchedCustomers.length + matchedPurchases.length + matchedDeliveries.length + matchedSupplierPurchases.length;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-24 p-4 overflow-y-auto">
-      <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-24 p-4 overflow-y-auto backdrop-enter">
+      <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] modal-enter">
         {/* Search Bar Header */}
         <div className="p-4 border-b border-[#F1F1F1] dark:border-[#262626] flex items-center gap-3 bg-[#FAFAFA] dark:bg-[#1F1F1F]">
           <Search className="w-5 h-5 text-[#E31B23] shrink-0" />

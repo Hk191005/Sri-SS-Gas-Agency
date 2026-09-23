@@ -918,8 +918,8 @@ export const SupplierPurchases: React.FC = () => {
 
       {/* Unified Supplier Purchase Modal: Upload Bill (OCR) & Manual Entry */}
       {isPurchaseModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200 my-8">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto backdrop-enter">
+          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl modal-enter my-8">
             {/* Modal Header with Mode Switcher */}
             <div className="flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626] pb-3">
               <div className="flex items-center gap-3">
@@ -1388,8 +1388,8 @@ export const SupplierPurchases: React.FC = () => {
 
       {/* Add Supplier Payment Modal */}
       {isPaymentModalOpen && selectedPurchase && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 backdrop-enter">
+          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl modal-enter">
             <div className="flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626] pb-3">
               <h2 className="text-base font-black text-[#171717] dark:text-white">Record Supplier Payment</h2>
               <button
@@ -1489,8 +1489,8 @@ export const SupplierPurchases: React.FC = () => {
 
       {/* Edit Supplier Purchase Modal */}
       {isEditModalOpen && editingPurchase && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200 my-8">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto backdrop-enter">
+          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl modal-enter my-8">
             <div className="flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626] pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#FFF1F2] dark:bg-rose-950/40 text-[#E31B23] flex items-center justify-center border border-[#FECDD3] dark:border-red-900/40">
@@ -1742,8 +1742,8 @@ export const SupplierPurchases: React.FC = () => {
 
       {/* Delete / Void Supplier Purchase Modal */}
       {isDeleteModalOpen && deletingPurchase && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto backdrop-enter">
+          <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl modal-enter">
             <div className="flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626] pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#FFF1F2] dark:bg-rose-950/40 text-[#DC2626] flex items-center justify-center border border-[#FECDD3] dark:border-red-900/40">

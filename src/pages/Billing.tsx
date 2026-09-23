@@ -27,7 +27,9 @@ import {
   ShieldCheck,
   Truck,
   Loader2,
+  Eye,
 } from 'lucide-react';
+import { InvoicePreviewModal } from '../components/billing/InvoicePreviewModal';
 
 interface BillingItemRow {
   id: string;
@@ -70,6 +72,9 @@ export const Billing: React.FC = () => {
   const [paymentMode, setPaymentMode] = useState<'cash' | 'upi' | 'bank_transfer' | 'credit'>('cash');
   const [notes, setNotes] = useState('');
   const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [securityDeposit, setSecurityDeposit] = useState<number>(0);
+  const [emptyReturnQty, setEmptyReturnQty] = useState<number>(0);
+  const [emptyReturnSize, setEmptyReturnSize] = useState<string>('12KG');
 
   // Form State - Line items
   const [items, setItems] = useState<BillingItemRow[]>([]);
@@ -77,6 +82,22 @@ export const Billing: React.FC = () => {
   // Execution states
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [savingToDb, setSavingToDb] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  // Helper to reliably resolve customer information from both dropdown selection and manual inputs
+  const getResolvedCustomerDetails = () => {
+    const matchedCustomer = customers.find((c) => c.id === selectedCustomerId);
+    return {
+      name: (customerName.trim() || matchedCustomer?.name?.trim() || '').trim(),
+      company: (customerCompany.trim() || matchedCustomer?.company_name?.trim() || '').trim(),
+      phone: (customerPhone.trim() || matchedCustomer?.phone?.trim() || '').trim(),
+      address: (customerAddress.trim() || [matchedCustomer?.street, matchedCustomer?.area1, matchedCustomer?.area2, matchedCustomer?.landmark].filter(Boolean).join(', ') || matchedCustomer?.city || '').trim(),
+      city: (customerCity.trim() || matchedCustomer?.city?.trim() || 'Tiruppur').trim(),
+      state: (customerState.trim() || 'Tamil Nadu').trim(),
+      stateCode: (customerStateCode.trim() || '33').trim(),
+      gstin: (customerGstin.trim() || (matchedCustomer?.customer_type === 'company' ? '33AAAAA0000A1Z5' : '')).trim(),
+    };
+  };
 
   // Initial load
   useEffect(() => {
@@ -98,23 +119,41 @@ export const Billing: React.FC = () => {
       setAgencySettings(settings);
 
       // Default first row
-      if (types && types.length > 0 && items.length === 0) {
+      if (types && types.length > 0) {
         const defaultType = types.find((t) => t.weight_kg === 12) || types[0];
         setItems([
           {
             id: 'row-1',
             cylinder_type_id: defaultType.id,
-            description: defaultType.name,
+            description: `${defaultType.weight_kg}KG Cylinder`,
             hsn: '27111200',
             quantity: 1,
-            rate: defaultType.default_price || 1700,
+            rate: defaultType.default_price || 1800,
             gstRate: defaultType.weight_kg <= 5 ? 5 : 18,
           },
         ]);
       }
     } catch (e: any) {
       console.error(e);
-      showError('Failed to load customers or cylinder prices: ' + e.message);
+      const fallbackTypes: CylinderType[] = [
+        { id: 'cyl-type-4kg', name: '4KG', weight_kg: 4, default_price: 650, is_active: true },
+        { id: 'cyl-type-12kg', name: '12KG', weight_kg: 12, default_price: 1800, is_active: true },
+        { id: 'cyl-type-17kg', name: '17KG', weight_kg: 17, default_price: 2552, is_active: true },
+        { id: 'cyl-type-21kg', name: '21KG', weight_kg: 21, default_price: 3152, is_active: true },
+        { id: 'cyl-type-33kg', name: '33KG', weight_kg: 33, default_price: 4850, is_active: true },
+      ];
+      setCylinderTypes(fallbackTypes);
+      setItems([
+        {
+          id: 'row-1',
+          cylinder_type_id: 'cyl-type-12kg',
+          description: '12KG Cylinder',
+          hsn: '27111200',
+          quantity: 1,
+          rate: 1800,
+          gstRate: 18,
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -157,16 +196,16 @@ export const Billing: React.FC = () => {
 
   // Item Row manipulations
   const handleAddItem = () => {
-    const defaultType = cylinderTypes[0] || { id: '', name: 'Gas Cylinder Refill', default_price: 1700, weight_kg: 12 };
+    const defaultType = cylinderTypes.find((t) => t.weight_kg === 12) || cylinderTypes[0] || { id: '', name: '12KG', default_price: 1800, weight_kg: 12 };
     setItems([
       ...items,
       {
         id: 'row-' + Date.now(),
         cylinder_type_id: defaultType.id,
-        description: defaultType.name,
+        description: `${defaultType.weight_kg}KG Cylinder`,
         hsn: '27111200',
         quantity: 1,
-        rate: defaultType.default_price || 1700,
+        rate: defaultType.default_price || 1800,
         gstRate: defaultType.weight_kg <= 5 ? 5 : 18,
       },
     ]);
@@ -188,8 +227,8 @@ export const Billing: React.FC = () => {
           return {
             ...row,
             cylinder_type_id: matched.id,
-            description: matched.name,
-            rate: matched.default_price || 1700,
+            description: `${matched.weight_kg}KG Cylinder`,
+            rate: matched.default_price || 1800,
             gstRate: matched.weight_kg <= 5 ? 5 : 18,
           };
         }
@@ -265,10 +304,10 @@ export const Billing: React.FC = () => {
     }
   });
 
-  const rawSubtotal = processedItems.reduce((acc, item) => acc + (billingType === 'gst' ? item.taxableAmount : item.total), 0);
-  const totalCgst = processedItems.reduce((acc, item) => acc + item.cgst, 0);
-  const totalSgst = processedItems.reduce((acc, item) => acc + item.sgst, 0);
-  const totalIgst = processedItems.reduce((acc, item) => acc + item.igst, 0);
+  const rawSubtotal = processedItems.reduce((acc, item) => acc + (billingType === 'gst' ? (item.taxableAmount ?? item.total) : item.total), 0);
+  const totalCgst = processedItems.reduce((acc, item) => acc + (item.cgst ?? 0), 0);
+  const totalSgst = processedItems.reduce((acc, item) => acc + (item.sgst ?? 0), 0);
+  const totalIgst = processedItems.reduce((acc, item) => acc + (item.igst ?? 0), 0);
   const totalTaxAmount = totalCgst + totalSgst + totalIgst;
 
   const preRoundGrandTotal = billingType === 'gst'
@@ -281,9 +320,10 @@ export const Billing: React.FC = () => {
   // GST Safety Validation Check
   const isGstConfigIncomplete =
     billingType === 'gst' &&
-    (!customerName.trim() || items.some((it) => !it.hsn || it.rate <= 0));
+    (!getResolvedCustomerDetails().name || items.some((it) => !it.hsn || it.rate <= 0));
 
   const constructInvoiceData = (): InvoiceData => {
+    const cust = getResolvedCustomerDetails();
     return {
       invoiceType: billingType,
       invoiceNumber: invoiceNumber.trim() || `${billingType === 'gst' ? 'GST' : 'BILL'}-${Date.now().toString().slice(-6)}`,
@@ -291,21 +331,27 @@ export const Billing: React.FC = () => {
       supplyDate,
       vehicleNumber: vehicleNumber.trim() || undefined,
       agencyName: agencySettings?.agency_name || 'SRI SS GAS AGENCY',
-      agencyAddress: agencySettings?.address || 'Tiruppur District, Tamil Nadu, India',
-      agencyPhone: agencySettings?.phone || '+91 9876543210',
-      agencyEmail: agencySettings?.email || 'contact@srissgas.com',
+      agencyAddress: agencySettings?.address || '10/699, MP COMPLEX, Karaipudur Main Rd, Chinnakarai, Tiruppur, Tamil Nadu 641605',
+      agencyPhone: agencySettings?.phone || '+91 86672109929',
+      agencyEmail: agencySettings?.email || 'srissgasagency@gmail.com',
       agencyGstin: '33AAAAA0000A1Z5',
       agencyState: 'Tamil Nadu',
       agencyStateCode: '33',
-      customerName: customerName.trim() || 'Valued Customer',
-      customerCompany: customerCompany.trim() || undefined,
-      customerPhone: customerPhone.trim() || undefined,
-      customerAddress: customerAddress.trim() || undefined,
-      customerCity: customerCity.trim() || 'Tiruppur',
-      customerState,
-      customerStateCode,
-      customerGstin: customerGstin.trim() || undefined,
+      customerName: cust.name || 'Valued Customer',
+      customerCompany: cust.company || undefined,
+      customerPhone: cust.phone || undefined,
+      customerAddress: cust.address || undefined,
+      customerCity: cust.city || 'Tiruppur',
+      customerState: cust.state,
+      customerStateCode: cust.stateCode,
+      customerGstin: cust.gstin || undefined,
+      placeOfSupply: isInterState ? (cust.state || customerState || 'Outside State') : 'Tamil Nadu',
       items: processedItems,
+      emptyReturned: emptyReturnQty > 0 ? {
+        quantity: emptyReturnQty,
+        sizeLabel: emptyReturnSize || '12KG',
+      } : null,
+      securityDeposit: securityDeposit > 0 ? securityDeposit : undefined,
       subtotal: rawSubtotal,
       discount: discountAmount,
       taxableAmount: rawSubtotal,
@@ -320,8 +366,22 @@ export const Billing: React.FC = () => {
     };
   };
 
+  const handlePreviewBill = () => {
+    const resolvedCustomer = getResolvedCustomerDetails();
+    if (!resolvedCustomer.name) {
+      showError('Please enter or select a customer name before generating invoice.');
+      return;
+    }
+    if (items.length === 0) {
+      showError('Please add at least one item to the invoice.');
+      return;
+    }
+    setIsPreviewOpen(true);
+  };
+
   const handleDownloadPdf = async () => {
-    if (!customerName.trim()) {
+    const resolvedCustomer = getResolvedCustomerDetails();
+    if (!resolvedCustomer.name) {
       showError('Please enter or select a customer name before generating invoice.');
       return;
     }
@@ -363,9 +423,13 @@ export const Billing: React.FC = () => {
           quantity: it.quantity,
           unit_price: it.rate,
         })),
+        deposit_amount: securityDeposit > 0 ? securityDeposit : undefined,
+        deposit_payment_method: paymentMode === 'credit' ? 'other' : (paymentMode as any),
         payment_amount: paymentMode === 'credit' ? 0 : roundedGrandTotal,
         payment_method: paymentMode === 'credit' ? 'other' : (paymentMode as any),
         delivery_status: 'delivered',
+        empty_return_quantity: emptyReturnQty > 0 ? emptyReturnQty : undefined,
+        empty_return_type_name: emptyReturnSize,
         notes: `Issued via ${billingType.toUpperCase()} Invoice (${invoiceNumber}). ${notes || ''}`.trim(),
       });
 
@@ -388,16 +452,19 @@ export const Billing: React.FC = () => {
     setCustomerGstin('');
     setNotes('');
     setDiscountAmount(0);
+    setSecurityDeposit(0);
+    setEmptyReturnQty(0);
+    setEmptyReturnSize('12KG');
     if (cylinderTypes.length > 0) {
-      const def = cylinderTypes[0];
+      const def = cylinderTypes.find((t) => t.weight_kg === 12) || cylinderTypes[0];
       setItems([
         {
           id: 'row-1',
           cylinder_type_id: def.id,
-          description: def.name,
+          description: `${def.weight_kg}KG Cylinder`,
           hsn: '27111200',
           quantity: 1,
-          rate: def.default_price || 1700,
+          rate: def.default_price || 1800,
           gstRate: def.weight_kg <= 5 ? 5 : 18,
         },
       ]);
@@ -725,7 +792,7 @@ export const Billing: React.FC = () => {
                           >
                             {cylinderTypes.map((t) => (
                               <option key={t.id} value={t.id}>
-                                {t.name} ({t.weight_kg} kg) - ₹{t.default_price}
+                                {t.weight_kg}KG - ₹{t.default_price}
                               </option>
                             ))}
                           </select>
@@ -798,6 +865,50 @@ export const Billing: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Security Deposit (₹) and Empty Cylinder Return */}
+            <div className="pt-3 border-t border-[#F1F1F1] dark:border-[#262626] grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              {/* Security Deposit (₹) Slot */}
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] font-bold text-[#525252] dark:text-[#D4D4D4] whitespace-nowrap">
+                  Security Deposit (₹):
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={securityDeposit || ''}
+                  onChange={(e) => setSecurityDeposit(Math.max(0, parseFloat(e.target.value) || 0))}
+                  placeholder="0"
+                  className="w-28 px-2.5 py-1.5 text-right bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-mono font-bold text-xs"
+                />
+              </div>
+
+              {/* Empty Cylinder Return */}
+              <div className="flex items-center gap-2 sm:justify-end">
+                <span className="text-[11px] font-bold text-[#525252] dark:text-[#D4D4D4] whitespace-nowrap">
+                  Empty Return:
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  value={emptyReturnQty || ''}
+                  onChange={(e) => setEmptyReturnQty(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                  placeholder="0"
+                  className="w-16 px-2.5 py-1.5 text-center bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-bold text-xs"
+                />
+                <select
+                  value={emptyReturnSize}
+                  onChange={(e) => setEmptyReturnSize(e.target.value)}
+                  className="px-2.5 py-1.5 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-lg font-bold text-xs"
+                >
+                  <option value="4KG">4KG</option>
+                  <option value="12KG">12KG</option>
+                  <option value="17KG">17KG</option>
+                  <option value="21KG">21KG</option>
+                  <option value="33KG">33KG</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -860,6 +971,15 @@ export const Billing: React.FC = () => {
                 </div>
               )}
 
+              {securityDeposit > 0 && (
+                <div className="flex justify-between text-[#737373] text-[11px] bg-[#FAFAFA] dark:bg-[#1F1F1F] p-2 rounded-lg border border-[#E5E5E5] dark:border-[#2A2A2A]">
+                  <span>Security Deposit (Refundable):</span>
+                  <span className="font-mono font-bold text-[#171717] dark:text-white">
+                    ₹{securityDeposit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+
               {/* Grand Total Box */}
               <div className="p-4 bg-[#FFF1F2] dark:bg-red-950/30 rounded-xl border border-[#FECDD3] dark:border-red-900/50 space-y-1">
                 <span className="text-[10px] font-black uppercase text-[#E31B23] block tracking-wider">
@@ -897,6 +1017,15 @@ export const Billing: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="space-y-2.5 pt-3 border-t border-[#F1F1F1] dark:border-[#262626]">
+              <button
+                type="button"
+                onClick={handlePreviewBill}
+                className="w-full inline-flex items-center justify-center gap-2 bg-[#171717] dark:bg-white text-white dark:text-[#171717] hover:bg-[#262626] dark:hover:bg-[#F5F5F5] text-xs font-black py-3 px-4 rounded-xl shadow-xs transition-all active:scale-98"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Preview Bill</span>
+              </button>
+
               <button
                 onClick={handleDownloadPdf}
                 disabled={generatingPdf}
@@ -945,6 +1074,15 @@ export const Billing: React.FC = () => {
       </div>
         </>
       )}
+
+      {/* A4 Invoice Preview Modal */}
+      <InvoicePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        invoiceData={constructInvoiceData()}
+        onDownloadPdf={handleDownloadPdf}
+        isGeneratingPdf={generatingPdf}
+      />
     </div>
   );
 };

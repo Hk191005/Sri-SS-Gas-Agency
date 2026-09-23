@@ -31,7 +31,7 @@ export const Cylinders: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -77,8 +77,11 @@ export const Cylinders: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stockSummaries.map((stock) => (
-            <div key={stock.size} className="saas-card bg-white dark:bg-[#171717] p-5 rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs space-y-4">
+          {stockSummaries.map((stock, idx) => (
+            <div
+              key={stock.size}
+              className={`saas-card bg-white dark:bg-[#171717] p-5 rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs space-y-4 animate-card-enter stagger-${(idx % 4) + 1} hover:-translate-y-0.5 transition-all duration-200`}
+            >
               <div className="flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626] pb-3">
                 <span className="text-base font-black text-[#171717] dark:text-white">{stock.size} Cylinders</span>
                 <span className="text-xs font-extrabold text-[#171717] dark:text-white bg-[#FAFAFA] dark:bg-[#1F1F1F] px-2.5 py-1 rounded-lg border border-[#E5E5E5] dark:border-[#2A2A2A]">
@@ -87,11 +90,26 @@ export const Cylinders: React.FC = () => {
               </div>
 
               <div className="space-y-2 text-xs font-bold">
-                <div className="flex items-center justify-between p-2.5 bg-[#F0FDF4] dark:bg-emerald-950/30 text-[#16A34A] dark:text-emerald-400 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40">
+                <div
+                  className={`flex items-center justify-between p-2.5 rounded-xl border ${
+                    stock.available === 0
+                      ? 'bg-[#FFF1F2] dark:bg-red-950/30 text-[#DC2626] dark:text-red-400 border-[#FFD6D8] dark:border-red-900/40'
+                      : stock.available <= 5
+                      ? 'bg-[#FFFBEB] dark:bg-amber-950/30 text-[#D97706] dark:text-amber-400 border-amber-200/60 dark:border-amber-900/40'
+                      : 'bg-[#F0FDF4] dark:bg-emerald-950/30 text-[#16A34A] dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-900/40'
+                  }`}
+                >
                   <span className="flex items-center gap-1.5 font-bold">
-                    <PackageCheck className="w-4 h-4 text-[#16A34A]" /> Full Available
+                    <PackageCheck className="w-4 h-4 shrink-0" /> Full Available
                   </span>
-                  <span className="text-sm font-black">{stock.available}</span>
+                  <span className="text-sm font-black">
+                    {stock.available}
+                    {stock.available === 0 ? (
+                      <span className="text-[10px] font-bold ml-1 opacity-80">(Out of Stock)</span>
+                    ) : stock.available <= 5 ? (
+                      <span className="text-[10px] font-bold ml-1 opacity-80">(Low)</span>
+                    ) : null}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between p-2.5 bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A]">

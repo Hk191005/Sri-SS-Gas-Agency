@@ -920,8 +920,8 @@ export const Messages: React.FC = () => {
 
       {/* Preview Modal */}
       {previewModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs backdrop-enter">
+          <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4 modal-enter">
             <div className="flex items-center justify-between border-b border-[#E5E7EB] dark:border-[#2A2A2A] pb-3">
               <h3 className="text-sm font-black text-[#111111] dark:text-white">
                 Live Rendered Preview
@@ -972,8 +972,8 @@ export const Messages: React.FC = () => {
 
       {/* Campaign Safety Confirmation Dialog */}
       {confirmModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs backdrop-enter">
+          <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 modal-enter">
             <div className="space-y-1">
               <h3 className="text-base font-black text-[#111111] dark:text-white">
                 Confirm Campaign Dispatch

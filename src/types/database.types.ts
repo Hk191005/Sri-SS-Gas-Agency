@@ -29,31 +29,37 @@ export interface AgencySettings {
   default_price_12kg: number;
   default_price_17kg: number;
   default_price_21kg: number;
+  default_price_33kg?: number;
   // Buying Prices (Supplier Stock Acquisition)
   default_buying_price_4kg: number;
   default_buying_price_12kg: number;
   default_buying_price_17kg: number;
   default_buying_price_21kg: number;
+  default_buying_price_33kg?: number;
   // Security Deposits (Held Cylinder Liability)
   default_deposit_4kg: number;
   default_deposit_12kg: number;
   default_deposit_17kg: number;
   default_deposit_21kg: number;
+  default_deposit_33kg?: number;
   // Refill Reminder Rules
   reminder_auto_enabled?: boolean;
   reminder_interval_4kg?: number;
   reminder_interval_12kg?: number;
   reminder_interval_17kg?: number;
   reminder_interval_21kg?: number;
+  reminder_interval_33kg?: number;
   reminder_lead_days_4kg?: number;
   reminder_lead_days_12kg?: number;
   reminder_lead_days_17kg?: number;
   reminder_lead_days_21kg?: number;
+  reminder_lead_days_33kg?: number;
   // Opening Stock Inventory Defaults (Baseline Full Cylinders in stock)
   opening_stock_4kg?: number;
   opening_stock_12kg?: number;
   opening_stock_17kg?: number;
   opening_stock_21kg?: number;
+  opening_stock_33kg?: number;
   // Legacy alias for backward compatibility (read-only from existing database column)
   default_price_5kg?: number;
   created_at?: string;

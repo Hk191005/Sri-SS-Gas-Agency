@@ -88,8 +88,8 @@ export const Login: React.FC = () => {
             <h1 className="text-xl sm:text-2xl font-black text-[#111111] dark:text-white tracking-tight">
               {AGENCY_BRANDING.NAME}
             </h1>
-            <p className="text-xs font-black text-[#E31B23] tracking-wide uppercase">
-              Management System • Tiruppur
+            <p className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3]">
+              Tiruppur District, Tamil Nadu
             </p>
           </div>
 
@@ -200,8 +200,8 @@ export const Login: React.FC = () => {
 
       {/* Forgot Password Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs backdrop-enter">
+          <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 modal-enter">
             <div className="space-y-1">
               <h2 className="text-base font-black text-[#111111] dark:text-white">
                 Reset Administrator Password

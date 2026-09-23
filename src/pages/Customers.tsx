@@ -10,8 +10,6 @@ import {
   Users,
   Search,
   Plus,
-  User,
-  Building2,
   Phone,
   MapPin,
   Edit,
@@ -29,6 +27,7 @@ import {
   ArrowDown,
   ArrowUpDown,
   GitMerge,
+  MoreVertical,
 } from 'lucide-react';
 
 /**
@@ -100,6 +99,7 @@ export const Customers: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [customerToMerge, setCustomerToMerge] = useState<Customer | null>(null);
+  const [activeMoreMenuId, setActiveMoreMenuId] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
@@ -127,6 +127,13 @@ export const Customers: React.FC = () => {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Dismiss More Actions menu on outside click
+  useEffect(() => {
+    const handleOutsideClick = () => setActiveMoreMenuId(null);
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
   }, []);
 
   // Filter and sort the complete dataset reactively
@@ -247,9 +254,9 @@ export const Customers: React.FC = () => {
   const totalInactive = allFetchedCustomers.filter((c) => !c.is_active || c.deleted_at !== null).length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto w-full min-w-0">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full min-w-0">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#171717] dark:text-white tracking-tight flex items-center gap-2.5">
             <Users className="w-7 h-7 text-[#E31B23]" /> Customers Directory
@@ -258,26 +265,28 @@ export const Customers: React.FC = () => {
             Manage customer accounts, refill activity & contact details ({totalAll} total accounts registered)
           </p>
         </div>
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">
           <button
             onClick={() => handleOpenMerge()}
-            className="flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#FAFAFA] text-[#171717] dark:text-white border border-[#E5E5E5] dark:border-[#2A2A2A] font-black text-xs px-4 py-2.5 rounded-[12px] shadow-xs transition-all active:scale-98"
+            className="min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#FAFAFA] dark:hover:bg-[#262626] text-[#171717] dark:text-white border border-[#E5E5E5] dark:border-[#2A2A2A] font-black text-xs px-4 py-2.5 rounded-[12px] shadow-xs transition-all active:scale-98 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23]"
             title="Merge duplicate customer accounts safely"
           >
-            <GitMerge className="w-4 h-4 text-[#E31B23]" /> Merge Customers
+            <GitMerge className="w-4 h-4 text-[#E31B23]" />
+            <span>Merge</span>
           </button>
 
           <button
             onClick={handleOpenAdd}
-            className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4.5 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98"
+            className="min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4.5 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23]"
           >
-            <Plus className="w-4 h-4" /> Add New Customer
+            <Plus className="w-4 h-4" />
+            <span>Add Customer</span>
           </button>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#F1F1F1] dark:border-[#262626] pb-2 overflow-x-auto text-xs font-extrabold">
+      {/* Navigation Tabs - Isolated Horizontal Scroll Container */}
+      <div className="flex items-center gap-2 border-b border-[#F1F1F1] dark:border-[#262626] pb-2 overflow-x-auto scrollbar-none w-full max-w-full text-xs font-extrabold">
         {[
           { id: 'all', label: `All Customers (${totalAll})` },
           { id: 'active', label: `Active Customers (${totalActive})` },
@@ -292,10 +301,10 @@ export const Customers: React.FC = () => {
               setActiveTab(tab.id as any);
               setPage(1);
             }}
-            className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all border ${
+            className={`min-h-[40px] px-3.5 sm:px-4 py-2 rounded-xl whitespace-nowrap transition-all border text-xs font-black shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#121212] cursor-pointer ${
               activeTab === tab.id
-                ? 'bg-[#FFF1F2] text-[#C9151C] border-[#FFD6D8] font-black shadow-2xs'
-                : 'bg-white dark:bg-[#171717] text-[#525252] dark:text-[#D4D4D4] border-[#E5E5E5] dark:border-[#2A2A2A] hover:bg-[#FAFAFA]'
+                ? 'bg-[#FFF1F2] dark:bg-rose-950/50 text-[#E31B23] dark:text-red-400 border-[#FECDD3] dark:border-red-900/60 shadow-2xs hover:bg-[#FFE4E6] dark:hover:bg-rose-900/60 hover:text-[#B91C1C] dark:hover:text-red-300'
+                : 'bg-white dark:bg-[#1A1A1A] text-[#525252] dark:text-[#D4D4D4] border-[#E5E7EB] dark:border-[#2E2E2E] hover:bg-[#FFF1F2] hover:text-[#E31B23] hover:border-[#FECDD3] dark:hover:bg-[#262626] dark:hover:text-white dark:hover:border-[#404040]'
             }`}
           >
             {tab.label}
@@ -304,10 +313,10 @@ export const Customers: React.FC = () => {
       </div>
 
       {/* Filter & View Controls */}
-      <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-4 rounded-2xl shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-96">
-            <Search className="w-4 h-4 absolute left-3.5 top-3 text-[#737373]" />
+      <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-3 sm:p-4 rounded-2xl shadow-xs space-y-4 w-full min-w-0">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 w-full min-w-0">
+          <div className="relative w-full sm:w-96 min-w-0">
+            <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-[#737373]" />
             <input
               type="text"
               value={search}
@@ -315,8 +324,8 @@ export const Customers: React.FC = () => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder="Search ID (SSG-...), Name, Phone, Company, Street..."
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs text-[#171717] dark:text-white placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#E31B23]/20 font-semibold"
+              placeholder="Search ID (SSG-...), Name, Phone..."
+              className="w-full min-h-[44px] pl-10 pr-4 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs text-[#171717] dark:text-white placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#E31B23]/20 font-semibold"
             />
           </div>
 
@@ -391,118 +400,168 @@ export const Customers: React.FC = () => {
           </p>
         </div>
       ) : viewMode === 'card' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {paginatedCustomers.map((cust) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full min-w-0">
+          {paginatedCustomers.map((cust, idx) => (
             <div
               key={cust.id}
               onClick={() => navigate(`/customers/${cust.id}`)}
-              className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl p-5 space-y-4 cursor-pointer hover:border-[#D6D6D6] transition-all shadow-xs group"
+              className={`saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl p-4 sm:p-5 space-y-3.5 cursor-pointer hover:border-[#D6D6D6] dark:hover:border-[#404040] hover:-translate-y-0.5 transition-all duration-200 shadow-xs group w-full min-w-0 relative animate-card-enter stagger-${(idx % 6) + 1}`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border ${
-                      cust.customer_type === 'company'
-                        ? 'bg-[#FFF1F2] text-[#E31B23] border-[#FFD6D8]'
-                        : 'bg-[#FAFAFA] text-[#171717] border-[#E5E5E5]'
-                    }`}
-                  >
-                    {cust.customer_type === 'company' ? <Building2 className="w-5 h-5" /> : <User className="w-5 h-5" />}
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-mono font-black text-[#C9151C] bg-[#FFF1F2] px-2 py-0.5 rounded border border-[#FFD6D8]">
-                      {cust.customer_code}
-                    </span>
-                    <h3 className="text-sm font-black text-[#171717] dark:text-white group-hover:text-[#E31B23] transition-colors mt-1 line-clamp-1">
-                      {cust.name}
-                    </h3>
-                    {cust.company_name && (
-                      <p className="text-[11px] font-bold text-[#737373] line-clamp-1">{cust.company_name}</p>
-                    )}
-                  </div>
-                </div>
+              {/* ROW 1: [Customer ID] ... [Active / Inactive] */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center text-xs font-mono font-bold text-[#E31B23] dark:text-red-400 bg-[#FFF1F2] dark:bg-rose-950/40 border border-[#FECDD3] dark:border-red-900/40 px-2.5 py-1 rounded-md min-h-[28px] tracking-wide shadow-2xs">
+                  {cust.customer_code}
+                </span>
 
                 <span
-                  className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border shrink-0 ${
+                  className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border shrink-0 ${
                     cust.is_active && !cust.deleted_at
-                      ? 'bg-[#F0FDF4] text-[#16A34A] border-emerald-200/60'
-                      : 'bg-[#FAFAFA] text-[#737373] border-[#E5E5E5]'
+                      ? 'bg-[#F0FDF4] dark:bg-emerald-950/40 text-[#16A34A] dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-900/40'
+                      : 'bg-[#FAFAFA] dark:bg-[#222222] text-[#737373] dark:text-[#A3A3A3] border-[#E5E5E5] dark:border-[#333333]'
                   }`}
                 >
                   {cust.is_active && !cust.deleted_at ? 'Active' : 'Inactive'}
                 </span>
               </div>
 
-              <div className="space-y-1.5 text-xs text-[#525252] dark:text-[#D4D4D4] font-semibold">
-                <div className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 text-[#737373] shrink-0" />
-                  <span>{cust.phone}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-[#737373] shrink-0 mt-0.5" />
-                  <span className="line-clamp-1">
-                    {[cust.street, cust.area1, cust.city || 'Tiruppur'].filter(Boolean).join(', ')}
-                  </span>
-                </div>
+              {/* ROW 2: Customer Name (Large, readable, bold) */}
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-black text-[#171717] dark:text-white group-hover:text-[#E31B23] transition-colors line-clamp-1">
+                  {cust.name}
+                </h3>
+                {cust.company_name && (
+                  <p className="text-xs font-bold text-[#737373] dark:text-[#A3A3A3] line-clamp-1 mt-0.5">
+                    {cust.company_name}
+                  </p>
+                )}
               </div>
 
-              {/* Action Toolbar */}
-              <div className="pt-3 border-t border-[#F1F1F1] dark:border-[#262626] flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
+              {/* ROW 3: Phone number (Tappable with tel:) */}
+              <div className="text-xs font-semibold">
+                <a
+                  href={`tel:${cust.phone}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-2 text-[#525252] dark:text-[#D4D4D4] hover:text-[#16A34A] dark:hover:text-emerald-400 transition-colors py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] rounded"
+                  title="Call Customer"
+                >
+                  <Phone className="w-4 h-4 text-[#16A34A] shrink-0" />
+                  <span className="font-bold">{cust.phone}</span>
+                </a>
+              </div>
+
+              {/* ROW 4: Address (Allow wrapping, do not force into one line) */}
+              <div className="flex items-start gap-2 text-xs text-[#525252] dark:text-[#D4D4D4] font-medium leading-relaxed">
+                <MapPin className="w-4 h-4 text-[#737373] shrink-0 mt-0.5" />
+                <span className="break-words line-clamp-2">
+                  {[cust.street, cust.area1, cust.city || 'Tiruppur', cust.pincode].filter(Boolean).join(', ')}
+                </span>
+              </div>
+
+              {/* PRIMARY ACTIONS: [Call] [Message] [Edit] [More] (≥44px touch targets) */}
+              <div className="relative pt-3 border-t border-[#F1F1F1] dark:border-[#262626]">
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                   <a
                     href={`tel:${cust.phone}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="p-2 rounded-lg bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] hover:text-[#16A34A] hover:bg-[#F0FDF4] border border-[#E5E5E5] dark:border-[#2A2A2A] transition-colors"
+                    className="min-h-[44px] flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-2 rounded-xl bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#16A34A] dark:text-emerald-400 hover:bg-[#F0FDF4] dark:hover:bg-emerald-950/40 border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs font-black transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23]"
                     title="Call Customer"
+                    aria-label={`Call customer ${cust.name}`}
                   >
-                    <PhoneCall className="w-3.5 h-3.5" />
+                    <PhoneCall className="w-4 h-4 shrink-0" />
+                    <span className="hidden xs:inline text-[11px] sm:text-xs">Call</span>
                   </a>
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/messages?customerId=${cust.id}`);
                     }}
-                    className="p-2 rounded-lg bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] hover:text-[#E31B23] hover:bg-[#FFF1F2] border border-[#E5E5E5] dark:border-[#2A2A2A] transition-colors"
-                    title="Send Message / Refill Reminder"
+                    className="min-h-[44px] flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-2 rounded-xl bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] hover:text-[#E31B23] dark:hover:text-red-400 hover:bg-[#FFF1F2] dark:hover:bg-red-950/40 border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs font-black transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] cursor-pointer"
+                    title="Send Message"
+                    aria-label={`Send message to ${cust.name}`}
                   >
-                    <MessageSquare className="w-3.5 h-3.5 text-[#E31B23]" />
+                    <MessageSquare className="w-4 h-4 text-[#E31B23] shrink-0" />
+                    <span className="hidden xs:inline text-[11px] sm:text-xs">Message</span>
                   </button>
+
                   <button
-                    onClick={(e) => handleOpenMerge(cust, e)}
-                    className="p-2 rounded-lg bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] hover:text-[#E31B23] hover:bg-[#FFF1F2] border border-[#E5E5E5] dark:border-[#2A2A2A] transition-colors"
-                    title="Merge Customer Account"
+                    onClick={(e) => handleOpenEdit(cust, e)}
+                    className="min-h-[44px] flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-2 rounded-xl bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] hover:text-[#171717] dark:hover:text-white hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs font-black transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] cursor-pointer"
+                    title="Edit Customer"
+                    aria-label={`Edit customer ${cust.name}`}
                   >
-                    <GitMerge className="w-3.5 h-3.5 text-[#E31B23]" />
+                    <Edit className="w-4 h-4 shrink-0" />
+                    <span className="hidden xs:inline text-[11px] sm:text-xs">Edit</span>
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMoreMenuId(activeMoreMenuId === cust.id ? null : cust.id);
+                    }}
+                    className={`min-h-[44px] flex items-center justify-center gap-1 px-2 py-2 rounded-xl border text-xs font-black transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] cursor-pointer ${
+                      activeMoreMenuId === cust.id
+                        ? 'bg-[#FFF1F2] dark:bg-rose-950/50 text-[#E31B23] dark:text-red-400 border-[#FECDD3] dark:border-red-900/60'
+                        : 'bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] hover:text-[#171717] dark:hover:text-white hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] border-[#E5E5E5] dark:border-[#2A2A2A]'
+                    }`}
+                    title="More actions"
+                    aria-label={`More actions for ${cust.name}`}
+                    aria-expanded={activeMoreMenuId === cust.id}
+                  >
+                    <MoreVertical className="w-4 h-4 shrink-0" />
+                    <span className="hidden xs:inline text-[11px] sm:text-xs">More</span>
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={(e) => handleOpenEdit(cust, e)}
-                    className="p-2 rounded-lg bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] hover:text-[#171717] border border-[#E5E5E5] transition-colors"
-                    title="Edit Customer"
+                {/* Expandable More Menu */}
+                {activeMoreMenuId === cust.id && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 bottom-full mb-2 w-52 bg-white dark:bg-[#1E1E1E] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-2xl shadow-xl p-1.5 z-20 space-y-1 animate-in fade-in duration-150"
                   >
-                    <Edit className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={(e) => handleToggleActive(cust, e)}
-                    className="p-2 rounded-lg bg-[#FAFAFA] dark:bg-[#1F1F1F] text-[#525252] hover:text-[#DC2626] border border-[#E5E5E5] transition-colors"
-                    title={cust.is_active ? 'Deactivate Account' : 'Reactivate Account'}
-                  >
-                    {cust.is_active ? (
-                      <UserX className="w-3.5 h-3.5" />
-                    ) : (
-                      <UserCheck className="w-3.5 h-3.5 text-[#16A34A]" />
-                    )}
-                  </button>
-                  <button
-                    onClick={(e) => handleOpenDelete(cust, e)}
-                    className="p-2 rounded-lg bg-[#FFF1F2] dark:bg-red-950/30 text-[#DC2626] hover:bg-[#FFE4E6] border border-[#FFD6D8] dark:border-red-900/40 transition-colors"
-                    title="Delete or Archive Customer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                    <button
+                      onClick={(e) => {
+                        setActiveMoreMenuId(null);
+                        handleOpenMerge(cust, e);
+                      }}
+                      className="w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:text-[#E31B23] dark:hover:text-red-400 hover:bg-[#FFF1F2] dark:hover:bg-rose-950/40 rounded-xl transition-all text-left cursor-pointer"
+                    >
+                      <GitMerge className="w-4 h-4 text-[#E31B23] shrink-0" />
+                      <span>Merge Account</span>
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        setActiveMoreMenuId(null);
+                        handleToggleActive(cust, e);
+                      }}
+                      className="w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:text-[#171717] dark:hover:text-white hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] rounded-xl transition-all text-left cursor-pointer"
+                    >
+                      {cust.is_active ? (
+                        <>
+                          <UserX className="w-4 h-4 text-[#DC2626] shrink-0" />
+                          <span>Deactivate Account</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="w-4 h-4 text-[#16A34A] shrink-0" />
+                          <span>Reactivate Account</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        setActiveMoreMenuId(null);
+                        handleOpenDelete(cust, e);
+                      }}
+                      className="w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-[#DC2626] dark:text-red-400 hover:bg-[#FFF1F2] dark:hover:bg-rose-950/40 rounded-xl transition-all text-left cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 shrink-0" />
+                      <span>Delete Customer</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -512,7 +571,7 @@ export const Customers: React.FC = () => {
           <div className="overflow-x-auto w-full">
             <table className="w-full min-w-[780px] text-left border-collapse text-xs font-semibold">
               <thead>
-                <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E5E5] dark:border-[#2A2A2A] font-extrabold text-[#525252] uppercase text-[10px] tracking-wider">
+                <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E5E5] dark:border-[#2A2A2A] font-bold text-[#525252] dark:text-[#D4D4D4] text-xs">
                   <th
                     onClick={() => handleSortToggle('code')}
                     className="py-3.5 px-4 cursor-pointer select-none hover:text-[#C9151C] transition-colors group"
@@ -560,25 +619,29 @@ export const Customers: React.FC = () => {
                   <tr
                     key={cust.id}
                     onClick={() => navigate(`/customers/${cust.id}`)}
-                    className="hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] cursor-pointer transition-colors"
+                    className="table-row-enter hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] cursor-pointer transition-colors"
                   >
-                    <td className="py-3.5 px-4 font-mono font-black text-[#C9151C]">{cust.customer_code}</td>
+                    <td className="py-3.5 px-4">
+                      <span className="inline-flex items-center text-xs font-mono font-bold text-[#E31B23] bg-[#FFF1F2] border border-[#FFD6D8] px-2.5 py-1 rounded-md min-h-[26px] tracking-wide shadow-2xs">
+                        {cust.customer_code}
+                      </span>
+                    </td>
                     <td className="py-3.5 px-4 font-black">
-                      {cust.name}
+                      <span className="hover:underline hover:text-[#E31B23] transition-colors inline-block">{cust.name}</span>
                       {cust.company_name && (
-                        <span className="block text-[11px] text-[#737373] font-normal">{cust.company_name}</span>
+                        <span className="block text-[11px] text-[#737373] dark:text-[#A3A3A3] font-normal">{cust.company_name}</span>
                       )}
                     </td>
                     <td className="py-3.5 px-4 font-bold">{cust.phone}</td>
-                    <td className="py-3.5 px-4 font-medium text-[#525252]">
+                    <td className="py-3.5 px-4 font-medium text-[#525252] dark:text-[#A3A3A3]">
                       {[cust.street, cust.area1, cust.city || 'Tiruppur'].filter(Boolean).join(', ')}
                     </td>
                     <td className="py-3.5 px-4">
                       <span
-                        className={`inline-block text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                        className={`inline-block text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                           cust.is_active && !cust.deleted_at
-                            ? 'bg-[#F0FDF4] text-[#16A34A] border-emerald-200/60'
-                            : 'bg-[#FAFAFA] text-[#737373] border-[#E5E5E5]'
+                            ? 'bg-[#F0FDF4] dark:bg-emerald-950/40 text-[#16A34A] dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-900/40'
+                            : 'bg-[#FAFAFA] dark:bg-[#222222] text-[#737373] dark:text-[#A3A3A3] border-[#E5E5E5] dark:border-[#333333]'
                         }`}
                       >
                         {cust.is_active && !cust.deleted_at ? 'Active' : 'Inactive'}
@@ -591,28 +654,32 @@ export const Customers: React.FC = () => {
                             e.stopPropagation();
                             navigate(`/messages?customerId=${cust.id}`);
                           }}
-                          className="p-1.5 text-[#525252] hover:text-[#E31B23] transition-colors"
+                          aria-label={`Message customer ${cust.name}`}
+                          className="p-1.5 text-[#525252] dark:text-[#D4D4D4] hover:text-[#E31B23] dark:hover:text-red-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] rounded-md"
                           title="Message Customer"
                         >
                           <MessageSquare className="w-4 h-4 text-[#E31B23]" />
                         </button>
                         <button
                           onClick={(e) => handleOpenMerge(cust, e)}
-                          className="p-1.5 text-[#525252] hover:text-[#E31B23] transition-colors"
+                          aria-label={`Merge customer account for ${cust.name}`}
+                          className="p-1.5 text-[#525252] dark:text-[#D4D4D4] hover:text-[#E31B23] dark:hover:text-red-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] rounded-md"
                           title="Merge Customer Account"
                         >
                           <GitMerge className="w-4 h-4 text-[#E31B23]" />
                         </button>
                         <button
                           onClick={(e) => handleOpenEdit(cust, e)}
-                          className="p-1.5 text-[#525252] hover:text-[#171717] transition-colors"
+                          aria-label={`Edit customer ${cust.name}`}
+                          className="p-1.5 text-[#525252] dark:text-[#D4D4D4] hover:text-[#171717] dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] rounded-md"
                           title="Edit Customer"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={(e) => handleOpenDelete(cust, e)}
-                          className="p-1.5 text-[#DC2626] hover:text-red-700 transition-colors"
+                          aria-label={`Delete customer ${cust.name}`}
+                          className="p-1.5 text-[#DC2626] dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] rounded-md"
                           title="Delete or Archive Customer"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -637,14 +704,16 @@ export const Customers: React.FC = () => {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="p-2 rounded-xl bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-[#171717] dark:text-white disabled:opacity-40"
+            className="p-2 rounded-xl bg-white dark:bg-[#1F1F1F] hover:bg-[#F5F5F5] dark:hover:bg-[#262626] border border-[#E5E5E5] dark:border-[#2A2A2A] text-[#171717] dark:text-white disabled:opacity-40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23]"
+            aria-label="Previous Page"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
-            className="p-2 rounded-xl bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] text-[#171717] dark:text-white disabled:opacity-40"
+            className="p-2 rounded-xl bg-white dark:bg-[#1F1F1F] hover:bg-[#F5F5F5] dark:hover:bg-[#262626] border border-[#E5E5E5] dark:border-[#2A2A2A] text-[#171717] dark:text-white disabled:opacity-40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23]"
+            aria-label="Next Page"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

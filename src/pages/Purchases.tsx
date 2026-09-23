@@ -5,7 +5,7 @@ import { AddPurchaseModal } from '../components/purchases/AddPurchaseModal';
 import { EditPurchaseDateModal } from '../components/purchases/EditPurchaseDateModal';
 import { DeletePurchaseModal } from '../components/purchases/DeletePurchaseModal';
 import { useToast } from '../context/ToastContext';
-import { ShoppingBag, Search, Plus, AlertTriangle, Calendar, Edit2, Trash2 } from 'lucide-react';
+import { ShoppingBag, Search, Plus, AlertTriangle, Calendar, Edit2, Trash2, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Purchases: React.FC = () => {
@@ -38,9 +38,9 @@ export const Purchases: React.FC = () => {
   }, [search]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto w-full min-w-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full min-w-0">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#171717] dark:text-white tracking-tight flex items-center gap-2.5">
             <ShoppingBag className="w-7 h-7 text-[#E31B23]" /> Sales History
@@ -49,7 +49,7 @@ export const Purchases: React.FC = () => {
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4.5 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 shrink-0"
+          className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4.5 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 shrink-0 min-h-[44px] cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Add New Sale
         </button>
@@ -58,13 +58,13 @@ export const Purchases: React.FC = () => {
       {/* Search Bar */}
       <div className="saas-card bg-white dark:bg-[#171717] p-4 rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs">
         <div className="relative">
-          <Search className="w-4 h-4 text-[#737373] absolute left-3.5 top-3" />
+          <Search className="w-4 h-4 text-[#737373] absolute left-3.5 top-3.5" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by Purchase Code (PUR-000001) or Customer Name..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs font-semibold text-[#171717] dark:text-white placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#E31B23]/20"
+            className="w-full pl-10 pr-4 py-2.5 min-h-[44px] bg-white dark:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A] rounded-xl text-xs font-semibold text-[#171717] dark:text-white placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#E31B23]/20"
           />
         </div>
       </div>
@@ -94,10 +94,10 @@ export const Purchases: React.FC = () => {
         </div>
       ) : (
         <div className="saas-card bg-white dark:bg-[#171717] rounded-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] shadow-xs overflow-hidden">
-          <div className="overflow-x-auto w-full">
+          <div className="overflow-x-auto w-full max-w-full min-w-0">
             <table className="w-full min-w-[760px] text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E5E5] dark:border-[#2A2A2A] font-extrabold text-[#525252] dark:text-[#D4D4D4] uppercase text-[10px] tracking-wider">
+                <tr className="bg-[#FAFAFA] dark:bg-[#1F1F1F] border-b border-[#E5E5E5] dark:border-[#2A2A2A] font-bold text-[#525252] dark:text-[#D4D4D4] text-xs">
                   <th className="py-3.5 px-4">Purchase Code</th>
                   <th className="py-3.5 px-4">Date</th>
                   <th className="py-3.5 px-4">Customer</th>
@@ -109,8 +109,8 @@ export const Purchases: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-[#F1F1F1] dark:divide-[#262626] text-[#171717] dark:text-[#F5F5F5] font-semibold">
                 {purchases.map((p) => (
-                  <tr key={p.id} className="hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-black text-[#E31B23]">{p.purchase_code}</td>
+                  <tr key={p.id} className="table-row-enter hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">{p.purchase_code}</td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-[#171717] dark:text-white">
@@ -127,7 +127,7 @@ export const Purchases: React.FC = () => {
                     </td>
                     <td className="py-3.5 px-4">
                       {p.customer ? (
-                        <Link to={`/customers/${p.customer_id}`} className="font-black text-[#171717] dark:text-white hover:text-[#E31B23]">
+                        <Link to={`/customers/${p.customer_id}`} className="font-black text-[#171717] dark:text-white hover:underline hover:text-[#E31B23] transition-colors">
                           {p.customer.name}
                         </Link>
                       ) : (
@@ -153,6 +153,14 @@ export const Purchases: React.FC = () => {
                     <td className="py-3.5 px-4 text-[#737373]">{p.notes || '-'}</td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        <Link
+                          to={`/billing?saleId=${p.id}`}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#FFF1F2] dark:bg-red-950/40 border border-[#FECDD3] dark:border-red-900/40 text-[#E31B23] hover:bg-[#E31B23] hover:text-white text-[11px] font-bold rounded-lg transition-colors shadow-2xs"
+                          title="View approved A4 customer bill"
+                        >
+                          <FileText className="w-3 h-3" />
+                          <span>View Bill</span>
+                        </Link>
                         <button
                           onClick={() => setEditingPurchase(p)}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-[#222] border border-[#E5E5E5] dark:border-[#333] hover:border-[#E31B23] text-[#171717] dark:text-white hover:text-[#E31B23] text-[11px] font-bold rounded-lg transition-colors shadow-2xs"

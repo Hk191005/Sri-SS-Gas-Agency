@@ -15,7 +15,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   action,
 }) => {
   return (
-    <div className="py-12 px-4 text-center space-y-3">
+    <div className="py-12 px-4 text-center space-y-3 animate-card-enter">
       <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] dark:bg-indigo-950/40 text-[#4F46E5] flex items-center justify-center mx-auto border border-indigo-200/60 dark:border-indigo-900/40">
         {icon || <PackageOpen className="w-6 h-6" />}
       </div>

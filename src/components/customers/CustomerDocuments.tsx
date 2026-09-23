@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { CustomerDocument, DocumentType } from '../../types/database.types';
-import { getCustomerDocuments, uploadCustomerDocument, deleteCustomerDocument } from '../../lib/db';
+import { getCustomerDocuments, uploadCustomerDocument, deleteCustomerDocument, getDocumentSignedUrl } from '../../lib/db';
 import { FileText, Shield, Upload, Trash2, ExternalLink, AlertCircle, Lock, Loader2, CheckCircle2 } from 'lucide-react';
 
 interface CustomerDocumentsProps {
@@ -22,6 +22,7 @@ export const CustomerDocuments: React.FC<CustomerDocumentsProps> = ({ customerId
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [openingId, setOpeningId] = useState<string | null>(null);
   const [docType, setDocType] = useState<DocumentType>('aadhaar');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
@@ -36,6 +37,26 @@ export const CustomerDocuments: React.FC<CustomerDocumentsProps> = ({ customerId
       setErrorMsg('Failed to fetch customer documents');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewDoc = async (doc: CustomerDocument) => {
+    if (doc.signed_url) {
+      window.open(doc.signed_url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    setOpeningId(doc.id);
+    try {
+      const url = await getDocumentSignedUrl(doc.storage_path);
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        setErrorMsg('Unable to generate secure download link for this document.');
+      }
+    } catch (e: any) {
+      setErrorMsg(e.message || 'Failed to open document');
+    } finally {
+      setOpeningId(null);
     }
   };
 
@@ -241,20 +262,19 @@ export const CustomerDocuments: React.FC<CustomerDocumentsProps> = ({ customerId
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
-                  {doc.signed_url ? (
-                    <a
-                      href={doc.signed_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 bg-white dark:bg-[#1F1F1F] hover:bg-[#FAFAFA] text-[#171717] dark:text-white text-xs font-bold px-3.5 py-2 rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] transition-colors shadow-2xs hover:border-[#E31B23]"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5 text-[#E31B23]" /> View / Download
-                    </a>
-                  ) : (
-                    <span className="text-xs text-[#737373] font-bold px-3 py-1.5 bg-[#FAFAFA] rounded-lg border border-[#E5E5E5]">
-                      Vault Protected
-                    </span>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleViewDoc(doc)}
+                    disabled={openingId === doc.id}
+                    className="inline-flex items-center gap-1.5 bg-white dark:bg-[#1F1F1F] hover:bg-[#FAFAFA] text-[#171717] dark:text-white text-xs font-bold px-3.5 py-2 rounded-xl border border-[#E5E5E5] dark:border-[#2A2A2A] transition-colors shadow-2xs hover:border-[#E31B23] disabled:opacity-50"
+                  >
+                    {openingId === doc.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E31B23]" />
+                    ) : (
+                      <ExternalLink className="w-3.5 h-3.5 text-[#E31B23]" />
+                    )}
+                    <span>View / Download</span>
+                  </button>
                   <button
                     onClick={() => handleDelete(doc)}
                     disabled={deletingId === doc.id}

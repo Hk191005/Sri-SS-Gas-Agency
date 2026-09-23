@@ -84,7 +84,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return (
             <div
               key={toast.id}
-              className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-2xl border shadow-xl backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 duration-200 ${
+              className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-2xl border shadow-xl backdrop-blur-md transition-all toast-enter ${
                 isSuccess
                   ? 'bg-emerald-50/95 dark:bg-emerald-950/90 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100'
                   : isError
@@ -92,9 +92,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   : 'bg-white/95 dark:bg-[#1C1C1C]/90 border-[#E5E5E5] dark:border-[#333333] text-[#171717] dark:text-white'
               }`}
             >
-              {isSuccess && <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />}
-              {isError && <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />}
-              {!isSuccess && !isError && <Info className="w-5 h-5 text-[#E31B23] shrink-0 mt-0.5" />}
+              {isSuccess && <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 animate-in zoom-in-75 duration-200" />}
+              {isError && <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5 animate-in zoom-in-75 duration-200" />}
+              {!isSuccess && !isError && <Info className="w-5 h-5 text-[#E31B23] shrink-0 mt-0.5 animate-in zoom-in-75 duration-200" />}
 
               <div className="flex-1 min-w-0 pr-1">
                 {toast.title && <p className="text-xs font-black tracking-tight">{toast.title}</p>}
@@ -105,7 +105,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 type="button"
                 onClick={() => dismissToast(toast.id)}
                 aria-label="Close notification"
-                className="min-w-[44px] min-h-[44px] -mr-2 -mt-2 flex items-center justify-center rounded-xl text-current opacity-70 hover:opacity-100 transition-opacity active:scale-95 focus:outline-hidden"
+                className="min-w-[44px] min-h-[44px] -mr-2 -mt-2 flex items-center justify-center rounded-xl text-current opacity-70 hover:opacity-100 transition-opacity active:scale-95 btn-press focus:outline-hidden"
               >
                 <X className="w-4 h-4" />
               </button>
