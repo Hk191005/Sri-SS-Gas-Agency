@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users,
@@ -66,26 +66,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
   const [activeModal, setActiveModal] = useState<'customer' | 'sale' | 'payment' | null>(null);
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
 
-  const loadData = async () => {
-    try {
-      const [dashStats, cycles, stockSummary, purchasesList] = await Promise.all([
-        getDashboardStats(),
-        getCustomerReminderCycles().catch(() => []),
-        getCylinderStockSummary().catch(() => []),
-        getPurchases().catch(() => []),
-      ]);
-      setStats(dashStats);
-      setReminderCycles(cycles);
-      setStockSummaries(stockSummary);
-      setPurchases(purchasesList);
-    } catch (e) {
-      console.error('Dashboard live data load error:', e);
-    }
-  };
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingStock, setLoadingStock] = useState(true);
+  const [loadingPurchases, setLoadingPurchases] = useState(true);
+
+  const loadData = useCallback(() => {
+    setLoadingStats(true);
+    setLoadingStock(true);
+    setLoadingPurchases(true);
+
+    getDashboardStats()
+      .then((s) => setStats(s))
+      .catch((e) => console.error('Stats error:', e))
+      .finally(() => setLoadingStats(false));
+
+    getCylinderStockSummary()
+      .then((s) => setStockSummaries(s))
+      .catch((e) => console.error('Stock error:', e))
+      .finally(() => setLoadingStock(false));
+
+    getPurchases()
+      .then((p) => setPurchases(p))
+      .catch((e) => console.error('Purchases error:', e))
+      .finally(() => setLoadingPurchases(false));
+
+    getCustomerReminderCycles()
+      .then((c) => setReminderCycles(c))
+      .catch(() => setReminderCycles([]));
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const handleOpenAction = (type: 'customer' | 'purchase' | 'delivery' | 'payment') => {
     if (onOpenQuickAction) {
@@ -98,7 +110,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
   };
 
   // Dynamically compute live weekly sales chart from Supabase purchases
-  const computeWeeklyChartData = () => {
+  const rawWeeklyBars = useMemo(() => {
     const now = new Date();
     const currentDay = now.getDay();
     const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
@@ -107,7 +119,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
     monday.setHours(0, 0, 0, 0);
 
     const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const daysData = dayLabels.map((dayLabel, index) => {
+    return dayLabels.map((dayLabel, index) => {
       const d = new Date(monday);
       d.setDate(monday.getDate() + index);
       const dateStr = d.toISOString().split('T')[0];
@@ -128,12 +140,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
         value: cylCount,
       };
     });
-
-    return daysData;
-  };
+  }, [purchases]);
 
   // Dynamically compute live monthly sales chart from Supabase purchases
-  const computeMonthlyChartData = () => {
+  const rawMonthlyBars = useMemo(() => {
     const now = new Date();
     const currentMonthPrefix = now.toISOString().substring(0, 7);
     const monthPurchases = purchases.filter((p) => p.purchase_date && p.purchase_date.startsWith(currentMonthPrefix));
@@ -164,10 +174,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
     });
 
     return weeks;
-  };
+  }, [purchases]);
 
-  const rawWeeklyBars = computeWeeklyChartData();
-  const rawMonthlyBars = computeMonthlyChartData();
   const rawChartBars = timeRange === 'week' ? rawWeeklyBars : rawMonthlyBars;
 
   // Real numeric scaling calculations (prevents visual exaggeration and handles 0 values gracefully)
@@ -181,10 +189,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
     0,
   ];
 
-  const chartBars = rawChartBars.map((d) => ({
-    ...d,
-    height: d.value > 0 ? `${Math.min(100, Math.round((d.value / yMax) * 100))}%` : '0%',
-  }));
+  const chartBars = useMemo(() => {
+    return rawChartBars.map((d) => ({
+      ...d,
+      height: d.value > 0 ? `${Math.min(100, Math.round((d.value / yMax) * 100))}%` : '0%',
+    }));
+  }, [rawChartBars, yMax]);
 
   // Chart summary metrics computed from live database records
   const totalPeriodCyls = chartBars.reduce((sum, b) => sum + b.value, 0);
@@ -253,6 +263,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
           subtitle="Registered gas accounts"
           icon={<Users className="w-5 h-5" />}
           variant="brand"
+          loading={loadingStats}
           className="animate-card-enter stagger-1"
         />
         <MetricCard
@@ -261,6 +272,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
           subtitle="Active refill accounts"
           icon={<CheckCircle2 className="w-5 h-5" />}
           variant="green"
+          loading={loadingStats}
           className="animate-card-enter stagger-2"
         />
         <MetricCard
@@ -269,6 +281,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
           subtitle="Field dispatches today"
           icon={<Truck className="w-5 h-5" />}
           variant="cyan"
+          loading={loadingStats}
           className="animate-card-enter stagger-3"
         />
         <MetricCard
@@ -277,6 +290,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
           subtitle="Filled ready stock"
           icon={<Database className="w-5 h-5" />}
           variant="green"
+          loading={loadingStats}
           className="animate-card-enter stagger-4"
         />
         <MetricCard
@@ -285,6 +299,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
           subtitle="Customer receivables"
           icon={<CreditCard className="w-5 h-5" />}
           variant="red"
+          loading={loadingStats}
           className="animate-card-enter stagger-5"
         />
         <MetricCard
@@ -293,6 +308,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
           subtitle="SUPERGAS payables"
           icon={<Building2 className="w-5 h-5" />}
           variant="orange"
+          loading={loadingStats}
           className="animate-card-enter stagger-6"
         />
       </div>
@@ -338,6 +354,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
 
           {/* Plot Area with Y-axis & SUPERGAS Red bars */}
           <div className="relative w-full h-52 flex items-end gap-3 pt-4 pb-2">
+            {loadingPurchases && (
+              <div className="absolute inset-0 bg-white/60 dark:bg-[#171717]/60 backdrop-blur-[2px] z-30 flex items-center justify-center">
+                <div className="h-6 w-32 skeleton-shimmer rounded-full" />
+              </div>
+            )}
             {/* Y-axis Labels & Grid Lines */}
             <div className="flex flex-col justify-between h-full text-xs font-semibold text-[#737373] pr-2 select-none min-w-[28px] text-right">
               {yTicks.map((t, idx) => (
@@ -420,9 +441,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenQuickAction }) => {
           </div>
 
           <div className="space-y-3.5">
-            {stockSummaries.length === 0 ? (
-              <div className="py-8 text-center text-xs font-semibold text-[#737373]">
-                Loading inventory stock...
+            {loadingStock && stockSummaries.length === 0 ? (
+              <div className="space-y-3.5">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="p-3 bg-[#FAFAFA] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="h-3.5 w-16 skeleton-shimmer rounded" />
+                      <div className="h-3.5 w-24 skeleton-shimmer rounded" />
+                    </div>
+                    <div className="w-full bg-[#E5E7EB] dark:bg-[#2A2A2A] h-2 rounded-full overflow-hidden">
+                      <div className="h-full skeleton-shimmer rounded-full w-2/3" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               stockSummaries.map((stock) => {

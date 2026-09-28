@@ -16,12 +16,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div className="py-12 px-4 text-center space-y-3 animate-card-enter">
-      <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] dark:bg-indigo-950/40 text-[#4F46E5] flex items-center justify-center mx-auto border border-indigo-200/60 dark:border-indigo-900/40">
+      <div className="w-12 h-12 rounded-2xl bg-[#FFF1F2] dark:bg-red-950/40 text-[#E31B23] flex items-center justify-center mx-auto border border-[#FECDD3]/60 dark:border-red-900/40 shadow-2xs">
         {icon || <PackageOpen className="w-6 h-6" />}
       </div>
-      <h3 className="text-sm font-black text-[#172033] dark:text-white">{title}</h3>
-      {description && <p className="text-xs font-semibold text-[#64748B] dark:text-slate-400 max-w-sm mx-auto">{description}</p>}
+      <h3 className="text-sm font-black text-[#111111] dark:text-white tracking-tight">{title}</h3>
+      {description && <p className="text-xs font-semibold text-[#525252] dark:text-[#A3A3A3] max-w-sm mx-auto leading-relaxed">{description}</p>}
       {action && <div className="pt-2">{action}</div>}
     </div>
   );
 };
+

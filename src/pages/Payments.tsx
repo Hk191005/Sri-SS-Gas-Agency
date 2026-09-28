@@ -3,6 +3,9 @@ import type { Payment, Deposit, Customer } from '../types/database.types';
 import { getCustomers, getPayments, getDeposits, getPurchases } from '../lib/db';
 import { getSupplierPurchases } from '../lib/supplierDb';
 import { AddPaymentModal } from '../components/payments/AddPaymentModal';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Button } from '../components/ui/Button';
+import { MetricCard } from '../components/ui/MetricCard';
 import { CreditCard, Plus, ArrowUpRight, Building2, Database, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -79,54 +82,42 @@ export const Payments: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto w-full min-w-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#171717] dark:text-white tracking-tight flex items-center gap-2.5">
-            <CreditCard className="w-7 h-7 text-[#E31B23]" /> Finance & Collections Hub
-          </h1>
-          <p className="text-xs font-semibold text-[#525252] dark:text-[#D4D4D4] mt-1">
-            Manage customer receivables, payment receipts, held cylinder deposits & supplier payables
-          </p>
-        </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4.5 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 shrink-0 min-h-[44px]"
-        >
-          <Plus className="w-4 h-4" /> Record Customer Payment
-        </button>
-      </div>
+      <PageHeader
+        title="Finance & Collections Hub"
+        subtitle="Manage customer receivables, payment receipts, held cylinder deposits & supplier payables"
+        icon={<CreditCard className="w-5 h-5 text-[#E31B23]" />}
+        actions={
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => setIsAddModalOpen(true)}
+            icon={<Plus className="w-4 h-4" />}
+          >
+            Record Customer Payment
+          </Button>
+        }
+      />
 
       {/* Summary KPI Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-5 rounded-2xl shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">Customer Collections Logged</span>
-            <span className="text-2xl font-black text-[#16A34A] dark:text-emerald-400 mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[#F0FDF4] dark:bg-emerald-950/30 text-[#16A34A] flex items-center justify-center border border-emerald-200/60 dark:border-emerald-900/40">
-            <CreditCard className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-5 rounded-2xl shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">Active Held Deposits</span>
-            <span className="text-2xl font-black text-[#171717] dark:text-white mt-1 block">₹{totalDeposits.toLocaleString('en-IN')}</span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[#FAFAFA] dark:bg-[#222] text-[#171717] dark:text-white flex items-center justify-center border border-[#E5E5E5] dark:border-[#333]">
-            <Database className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="saas-card bg-white dark:bg-[#171717] border border-[#E5E5E5] dark:border-[#2A2A2A] p-5 rounded-2xl shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3] block">Supplier Payables Balance</span>
-            <span className="text-2xl font-black text-[#D97706] dark:text-amber-400 mt-1 block">₹{totalSupplierPayable.toLocaleString('en-IN')}</span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[#FFFBEB] dark:bg-amber-950/30 text-[#D97706] flex items-center justify-center border border-amber-200/60 dark:border-amber-900/40">
-            <Building2 className="w-5 h-5" />
-          </div>
-        </div>
+        <MetricCard
+          title="Customer Collections Logged"
+          value={`₹${totalCollected.toLocaleString('en-IN')}`}
+          icon={<CreditCard className="w-5 h-5" />}
+          variant="green"
+        />
+        <MetricCard
+          title="Active Held Deposits"
+          value={`₹${totalDeposits.toLocaleString('en-IN')}`}
+          icon={<Database className="w-5 h-5" />}
+          variant="brand"
+        />
+        <MetricCard
+          title="Supplier Payables Balance"
+          value={`₹${totalSupplierPayable.toLocaleString('en-IN')}`}
+          icon={<Building2 className="w-5 h-5" />}
+          variant="orange"
+        />
       </div>
 
       {/* Navigation Tabs */}

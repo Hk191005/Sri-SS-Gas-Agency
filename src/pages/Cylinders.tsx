@@ -3,6 +3,9 @@ import type { CylinderStockSummary } from '../types/database.types';
 import { getCylinderStockSummary } from '../lib/db';
 import { CylinderReturnModal } from '../components/cylinders/CylinderReturnModal';
 import { EditOpeningStockModal } from '../components/cylinders/EditOpeningStockModal';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Button } from '../components/ui/Button';
+import { EmptyState } from '../components/ui/EmptyState';
 import { Database, RotateCcw, PackageCheck, Truck, RefreshCw, ShieldCheck, AlertTriangle, SlidersHorizontal } from 'lucide-react';
 
 export const Cylinders: React.FC = () => {
@@ -33,30 +36,31 @@ export const Cylinders: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto w-full min-w-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#171717] dark:text-white tracking-tight flex items-center gap-2.5">
-            <Database className="w-7 h-7 text-[#E31B23]" /> Inventory Stock & Cylinder Holdings
-          </h1>
-          <p className="text-xs font-semibold text-[#525252] dark:text-[#D4D4D4] mt-1">
-            Real-time stock management across 4 kg, 12 kg, 17 kg and 21 kg cylinders
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <button
-            onClick={() => setIsOpeningStockModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] text-[#171717] dark:text-white font-bold text-xs px-4 py-2.5 rounded-[12px] border border-[#E5E5E5] dark:border-[#2A2A2A] transition-all active:scale-98 min-h-[44px]"
-          >
-            <SlidersHorizontal className="w-4 h-4 text-[#E31B23]" /> Edit Opening Stock
-          </button>
-          <button
-            onClick={() => setIsReturnModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-[#E31B23] hover:bg-[#C9151C] text-white font-black text-xs px-4.5 py-2.5 rounded-[12px] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all active:scale-98 shrink-0 min-h-[44px]"
-          >
-            <RotateCcw className="w-4 h-4" /> Record Cylinder Return
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Inventory Stock & Cylinder Holdings"
+        subtitle="Real-time stock management across 4 kg, 12 kg, 17 kg and 21 kg cylinders"
+        icon={<Database className="w-5 h-5 text-[#E31B23]" />}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setIsOpeningStockModalOpen(true)}
+              icon={<SlidersHorizontal className="w-4 h-4 text-[#E31B23]" />}
+            >
+              Edit Opening Stock
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setIsReturnModalOpen(true)}
+              icon={<RotateCcw className="w-4 h-4" />}
+            >
+              Record Cylinder Return
+            </Button>
+          </>
+        }
+      />
 
       {/* Stock Cards Grid per Size */}
       {loading ? (
@@ -64,16 +68,17 @@ export const Cylinders: React.FC = () => {
           Calculating live cylinder inventory stock...
         </div>
       ) : loadError ? (
-        <div className="saas-card bg-white dark:bg-[#171717] p-8 text-center rounded-2xl border border-red-200 dark:border-red-900/50 space-y-3">
-          <AlertTriangle className="w-10 h-10 text-red-500 mx-auto" />
-          <p className="font-black text-red-600 dark:text-red-400 text-sm">Failed to load cylinder inventory</p>
-          <p className="text-xs text-[#737373] max-w-md mx-auto">{loadError}</p>
-          <button
-            onClick={loadData}
-            className="px-4 py-2 bg-[#E31B23] text-white text-xs font-bold rounded-xl hover:bg-[#C9151C] transition-colors"
-          >
-            Retry Loading
-          </button>
+        <div className="saas-card bg-white dark:bg-[#171717] p-8 text-center rounded-2xl border border-red-200 dark:border-red-900/50">
+          <EmptyState
+            title="Failed to load cylinder inventory"
+            description={loadError}
+            icon={<AlertTriangle className="w-6 h-6 text-red-500" />}
+            action={
+              <Button variant="primary" size="sm" onClick={loadData}>
+                Retry Loading
+              </Button>
+            }
+          />
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

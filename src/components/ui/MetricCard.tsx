@@ -12,6 +12,7 @@ interface MetricCardProps {
     isPositive?: boolean;
   };
   variant?: 'brand' | 'green' | 'orange' | 'danger' | 'info' | 'blue' | 'cyan' | 'purple' | 'red';
+  loading?: boolean;
   className?: string;
 }
 
@@ -22,6 +23,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   icon,
   trend,
   variant = 'brand',
+  loading = false,
   className = '',
 }) => {
   const iconBgClasses: Record<string, string> = {
@@ -37,11 +39,15 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   return (
-    <div className={`saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-5 relative flex flex-col justify-between transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 ${className}`}>
+    <div className={`saas-card bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-5 relative flex flex-col justify-between transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 min-h-[110px] ${className}`}>
       <div className="flex items-start justify-between gap-3 mb-2">
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-xs font-bold text-[#525252] dark:text-[#A3A3A3]">{title}</p>
-          <div className="text-2xl sm:text-3xl font-black text-[#111111] dark:text-white mt-1 tracking-tight">{value}</div>
+          {loading ? (
+            <div className="h-8 w-24 skeleton-shimmer rounded-lg mt-1.5" />
+          ) : (
+            <div className="text-2xl sm:text-3xl font-black text-[#111111] dark:text-white mt-1 tracking-tight">{value}</div>
+          )}
         </div>
 
         {icon && (
@@ -53,19 +59,24 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
       {(subtitle || trend) && (
         <div className="flex items-center justify-between text-xs pt-2.5 border-t border-[#F1F5F9] dark:border-[#262626]">
-          {subtitle && <span className="font-semibold text-[#737373] dark:text-[#737373]">{subtitle}</span>}
-
-          {trend && (
-            <span
-              className={`inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-full text-xs ${
-                trend.isPositive
-                  ? 'bg-[#ECFDF5] text-[#059669] border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900'
-                  : 'bg-[#FFF1F2] text-[#DC2626] border border-[#FECDD3] dark:bg-red-950/40 dark:text-red-400 dark:border-red-900'
-              }`}
-            >
-              {trend.isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              <span>{trend.value}% {trend.label}</span>
-            </span>
+          {loading ? (
+            <div className="h-3.5 w-28 skeleton-shimmer rounded" />
+          ) : (
+            <>
+              {subtitle && <span className="font-semibold text-[#737373] dark:text-[#737373]">{subtitle}</span>}
+              {trend && (
+                <span
+                  className={`inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-full text-xs ${
+                    trend.isPositive
+                      ? 'bg-[#ECFDF5] text-[#059669] border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900'
+                      : 'bg-[#FFF1F2] text-[#DC2626] border border-[#FECDD3] dark:bg-red-950/40 dark:text-red-400 dark:border-red-900'
+                  }`}
+                >
+                  {trend.isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  <span>{trend.value}% {trend.label}</span>
+                </span>
+              )}
+            </>
           )}
         </div>
       )}

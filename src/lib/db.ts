@@ -1774,41 +1774,77 @@ export async function updateDeliveryStatus(id: string, newStatus: DeliveryStatus
 export async function getDashboardStats(): Promise<DashboardStats> {
   assertBackendAccess();
 
-  const [totalRes, activeRes, indivRes, compRes] = await Promise.all([
+  const todayStr = new Date().toISOString().split('T')[0];
+  const currentMonthPrefix = todayStr.substring(0, 7);
+
+  const [
+    totalRes,
+    activeRes,
+    indivRes,
+    compRes,
+    todayDelivRes,
+    pendingDelivRes,
+    purchasesRes,
+    paymentsRes,
+    depositsRes,
+    supplierRes,
+  ] = await Promise.all([
     supabase.from('customers').select('*', { count: 'exact', head: true }),
     supabase.from('customers').select('*', { count: 'exact', head: true }).eq('is_active', true).is('deleted_at', null),
     supabase.from('customers').select('*', { count: 'exact', head: true }).eq('customer_type', 'individual'),
     supabase.from('customers').select('*', { count: 'exact', head: true }).eq('customer_type', 'company'),
+    supabase.from('deliveries').select('*', { count: 'exact', head: true }).eq('delivery_date', todayStr),
+    supabase.from('deliveries').select('*', { count: 'exact', head: true }).in('status', ['pending', 'assigned', 'out_for_delivery']),
+    supabase.from('purchases').select('total_gas_amount, purchase_date'),
+    supabase.from('payments').select('amount'),
+    supabase.from('deposits').select('amount, status'),
+    supabase.from('supplier_purchases').select('total_amount, amount_paid, outstanding_amount, invoice_date, status'),
   ]);
-  const totalCust = totalRes.count ?? 0;
+
+  const totalCustomers = totalRes.count ?? 0;
   const activeCustomers = activeRes.count ?? 0;
   const individualCustomers = indivRes.count ?? 0;
   const companyCustomers = compRes.count ?? 0;
+  const todaysDeliveries = todayDelivRes.count ?? 0;
+  const pendingDeliveries = pendingDelivRes.count ?? 0;
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const deliveries = await getDeliveries();
-  const todaysDeliveries = deliveries.filter((d) => d.delivery_date === todayStr).length;
-  const pendingDeliveries = deliveries.filter((d) => d.status === 'pending' || d.status === 'assigned' || d.status === 'out_for_delivery').length;
+  const purchases = purchasesRes.data || [];
+  const payments = paymentsRes.data || [];
+  const deposits = depositsRes.data || [];
+  const supplierPurchases = supplierRes.data || [];
 
-  const purchases = await getPurchases();
-  const currentMonthPrefix = new Date().toISOString().substring(0, 7);
   const thisMonthSales = purchases
-    .filter((p) => p.purchase_date.startsWith(currentMonthPrefix))
-    .reduce((sum, p) => sum + p.total_gas_amount, 0);
+    .filter((p) => p.purchase_date && p.purchase_date.startsWith(currentMonthPrefix))
+    .reduce((sum, p) => sum + (Number(p.total_gas_amount) || 0), 0);
 
-  const payments = await getPayments();
-  const totalGasPurchasedAllTime = purchases.reduce((sum, p) => sum + p.total_gas_amount, 0);
-  const totalPaidAllTime = payments.reduce((sum, p) => sum + p.amount, 0);
+  const totalGasPurchasedAllTime = purchases.reduce((sum, p) => sum + (Number(p.total_gas_amount) || 0), 0);
+  const totalPaidAllTime = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   const outstandingPayments = Math.max(0, totalGasPurchasedAllTime - totalPaidAllTime);
 
-  const deposits = await getDeposits();
-  const totalDepositsHeld = deposits.reduce((sum, d) => (d.status === 'held' || d.status === 'given' ? sum + d.amount : sum), 0);
+  const totalDepositsHeld = deposits.reduce(
+    (sum, d) => (d.status === 'held' || d.status === 'given' ? sum + (Number(d.amount) || 0) : sum),
+    0
+  );
 
-  const cylinderStock = await getCylinderStockSummary();
-  const availableCylinders = cylinderStock.reduce((sum, c) => sum + c.available, 0);
+  const supplierPurchasesMonth = supplierPurchases
+    .filter((sp) => sp.status === 'confirmed' && sp.invoice_date && sp.invoice_date.startsWith(currentMonthPrefix))
+    .reduce((sum, sp) => sum + (Number(sp.total_amount) || 0), 0);
+
+  const supplierOutstanding = supplierPurchases
+    .filter((sp) => sp.status === 'confirmed')
+    .reduce((sum, sp) => sum + (Number(sp.outstanding_amount) || 0), 0);
+
+  // Available cylinders query from stock summary
+  let availableCylinders = 0;
+  try {
+    const cylinderStock = await getCylinderStockSummary();
+    availableCylinders = cylinderStock.reduce((sum, c) => sum + c.available, 0);
+  } catch (e) {
+    console.warn('Cylinder stock summary error in stats:', e);
+  }
 
   return {
-    totalCustomers: totalCust,
+    totalCustomers,
     activeCustomers,
     individualCustomers,
     companyCustomers,
@@ -1818,8 +1854,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     outstandingPayments,
     totalDepositsHeld,
     availableCylinders,
-    supplierPurchasesMonth: 0,
-    supplierOutstanding: 0,
+    supplierPurchasesMonth,
+    supplierOutstanding,
   };
 }
 
