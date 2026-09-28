@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useModalEscape } from '../../hooks/useModalEscape';
 import { SupabaseSetupBanner } from '../SupabaseSetupBanner';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { AGENCY_BRANDING } from '../../lib/constants';
@@ -48,12 +49,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
 
   const isConfigured = isSupabaseConfigured();
 
-  // Handle escape key to close mobile drawer
+  // Handle escape key to close mobile drawer with capture-phase hook
+  useModalEscape(mobileMenuOpen, () => setMobileMenuOpen(false));
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && mobileMenuOpen) {
-        setMobileMenuOpen(false);
-      }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsSearchOpen(true);
@@ -62,7 +62,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mobileMenuOpen]);
+  }, []);
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
@@ -246,9 +246,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
               onClick={handleLogout}
               title="Sign Out"
               aria-label="Sign Out"
-              className="p-1.5 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-[#262626] rounded-lg transition-colors shrink-0 cursor-pointer btn-press"
+              className={`flex items-center gap-1.5 p-1.5 ${!sidebarCollapsed ? 'px-2.5 py-1.5' : ''} text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-red-950/40 rounded-lg transition-colors shrink-0 cursor-pointer btn-press border border-transparent hover:border-[#FECDD3] dark:hover:border-red-900/40`}
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 text-[#DC2626]" />
+              {!sidebarCollapsed && <span className="text-xs font-bold text-[#DC2626]">Logout</span>}
             </button>
           </div>
         </div>
@@ -391,11 +392,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ onOpenQuickAction }) => {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#737373] hover:text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-[#262626] rounded-xl transition-colors shrink-0 cursor-pointer btn-press"
+                  className="min-h-[44px] flex items-center gap-2 px-3 py-2 text-[#DC2626] hover:bg-[#FFF1F2] dark:hover:bg-red-950/40 border border-[#FECDD3] dark:border-red-900/40 rounded-xl transition-colors shrink-0 cursor-pointer btn-press"
                   title="Sign Out"
                   aria-label="Sign Out"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-4 h-4 text-[#DC2626]" />
+                  <span className="text-xs font-bold text-[#DC2626]">Logout</span>
                 </button>
               </div>
             </div>

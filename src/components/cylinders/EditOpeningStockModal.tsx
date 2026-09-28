@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getCylinderStockSummary, getInventoryOpeningBalances, updateInventoryOpeningBalances } from '../../lib/db';
 import { useToast } from '../../context/ToastContext';
+import { useModalEscape } from '../../hooks/useModalEscape';
+import { ModalPortal } from '../common/ModalPortal';
 import { X, Save, AlertCircle, Database, Info, Loader2, AlertTriangle } from 'lucide-react';
 
 interface EditOpeningStockModalProps {
@@ -27,6 +29,7 @@ export const EditOpeningStockModal: React.FC<EditOpeningStockModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  useModalEscape(isOpen, onClose);
   const { showSuccess, showError } = useToast();
 
   const [rows, setRows] = useState<StockRowState[]>([]);
@@ -152,8 +155,9 @@ export const EditOpeningStockModal: React.FC<EditOpeningStockModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto backdrop-enter">
-      <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-lg overflow-hidden modal-enter my-auto">
+    <ModalPortal>
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-enter">
+        <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-lg overflow-hidden modal-enter my-auto">
         {/* Header */}
         <div className="bg-white dark:bg-[#171717] text-[#171717] dark:text-white px-6 py-4 flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626]">
           <div className="flex items-center gap-2.5">
@@ -281,5 +285,6 @@ export const EditOpeningStockModal: React.FC<EditOpeningStockModalProps> = ({
         </form>
       </div>
     </div>
+  </ModalPortal>
   );
 };

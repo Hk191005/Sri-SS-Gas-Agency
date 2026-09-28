@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { Customer, CustomerMergeStats, CustomerMergeResult } from '../../types/database.types';
 import { getCustomers, getCustomerStatsForMerge, mergeCustomers } from '../../lib/db';
 import { useToast } from '../../context/ToastContext';
+import { useModalEscape } from '../../hooks/useModalEscape';
+import { ModalPortal } from '../common/ModalPortal';
 import {
   GitMerge,
   AlertTriangle,
@@ -27,6 +29,7 @@ export const MergeCustomerModal: React.FC<MergeCustomerModalProps> = ({
   initialDuplicateCustomer,
   initialPrimaryCustomer,
 }) => {
+  useModalEscape(isOpen, onClose);
   const { showSuccess, showError } = useToast();
 
   const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
@@ -165,8 +168,9 @@ export const MergeCustomerModal: React.FC<MergeCustomerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto backdrop-enter">
-      <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden modal-enter my-6">
+    <ModalPortal>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto backdrop-enter">
+        <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden modal-enter my-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[#F1F5F9] dark:border-[#262626] flex items-center justify-between bg-[#FFF1F2] dark:bg-red-950/20">
           <div className="flex items-center gap-3">
@@ -488,5 +492,6 @@ export const MergeCustomerModal: React.FC<MergeCustomerModalProps> = ({
         </div>
       </div>
     </div>
+  </ModalPortal>
   );
 };

@@ -15,7 +15,7 @@ export const AGENCY_BRANDING = {
   LOGO_PATH: '/assets/sri-ss-gas-agency-logo.png',
 };
 
-export const SUPPORTED_CYLINDER_SIZES = ['4 kg', '12 kg', '17 kg', '21 kg'] as const;
+export const SUPPORTED_CYLINDER_SIZES = ['4 kg', '12 kg', '17 kg', '21 kg', '33 kg'] as const;
 
 /**
  * Helper to map user input email or username.

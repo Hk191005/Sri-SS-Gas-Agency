@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Customer } from '../types/database.types';
-import { getCustomers, toggleCustomerActive } from '../lib/db';
+import { getCustomers, toggleCustomerActive, isCustomerActive } from '../lib/db';
 import { CustomerFormModal } from '../components/customers/CustomerFormModal';
 import { DeleteCustomerModal } from '../components/customers/DeleteCustomerModal';
 import { MergeCustomerModal } from '../components/customers/MergeCustomerModal';
@@ -142,16 +142,16 @@ export const Customers: React.FC = () => {
 
     // 1. Tab filtering
     if (activeTab === 'active') {
-      filtered = filtered.filter((c) => c.is_active && !c.deleted_at);
+      filtered = filtered.filter(isCustomerActive);
     } else if (activeTab === 'inactive') {
-      filtered = filtered.filter((c) => !c.is_active || c.deleted_at !== null);
+      filtered = filtered.filter((c) => !isCustomerActive(c));
     } else if (activeTab === 'individual') {
       filtered = filtered.filter((c) => c.customer_type === 'individual');
     } else if (activeTab === 'company') {
       filtered = filtered.filter((c) => c.customer_type === 'company');
     } else if (activeTab === 'followup') {
       // Followup filter (active accounts)
-      filtered = filtered.filter((c) => c.is_active);
+      filtered = filtered.filter(isCustomerActive);
     }
     // 'all' preserves all customer records (active, inactive, soft-deleted)
 
@@ -208,12 +208,13 @@ export const Customers: React.FC = () => {
 
   const handleToggleActive = async (cust: Customer, e: React.MouseEvent) => {
     e.stopPropagation();
-    const action = cust.is_active ? 'deactivate' : 'reactivate';
+    const currentlyActive = isCustomerActive(cust);
+    const action = currentlyActive ? 'deactivate' : 'reactivate';
     if (window.confirm(`Are you sure you want to ${action} customer ${cust.name}?`)) {
       try {
-        await toggleCustomerActive(cust.id, !cust.is_active);
+        await toggleCustomerActive(cust.id, !currentlyActive);
         await loadData();
-        showSuccess(`Customer ${cust.name} ${cust.is_active ? 'deactivated' : 'reactivated'} successfully.`);
+        showSuccess(`Customer ${cust.name} ${currentlyActive ? 'deactivated' : 'reactivated'} successfully.`);
       } catch (err: any) {
         showError(err.message || 'Failed to update customer status');
       }
@@ -250,8 +251,8 @@ export const Customers: React.FC = () => {
 
   // Tab counts
   const totalAll = allFetchedCustomers.length;
-  const totalActive = allFetchedCustomers.filter((c) => c.is_active && !c.deleted_at).length;
-  const totalInactive = allFetchedCustomers.filter((c) => !c.is_active || c.deleted_at !== null).length;
+  const totalActive = allFetchedCustomers.filter(isCustomerActive).length;
+  const totalInactive = allFetchedCustomers.filter((c) => !isCustomerActive(c)).length;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto w-full min-w-0">
@@ -415,12 +416,12 @@ export const Customers: React.FC = () => {
 
                 <span
                   className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border shrink-0 ${
-                    cust.is_active && !cust.deleted_at
+                    isCustomerActive(cust)
                       ? 'bg-[#F0FDF4] dark:bg-emerald-950/40 text-[#16A34A] dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-900/40'
                       : 'bg-[#FAFAFA] dark:bg-[#222222] text-[#737373] dark:text-[#A3A3A3] border-[#E5E5E5] dark:border-[#333333]'
                   }`}
                 >
-                  {cust.is_active && !cust.deleted_at ? 'Active' : 'Inactive'}
+                  {isCustomerActive(cust) ? 'Active' : 'Inactive'}
                 </span>
               </div>
 
@@ -537,7 +538,7 @@ export const Customers: React.FC = () => {
                       }}
                       className="w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:text-[#171717] dark:hover:text-white hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] rounded-xl transition-all text-left cursor-pointer"
                     >
-                      {cust.is_active ? (
+                      {isCustomerActive(cust) ? (
                         <>
                           <UserX className="w-4 h-4 text-[#DC2626] shrink-0" />
                           <span>Deactivate Account</span>
@@ -639,16 +640,28 @@ export const Customers: React.FC = () => {
                     <td className="py-3.5 px-4">
                       <span
                         className={`inline-block text-xs font-bold px-2.5 py-0.5 rounded-full border ${
-                          cust.is_active && !cust.deleted_at
+                          isCustomerActive(cust)
                             ? 'bg-[#F0FDF4] dark:bg-emerald-950/40 text-[#16A34A] dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-900/40'
                             : 'bg-[#FAFAFA] dark:bg-[#222222] text-[#737373] dark:text-[#A3A3A3] border-[#E5E5E5] dark:border-[#333333]'
                         }`}
                       >
-                        {cust.is_active && !cust.deleted_at ? 'Active' : 'Inactive'}
+                        {isCustomerActive(cust) ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={(e) => handleToggleActive(cust, e)}
+                          aria-label={isCustomerActive(cust) ? `Deactivate customer ${cust.name}` : `Reactivate customer ${cust.name}`}
+                          className={`p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23] rounded-md ${
+                            isCustomerActive(cust)
+                              ? 'text-[#525252] dark:text-[#D4D4D4] hover:text-[#DC2626] dark:hover:text-red-400'
+                              : 'text-[#16A34A] dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300'
+                          }`}
+                          title={isCustomerActive(cust) ? 'Deactivate Account' : 'Reactivate Account'}
+                        >
+                          {isCustomerActive(cust) ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                        </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

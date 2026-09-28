@@ -26,7 +26,7 @@ import {
   sendRefillReminderToCustomer,
   renderTemplateVariables,
 } from '../lib/messaging';
-import { getCustomers, getCylinderTypes, getAgencySettings } from '../lib/db';
+import { getCustomers, getCylinderTypes, getAgencySettings, isCustomerActive } from '../lib/db';
 import { AGENCY_BRANDING } from '../lib/constants';
 import type {
   Customer,
@@ -86,7 +86,7 @@ export const Messages: React.FC = () => {
         getCustomerReminderCycles(),
       ]);
 
-      setCustomers(custRes.customers.filter((c) => !c.deleted_at && c.is_active));
+      setCustomers(custRes.customers.filter(isCustomerActive));
       setCylinderTypes(cyls);
       setAgencySettings(settings);
       setTemplates(tmpls);

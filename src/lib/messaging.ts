@@ -5,7 +5,7 @@
  */
 
 import { supabase, isSupabaseConfigured } from './supabase';
-import { getCustomers, getCylinderTypes, getAgencySettings, getPurchases } from './db';
+import { getCustomers, getCylinderTypes, getAgencySettings, getPurchases, isCustomerActive } from './db';
 import { AGENCY_BRANDING } from './constants';
 import type {
   Customer,
@@ -399,7 +399,7 @@ export async function createCustomerCampaign(payload: {
 
   for (const customer of payload.recipients) {
     // 1. Exclude soft-deleted/archived customers
-    if (customer.deleted_at || !customer.is_active) {
+    if (!isCustomerActive(customer)) {
       skipped++;
       continue;
     }
@@ -529,7 +529,7 @@ export async function getCustomerReminderCycles(): Promise<CustomerReminderCycle
 
   for (const customer of custRes.customers) {
     // Exclude archived/deleted customers
-    if (customer.deleted_at || !customer.is_active) continue;
+    if (!isCustomerActive(customer)) continue;
 
     // Find customer's latest completed purchase
     const custPurchases = purchases

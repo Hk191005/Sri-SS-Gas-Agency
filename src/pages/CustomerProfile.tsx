@@ -8,6 +8,8 @@ import {
   getDeposits,
   getCustomerNotes,
   addCustomerNote,
+  toggleCustomerActive,
+  isCustomerActive,
 } from '../lib/db';
 import { exportCustomerProfilePdf } from '../lib/pdfExport';
 import { useToast } from '../context/ToastContext';
@@ -23,6 +25,8 @@ import {
   MapPin,
   Building2,
   User,
+  UserCheck,
+  UserX,
   ShoppingBag,
   CreditCard,
   PhoneCall,
@@ -206,6 +210,41 @@ export const CustomerProfile: React.FC = () => {
           </button>
 
           <button
+            onClick={async () => {
+              if (!customer) return;
+              const currentlyActive = isCustomerActive(customer);
+              const action = currentlyActive ? 'deactivate' : 'reactivate';
+              if (window.confirm(`Are you sure you want to ${action} customer ${customer.name}?`)) {
+                try {
+                  await toggleCustomerActive(customer.id, !currentlyActive);
+                  await loadCustomerData();
+                  showSuccess(`Customer ${customer.name} ${currentlyActive ? 'deactivated' : 'reactivated'} successfully.`);
+                } catch (err: any) {
+                  showError(err.message || 'Failed to update customer status');
+                }
+              }
+            }}
+            className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-xl border text-xs font-black transition-all shadow-xs cursor-pointer ${
+              isCustomerActive(customer)
+                ? 'bg-white dark:bg-[#1F1F1F] text-[#525252] dark:text-[#D4D4D4] border-[#E5E5E5] dark:border-[#2A2A2A] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A]'
+                : 'bg-[#F0FDF4] dark:bg-emerald-950/30 text-[#16A34A] border-emerald-200/60 dark:border-emerald-900/40 hover:bg-emerald-100'
+            }`}
+            title={isCustomerActive(customer) ? 'Deactivate Customer Account' : 'Reactivate Customer Account'}
+          >
+            {isCustomerActive(customer) ? (
+              <>
+                <UserX className="w-3.5 h-3.5 text-[#DC2626]" />
+                <span>Deactivate Account</span>
+              </>
+            ) : (
+              <>
+                <UserCheck className="w-3.5 h-3.5 text-[#16A34A]" />
+                <span>Reactivate Account</span>
+              </>
+            )}
+          </button>
+
+          <button
             onClick={() => setIsMergeModalOpen(true)}
             className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-xl bg-white dark:bg-[#1F1F1F] text-[#171717] dark:text-white border border-[#E5E5E5] dark:border-[#2A2A2A] text-xs font-black hover:bg-[#FAFAFA] transition-all shadow-xs cursor-pointer"
             title="Merge duplicate customer account into this primary profile"
@@ -244,6 +283,15 @@ export const CustomerProfile: React.FC = () => {
                 </span>
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#F0FDF4] text-[#16A34A] border border-emerald-200/60 uppercase">
                   {customer.customer_type}
+                </span>
+                <span
+                  className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border uppercase ${
+                    isCustomerActive(customer)
+                      ? 'bg-[#F0FDF4] dark:bg-emerald-950/40 text-[#16A34A] dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-900/40'
+                      : 'bg-[#FAFAFA] dark:bg-[#222222] text-[#737373] dark:text-[#A3A3A3] border-[#E5E5E5] dark:border-[#333333]'
+                  }`}
+                >
+                  {isCustomerActive(customer) ? 'Active' : 'Inactive'}
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl font-black text-[#171717] dark:text-white tracking-tight mt-1 truncate">

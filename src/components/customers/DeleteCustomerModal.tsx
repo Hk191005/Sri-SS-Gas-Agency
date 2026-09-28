@@ -3,6 +3,8 @@ import { AlertTriangle, Trash2, ShieldAlert, X, Loader2 } from 'lucide-react';
 import type { Customer } from '../../types/database.types';
 import { deleteCustomer } from '../../lib/db';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { useModalEscape } from '../../hooks/useModalEscape';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface DeleteCustomerModalProps {
   isOpen: boolean;
@@ -17,6 +19,7 @@ export const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
   onClose,
   onDeleted,
 }) => {
+  useModalEscape(isOpen, onClose);
   const [loadingDependencies, setLoadingDependencies] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -82,8 +85,9 @@ export const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs backdrop-enter">
-      <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-xl w-full max-w-md overflow-hidden modal-enter">
+    <ModalPortal>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs backdrop-enter overflow-y-auto">
+        <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-xl w-full max-w-md overflow-hidden modal-enter my-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[#F1F5F9] dark:border-[#262626] flex items-center justify-between bg-[#FFF1F2] dark:bg-red-950/20">
           <div className="flex items-center gap-3">
@@ -201,5 +205,6 @@ export const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
         </div>
       </div>
     </div>
+  </ModalPortal>
   );
 };

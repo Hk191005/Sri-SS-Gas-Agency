@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { AgencyLogo } from '../components/branding/AgencyLogo';
 import { AGENCY_BRANDING } from '../lib/constants';
 import { Lock, Mail, ShieldCheck, AlertCircle, Eye, EyeOff, CheckCircle2, ArrowRight } from 'lucide-react';
+import { useModalEscape } from '../hooks/useModalEscape';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -19,11 +20,14 @@ export const Login: React.FC = () => {
   const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
   const [forgotError, setForgotError] = useState<string | null>(null);
 
+  useModalEscape(showForgotModal, () => setShowForgotModal(false));
+
   const { login, resetPassword } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent duplicate submission
     if (!email.trim() || !password) {
       setError('Please provide both your Email Address and Password.');
       return;
@@ -95,7 +99,7 @@ export const Login: React.FC = () => {
 
           {/* Error notification */}
           {error && (
-            <div className="p-3.5 bg-[#FFF1F2] dark:bg-red-950/30 border border-[#FECDD3] dark:border-red-900/40 text-[#DC2626] dark:text-red-400 rounded-xl text-xs font-bold flex items-center gap-2">
+            <div role="alert" aria-live="assertive" className="p-3.5 bg-[#FFF1F2] dark:bg-red-950/30 border border-[#FECDD3] dark:border-red-900/40 text-[#DC2626] dark:text-red-400 rounded-xl text-xs font-bold flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626]" />
               <span>{error}</span>
             </div>
@@ -112,11 +116,12 @@ export const Login: React.FC = () => {
                 <input
                   type="email"
                   required
+                  disabled={loading}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="sshk5318@gmail.com"
                   autoComplete="email"
-                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/10"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/10 disabled:opacity-60"
                 />
               </div>
             </div>
@@ -128,13 +133,14 @@ export const Login: React.FC = () => {
                 </label>
                 <button
                   type="button"
+                  disabled={loading}
                   onClick={() => {
                     setForgotEmail(email);
                     setForgotError(null);
                     setForgotSuccess(null);
                     setShowForgotModal(true);
                   }}
-                  className="text-[11px] font-bold text-[#E31B23] hover:underline focus:outline-none"
+                  className="text-[11px] font-bold text-[#E31B23] hover:underline focus:outline-none disabled:opacity-50"
                 >
                   Forgot Password?
                 </button>
@@ -144,11 +150,12 @@ export const Login: React.FC = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  disabled={loading}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  className="w-full pl-10 pr-11 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/10"
+                  className="w-full pl-10 pr-11 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/10 disabled:opacity-60"
                 />
                 <button
                   type="button"

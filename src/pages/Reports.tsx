@@ -5,6 +5,7 @@ import {
   getDeposits,
   getCustomers,
   getDeliveries,
+  isCustomerActive,
 } from '../lib/db';
 import { getSupplierPurchases } from '../lib/supplierDb';
 import { exportPurchaseReportPdf } from '../lib/purchaseReportPdf';
@@ -271,7 +272,7 @@ export const Reports: React.FC = () => {
         c.city || 'Tiruppur',
         c.district || 'Tiruppur',
         c.pincode || '',
-        c.is_active ? 'Active' : 'Deactivated',
+        isCustomerActive(c) ? 'Active' : 'Inactive',
       ]);
     } else if (reportType === 'payments') {
       headers = ['#', 'Receipt ID', 'Date', 'Customer Name', 'Payment Method', 'Amount', 'Status'];
@@ -636,8 +637,8 @@ export const Reports: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${c.is_active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-red-50 text-red-700'}`}>
-                          {c.is_active ? 'ACTIVE' : 'ARCHIVED'}
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${isCustomerActive(c) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-red-50 text-red-700'}`}>
+                          {isCustomerActive(c) ? 'ACTIVE' : 'INACTIVE'}
                         </span>
                       </td>
                     </tr>

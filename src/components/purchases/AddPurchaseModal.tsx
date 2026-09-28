@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Customer, CylinderType } from '../../types/database.types';
-import { getCustomers, getCylinderTypes, createPurchase } from '../../lib/db';
+import { getCustomers, getCylinderTypes, createPurchase, isCustomerActive } from '../../lib/db';
 import { useToast } from '../../context/ToastContext';
+import { useModalEscape } from '../../hooks/useModalEscape';
+import { ModalPortal } from '../common/ModalPortal';
 import { X, ShoppingBag, Plus, Trash2, Save, AlertCircle, Calculator, FileText } from 'lucide-react';
 
 interface AddPurchaseModalProps {
@@ -18,6 +20,7 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
   onSuccess,
   preselectedCustomerId,
 }) => {
+  useModalEscape(isOpen, onClose);
   const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -51,7 +54,8 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
         getCustomers({ activeOnly: true, limit: 500 }),
         getCylinderTypes(),
       ]);
-      setCustomers(custRes.customers);
+      const activeCustomers = (custRes.customers || []).filter(isCustomerActive);
+      setCustomers(activeCustomers);
       setCylinderTypes(types);
 
       if (types.length > 0) {
@@ -68,8 +72,8 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
 
       if (preselectedCustomerId) {
         setSelectedCustomerId(preselectedCustomerId);
-      } else if (custRes.customers.length > 0) {
-        setSelectedCustomerId(custRes.customers[0].id);
+      } else if (activeCustomers.length > 0) {
+        setSelectedCustomerId(activeCustomers[0].id);
       }
     } catch (e) {
       console.error('Failed to load purchase modal data', e);
@@ -167,8 +171,9 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto backdrop-enter">
-      <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden modal-enter">
+    <ModalPortal>
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-enter">
+        <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden modal-enter my-auto">
         {/* Modal Header */}
         <div className="bg-white dark:bg-[#171717] text-[#171717] dark:text-white px-6 py-4 flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626]">
           <div>
@@ -183,7 +188,7 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1 text-[#171717] dark:text-[#F5F5F5]">
+        <form id="add-purchase-form" onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1 min-h-0 text-[#171717] dark:text-[#F5F5F5]">
           {errorMsg && (
             <div className="p-3 bg-[#FFF1F2] border border-[#FFD6D8] text-[#DC2626] text-xs rounded-xl flex items-center gap-2 font-bold">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -425,13 +430,19 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
               />
             </div>
           </div>
+        </form>
 
-          {/* Modal Actions */}
-          <div className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t border-[#F1F1F1] dark:border-[#262626]">
+        {/* Modal Footer (Pinned) */}
+        <div className="px-4 sm:px-6 py-3.5 bg-[#FAFAFA] dark:bg-[#1A1A1A] border-t border-[#F1F1F1] dark:border-[#262626] flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-[#737373]">Gas Sale Total:</span>
+            <span className="text-sm sm:text-base font-black text-[#E31B23]">₹{totalGasAmount.toLocaleString('en-IN')}</span>
+          </div>
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:bg-[#FAFAFA] dark:hover:bg-[#1F1F1F] border border-[#E5E5E5] dark:border-[#2A2A2A]"
+              className="px-3.5 py-2 min-h-[40px] rounded-xl text-xs font-bold text-[#525252] dark:text-[#D4D4D4] hover:bg-white dark:hover:bg-[#222] border border-[#E5E5E5] dark:border-[#2A2A2A] transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -439,22 +450,24 @@ export const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({
               type="button"
               onClick={(e) => handleSubmit(e, true)}
               disabled={submitting}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] bg-white dark:bg-[#222] border border-[#E5E5E5] dark:border-[#333] hover:border-[#E31B23] text-[#E31B23] font-bold text-xs rounded-xl shadow-2xs transition-all active:scale-98 disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[40px] bg-white dark:bg-[#222] border border-[#E5E5E5] dark:border-[#333] hover:border-[#E31B23] text-[#E31B23] font-bold text-xs rounded-xl shadow-2xs transition-all active:scale-98 disabled:opacity-50 cursor-pointer"
             >
               <FileText className="w-4 h-4" />
               <span>Save & View Bill</span>
             </button>
             <button
               type="submit"
+              form="add-purchase-form"
               disabled={submitting}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 min-h-[44px] rounded-xl text-xs font-black text-white bg-[#E31B23] hover:bg-[#C9151C] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-5 py-2 min-h-[40px] rounded-xl text-xs font-black text-white bg-[#E31B23] hover:bg-[#C9151C] shadow-[0_6px_18px_rgba(227,27,35,0.16)] transition-all disabled:opacity-50 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               {submitting ? 'Recording Sale...' : 'Save Gas Sale'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
+  </ModalPortal>
   );
 };

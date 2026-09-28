@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { Purchase } from '../../types/database.types';
 import { updatePurchaseDate } from '../../lib/db';
 import { useToast } from '../../context/ToastContext';
+import { useModalEscape } from '../../hooks/useModalEscape';
+import { ModalPortal } from '../common/ModalPortal';
 import { Calendar, X, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface EditPurchaseDateModalProps {
@@ -17,6 +19,7 @@ export const EditPurchaseDateModal: React.FC<EditPurchaseDateModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  useModalEscape(isOpen, onClose);
   const { showSuccess, showError } = useToast();
   const [purchaseDate, setPurchaseDate] = useState('');
   const [saving, setSaving] = useState(false);
@@ -56,8 +59,9 @@ export const EditPurchaseDateModal: React.FC<EditPurchaseDateModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs backdrop-enter">
-      <div className="relative w-full max-w-md bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] overflow-hidden modal-enter">
+    <ModalPortal>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs backdrop-enter overflow-y-auto">
+        <div className="relative w-full max-w-md bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] overflow-hidden modal-enter my-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5E5] dark:border-[#2A2A2A] bg-[#FAFAFA] dark:bg-[#1F1F1F]">
           <div className="flex items-center gap-2.5">
@@ -153,5 +157,6 @@ export const EditPurchaseDateModal: React.FC<EditPurchaseDateModalProps> = ({
         </form>
       </div>
     </div>
+  </ModalPortal>
   );
 };

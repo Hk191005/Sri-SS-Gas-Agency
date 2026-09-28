@@ -213,13 +213,12 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
 .animate-page-enter {
-  animation: pageFadeSlideIn 240ms var(--ease-out-smooth) both;
-  will-change: opacity, transform;
+  animation: pageFadeSlideIn 240ms var(--ease-out-smooth);
 }
 
 /* Card Entrances & Staggers */

@@ -10,6 +10,8 @@ import {
   deleteCustomerDocument,
 } from '../../lib/db';
 import { useToast } from '../../context/ToastContext';
+import { useModalEscape } from '../../hooks/useModalEscape';
+import { ModalPortal } from '../common/ModalPortal';
 import { GPSLocationPicker } from './GPSLocationPicker';
 import {
   X,
@@ -42,6 +44,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   onSuccess,
   customerToEdit,
 }) => {
+  useModalEscape(isOpen, onClose);
   const isEditing = !!customerToEdit;
   const { showSuccess, showError } = useToast();
 
@@ -366,8 +369,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto backdrop-enter">
-      <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden modal-enter">
+    <ModalPortal>
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-enter">
+        <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden modal-enter my-auto">
         {/* Modal Header */}
         <div className="bg-white dark:bg-[#171717] text-[#171717] dark:text-white px-6 py-4 flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626]">
           <div>
@@ -1002,5 +1006,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         </form>
       </div>
     </div>
+  </ModalPortal>
   );
 };

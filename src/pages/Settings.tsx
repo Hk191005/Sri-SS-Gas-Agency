@@ -46,24 +46,28 @@ export const Settings: React.FC = () => {
   const [price12kg, setPrice12kg] = useState<number>(1700);
   const [price17kg, setPrice17kg] = useState<number>(2552);
   const [price21kg, setPrice21kg] = useState<number>(3152);
+  const [price33kg, setPrice33kg] = useState<number>(4850);
 
   // Buying Prices (Supplier Acquisition Cost)
   const [buyingPrice4kg, setBuyingPrice4kg] = useState<number>(600);
   const [buyingPrice12kg, setBuyingPrice12kg] = useState<number>(1625);
   const [buyingPrice17kg, setBuyingPrice17kg] = useState<number>(2380);
   const [buyingPrice21kg, setBuyingPrice21kg] = useState<number>(2940);
+  const [buyingPrice33kg, setBuyingPrice33kg] = useState<number>(4500);
 
   // Security Deposits (Held Cylinder Liability)
   const [deposit4kg, setDeposit4kg] = useState<number>(1000);
   const [deposit12kg, setDeposit12kg] = useState<number>(2000);
   const [deposit17kg, setDeposit17kg] = useState<number>(2500);
   const [deposit21kg, setDeposit21kg] = useState<number>(3000);
+  const [deposit33kg, setDeposit33kg] = useState<number>(4000);
 
   // Opening Stock Baseline Inventory (Full Cylinders Available Before Transactions)
   const [openingStock4kg, setOpeningStock4kg] = useState<number>(0);
   const [openingStock12kg, setOpeningStock12kg] = useState<number>(0);
   const [openingStock17kg, setOpeningStock17kg] = useState<number>(0);
   const [openingStock21kg, setOpeningStock21kg] = useState<number>(0);
+  const [openingStock33kg, setOpeningStock33kg] = useState<number>(0);
 
   // Refill Reminder Rules
   const [reminderAutoEnabled, setReminderAutoEnabled] = useState<boolean>(true);
@@ -71,11 +75,13 @@ export const Settings: React.FC = () => {
   const [reminderInterval12kg, setReminderInterval12kg] = useState<number>(30);
   const [reminderInterval17kg, setReminderInterval17kg] = useState<number>(60);
   const [reminderInterval21kg, setReminderInterval21kg] = useState<number>(60);
+  const [reminderInterval33kg, setReminderInterval33kg] = useState<number>(60);
 
   const [reminderLeadDays4kg, setReminderLeadDays4kg] = useState<number>(2);
   const [reminderLeadDays12kg, setReminderLeadDays12kg] = useState<number>(3);
   const [reminderLeadDays17kg, setReminderLeadDays17kg] = useState<number>(5);
   const [reminderLeadDays21kg, setReminderLeadDays21kg] = useState<number>(5);
+  const [reminderLeadDays33kg, setReminderLeadDays33kg] = useState<number>(5);
 
   // Change Password State
   const [newPassword, setNewPassword] = useState('');
@@ -92,10 +98,6 @@ export const Settings: React.FC = () => {
 
   const { theme, setTheme } = useTheme();
   const { updatePassword } = useAuth();
-
-  useEffect(() => {
-    loadSettings();
-  }, []);
 
   const loadSettings = async () => {
     try {
@@ -117,18 +119,21 @@ export const Settings: React.FC = () => {
       setPrice12kg(data.default_price_12kg ?? 1700);
       setPrice17kg(data.default_price_17kg ?? 2552);
       setPrice21kg(data.default_price_21kg ?? 3152);
+      setPrice33kg(data.default_price_33kg ?? 4850);
 
       // Buying
       setBuyingPrice4kg(data.default_buying_price_4kg ?? 600);
       setBuyingPrice12kg(data.default_buying_price_12kg ?? 1625);
       setBuyingPrice17kg(data.default_buying_price_17kg ?? 2380);
       setBuyingPrice21kg(data.default_buying_price_21kg ?? 2940);
+      setBuyingPrice33kg(data.default_buying_price_33kg ?? 4500);
 
       // Deposits
       setDeposit4kg(data.default_deposit_4kg ?? 1000);
       setDeposit12kg(data.default_deposit_12kg ?? 2000);
       setDeposit17kg(data.default_deposit_17kg ?? 2500);
       setDeposit21kg(data.default_deposit_21kg ?? 3000);
+      setDeposit33kg(data.default_deposit_33kg ?? 4000);
 
       // Authoritative Opening Stock Balances from inventory_opening_balances
       const b4 = balances.find((b) => {
@@ -147,11 +152,16 @@ export const Settings: React.FC = () => {
         const t = types.find((ct) => ct.id === b.cylinder_type_id);
         return t ? Math.round(t.weight_kg) === 21 : false;
       });
+      const b33 = balances.find((b) => {
+        const t = types.find((ct) => ct.id === b.cylinder_type_id);
+        return t ? Math.round(t.weight_kg) === 33 : false;
+      });
 
       setOpeningStock4kg(b4 ? b4.opening_full_quantity : 0);
       setOpeningStock12kg(b12 ? b12.opening_full_quantity : 0);
       setOpeningStock17kg(b17 ? b17.opening_full_quantity : 0);
       setOpeningStock21kg(b21 ? b21.opening_full_quantity : 0);
+      setOpeningStock33kg(b33 ? b33.opening_full_quantity : 0);
 
       // Reminders
       setReminderAutoEnabled(data.reminder_auto_enabled ?? true);
@@ -159,16 +169,22 @@ export const Settings: React.FC = () => {
       setReminderInterval12kg(data.reminder_interval_12kg ?? 30);
       setReminderInterval17kg(data.reminder_interval_17kg ?? 60);
       setReminderInterval21kg(data.reminder_interval_21kg ?? 60);
+      setReminderInterval33kg(data.reminder_interval_33kg ?? 60);
 
       setReminderLeadDays4kg(data.reminder_lead_days_4kg ?? 2);
       setReminderLeadDays12kg(data.reminder_lead_days_12kg ?? 3);
       setReminderLeadDays17kg(data.reminder_lead_days_17kg ?? 5);
       setReminderLeadDays21kg(data.reminder_lead_days_21kg ?? 5);
+      setReminderLeadDays33kg(data.reminder_lead_days_33kg ?? 5);
     } catch (e: any) {
       console.error('Failed to load agency settings', e);
       setErrorMsg(e.message || 'Failed to load settings from database');
     }
   };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,14 +195,17 @@ export const Settings: React.FC = () => {
       price12kg,
       price17kg,
       price21kg,
+      price33kg,
       buyingPrice4kg,
       buyingPrice12kg,
       buyingPrice17kg,
       buyingPrice21kg,
+      buyingPrice33kg,
       deposit4kg,
       deposit12kg,
       deposit17kg,
       deposit21kg,
+      deposit33kg,
     ];
 
     if (allPrices.some((p) => isNaN(p) || !isFinite(p) || p < 0)) {
@@ -199,6 +218,7 @@ export const Settings: React.FC = () => {
       { label: '12 kg Commercial Opening Stock', val: openingStock12kg },
       { label: '17 kg Commercial Opening Stock', val: openingStock17kg },
       { label: '21 kg Industrial Opening Stock', val: openingStock21kg },
+      { label: '33 kg Commercial Opening Stock', val: openingStock33kg },
     ];
 
     for (const item of openingStockInputs) {
@@ -221,12 +241,14 @@ export const Settings: React.FC = () => {
       const t12 = cylinderTypes.find((t) => Math.round(t.weight_kg) === 12);
       const t17 = cylinderTypes.find((t) => Math.round(t.weight_kg) === 17);
       const t21 = cylinderTypes.find((t) => Math.round(t.weight_kg) === 21);
+      const t33 = cylinderTypes.find((t) => Math.round(t.weight_kg) === 33);
 
       const openingPayload: { cylinder_type_id: string; opening_full_quantity: number }[] = [];
       if (t4) openingPayload.push({ cylinder_type_id: t4.id, opening_full_quantity: Number(openingStock4kg) });
       if (t12) openingPayload.push({ cylinder_type_id: t12.id, opening_full_quantity: Number(openingStock12kg) });
       if (t17) openingPayload.push({ cylinder_type_id: t17.id, opening_full_quantity: Number(openingStock17kg) });
       if (t21) openingPayload.push({ cylinder_type_id: t21.id, opening_full_quantity: Number(openingStock21kg) });
+      if (t33) openingPayload.push({ cylinder_type_id: t33.id, opening_full_quantity: Number(openingStock33kg) });
 
       await Promise.all([
         updateAgencySettings({
@@ -240,23 +262,28 @@ export const Settings: React.FC = () => {
           default_price_12kg: Number(price12kg),
           default_price_17kg: Number(price17kg),
           default_price_21kg: Number(price21kg),
+          default_price_33kg: Number(price33kg),
           default_buying_price_4kg: Number(buyingPrice4kg),
           default_buying_price_12kg: Number(buyingPrice12kg),
           default_buying_price_17kg: Number(buyingPrice17kg),
           default_buying_price_21kg: Number(buyingPrice21kg),
+          default_buying_price_33kg: Number(buyingPrice33kg),
           default_deposit_4kg: Number(deposit4kg),
           default_deposit_12kg: Number(deposit12kg),
           default_deposit_17kg: Number(deposit17kg),
           default_deposit_21kg: Number(deposit21kg),
+          default_deposit_33kg: Number(deposit33kg),
           reminder_auto_enabled: reminderAutoEnabled,
           reminder_interval_4kg: Number(reminderInterval4kg),
           reminder_interval_12kg: Number(reminderInterval12kg),
           reminder_interval_17kg: Number(reminderInterval17kg),
           reminder_interval_21kg: Number(reminderInterval21kg),
+          reminder_interval_33kg: Number(reminderInterval33kg),
           reminder_lead_days_4kg: Number(reminderLeadDays4kg),
           reminder_lead_days_12kg: Number(reminderLeadDays12kg),
           reminder_lead_days_17kg: Number(reminderLeadDays17kg),
           reminder_lead_days_21kg: Number(reminderLeadDays21kg),
+          reminder_lead_days_33kg: Number(reminderLeadDays33kg),
         }),
         openingPayload.length > 0 ? updateInventoryOpeningBalances(openingPayload) : Promise.resolve(),
       ]);
@@ -473,7 +500,7 @@ export const Settings: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">4 kg Domestic</label>
               <div className="relative">
@@ -529,6 +556,20 @@ export const Settings: React.FC = () => {
                 />
               </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">33 kg Commercial</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-xs font-black text-[#737373]">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={price33kg}
+                  onChange={(e) => setPrice33kg(parseFloat(e.target.value) || 0)}
+                  className="w-full pl-7 pr-3 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#E31B23] focus:ring-2 focus:ring-[#E31B23]/10"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -544,7 +585,7 @@ export const Settings: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">4 kg Buying (Domestic)</label>
               <div className="relative">
@@ -600,6 +641,20 @@ export const Settings: React.FC = () => {
                 />
               </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">33 kg Buying</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-xs font-black text-[#737373]">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={buyingPrice33kg}
+                  onChange={(e) => setBuyingPrice33kg(parseFloat(e.target.value) || 0)}
+                  className="w-full pl-7 pr-3 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/10"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -615,7 +670,7 @@ export const Settings: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">4 kg Deposit</label>
               <div className="relative">
@@ -671,6 +726,20 @@ export const Settings: React.FC = () => {
                 />
               </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">33 kg Deposit</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-xs font-black text-[#737373]">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={deposit33kg}
+                  onChange={(e) => setDeposit33kg(parseFloat(e.target.value) || 0)}
+                  className="w-full pl-7 pr-3 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#D97706]/10"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -686,7 +755,7 @@ export const Settings: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">4 kg Domestic (Units)</label>
               <input
@@ -738,6 +807,19 @@ export const Settings: React.FC = () => {
                 className="w-full px-3.5 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/10"
               />
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#525252] dark:text-[#D4D4D4] mb-1.5">33 kg Commercial (Units)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                required
+                value={openingStock33kg}
+                onChange={(e) => setOpeningStock33kg(parseInt(e.target.value) || 0)}
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-[#1F1F1F] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-xl text-xs font-black text-[#111111] dark:text-white focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/10"
+              />
+            </div>
           </div>
         </div>
 
@@ -765,7 +847,7 @@ export const Settings: React.FC = () => {
             </label>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <div className="p-3 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] space-y-2">
               <span className="font-black text-xs text-[#111111] dark:text-white block">4 kg Domestic</span>
               <div>
@@ -857,6 +939,30 @@ export const Settings: React.FC = () => {
                   min="1"
                   value={reminderLeadDays21kg}
                   onChange={(e) => setReminderLeadDays21kg(parseInt(e.target.value) || 5)}
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-[#171717] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-lg text-xs font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="p-3 bg-[#F8FAFC] dark:bg-[#1F1F1F] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] space-y-2">
+              <span className="font-black text-xs text-[#111111] dark:text-white block">33 kg Commercial</span>
+              <div>
+                <label className="block text-[10px] font-bold text-[#737373]">Interval (Days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={reminderInterval33kg}
+                  onChange={(e) => setReminderInterval33kg(parseInt(e.target.value) || 60)}
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-[#171717] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-lg text-xs font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-[#737373]">Lead Notice (Days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={reminderLeadDays33kg}
+                  onChange={(e) => setReminderLeadDays33kg(parseInt(e.target.value) || 5)}
                   className="w-full px-2.5 py-1.5 bg-white dark:bg-[#171717] border border-[#D1D5DB] dark:border-[#2A2A2A] rounded-lg text-xs font-bold"
                 />
               </div>

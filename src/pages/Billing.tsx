@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import type { Customer, CylinderType, AgencySettings } from '../types/database.types';
+import { useSearchParams } from 'react-router-dom';
+import type { Customer, CylinderType, AgencySettings, Purchase } from '../types/database.types';
 import {
   getCustomers,
   getCylinderTypes,
   getAgencySettings,
+  getPurchaseById,
   createPurchase,
+  isCustomerActive,
 } from '../lib/db';
 import {
   generateCustomerInvoicePdf,
@@ -41,8 +44,13 @@ interface BillingItemRow {
   gstRate: number; // e.g. 18 or 5
 }
 
+const generateBillingFallbackInvoiceNumber = (type: string): string =>
+  `${type === 'gst' ? 'GST' : 'BILL'}-${Date.now().toString().slice(-6)}`;
+
 export const Billing: React.FC = () => {
   const { showSuccess, showError } = useToast();
+  const [searchParams] = useSearchParams();
+  const saleId = searchParams.get('saleId');
 
   // Mode: regular vs gst
   const [billingType, setBillingType] = useState<'regular' | 'gst'>('regular');
@@ -52,6 +60,7 @@ export const Billing: React.FC = () => {
   const [cylinderTypes, setCylinderTypes] = useState<CylinderType[]>([]);
   const [agencySettings, setAgencySettings] = useState<AgencySettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [linkedSale, setLinkedSale] = useState<Purchase | null>(null);
 
   // Form State - Customer
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
@@ -99,28 +108,89 @@ export const Billing: React.FC = () => {
     };
   };
 
-  // Initial load
-  useEffect(() => {
-    loadMasterData();
-    generateNextInvoiceNumber();
-  }, [billingType]);
+  const populateFromLinkedSale = (sale: Purchase, availableTypes: CylinderType[]) => {
+    setLinkedSale(sale);
+    if (sale.purchase_code) {
+      setInvoiceNumber(`INV-${sale.purchase_code}`);
+    }
+    if (sale.purchase_date) {
+      setInvoiceDate(sale.purchase_date);
+      setSupplyDate(sale.purchase_date);
+    }
+    setSelectedCustomerId(sale.customer_id);
+
+    if (sale.customer) {
+      const c = sale.customer;
+      setCustomerName(c.name || '');
+      setCustomerCompany(c.company_name || '');
+      setCustomerPhone(c.phone || '');
+      const fullAddr = [c.street, c.area1, c.area2, c.landmark].filter(Boolean).join(', ');
+      setCustomerAddress(fullAddr || 'Tiruppur');
+      setCustomerCity(c.city || 'Tiruppur');
+      setCustomerState('Tamil Nadu');
+      setCustomerStateCode('33');
+      setCustomerGstin(c.customer_type === 'company' ? '33AAAAA0000A1Z5' : '');
+    }
+
+    if (sale.items && sale.items.length > 0) {
+      const mappedItems: BillingItemRow[] = sale.items.map((it: any, index: number) => {
+        const matchedType = availableTypes.find((t) => t.id === it.cylinder_type_id) || it.cylinder_type;
+        const weight = matchedType ? Math.round(matchedType.weight_kg) : 12;
+        return {
+          id: `sale-item-${index}`,
+          cylinder_type_id: it.cylinder_type_id || (matchedType?.id || ''),
+          description: matchedType?.name ? `${matchedType.name} Cylinder` : `${weight}KG Cylinder`,
+          hsn: '27111200',
+          quantity: Number(it.quantity) || 1,
+          rate: Number(it.unit_price) || 0,
+          gstRate: weight <= 5 ? 5 : 18,
+        };
+      });
+      setItems(mappedItems);
+    }
+
+    if (sale.deposits && sale.deposits.length > 0) {
+      const depTotal = sale.deposits.reduce((acc: number, d: any) => acc + (Number(d.deposit_amount) || 0), 0);
+      setSecurityDeposit(depTotal);
+    }
+
+    if (sale.payments && sale.payments.length > 0) {
+      const method = sale.payments[0].payment_method;
+      if (method === 'cash' || method === 'upi' || method === 'bank_transfer') {
+        setPaymentMode(method);
+      } else {
+        setPaymentMode('credit');
+      }
+    }
+
+    if (sale.notes) {
+      setNotes(sale.notes);
+    }
+  };
+
+
 
   const loadMasterData = async () => {
     setLoading(true);
     try {
-      const [custList, types, settings] = await Promise.all([
+      const [custList, types, settings, existingSale] = await Promise.all([
         getCustomers({ limit: 1000, activeOnly: true }),
         getCylinderTypes(),
         getAgencySettings(),
+        saleId ? getPurchaseById(saleId).catch(() => null) : Promise.resolve(null),
       ]);
 
-      setCustomers(custList.customers || []);
-      setCylinderTypes(types || []);
+      const activeList = (custList.customers || []).filter(isCustomerActive);
+      setCustomers(activeList);
+      const resolvedTypes = types || [];
+      setCylinderTypes(resolvedTypes);
       setAgencySettings(settings);
 
-      // Default first row
-      if (types && types.length > 0) {
-        const defaultType = types.find((t) => t.weight_kg === 12) || types[0];
+      if (existingSale) {
+        populateFromLinkedSale(existingSale, resolvedTypes);
+      } else if (resolvedTypes.length > 0) {
+        // Default first row if no linked sale
+        const defaultType = resolvedTypes.find((t) => t.weight_kg === 12) || resolvedTypes[0];
         setItems([
           {
             id: 'row-1',
@@ -164,6 +234,11 @@ export const Billing: React.FC = () => {
     const timestamp = Date.now().toString().slice(-6);
     setInvoiceNumber(`${prefix}-${timestamp}`);
   };
+
+  useEffect(() => {
+    loadMasterData();
+    generateNextInvoiceNumber();
+  }, [billingType, saleId]);
 
   // When a customer is selected from dropdown
   const handleCustomerSelect = (customerId: string) => {
@@ -326,7 +401,7 @@ export const Billing: React.FC = () => {
     const cust = getResolvedCustomerDetails();
     return {
       invoiceType: billingType,
-      invoiceNumber: invoiceNumber.trim() || `${billingType === 'gst' ? 'GST' : 'BILL'}-${Date.now().toString().slice(-6)}`,
+      invoiceNumber: invoiceNumber.trim() || generateBillingFallbackInvoiceNumber(billingType),
       invoiceDate,
       supplyDate,
       vehicleNumber: vehicleNumber.trim() || undefined,
@@ -404,6 +479,11 @@ export const Billing: React.FC = () => {
   };
 
   const handleSaveToDatabase = async () => {
+    if (linkedSale) {
+      showSuccess(`This sale is already recorded in the database (${linkedSale.purchase_code || linkedSale.id}). You can preview or download the invoice PDF directly.`);
+      return;
+    }
+
     if (!selectedCustomerId) {
       showError('Please select a registered customer from the dropdown to record this in database.');
       return;
@@ -443,6 +523,7 @@ export const Billing: React.FC = () => {
   };
 
   const handleReset = () => {
+    setLinkedSale(null);
     generateNextInvoiceNumber();
     setSelectedCustomerId('');
     setCustomerName('');
@@ -520,6 +601,28 @@ export const Billing: React.FC = () => {
         </div>
       ) : (
         <>
+          {/* Linked Sale Banner */}
+          {linkedSale && (
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-800 dark:text-emerald-300">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div>
+                  <p className="font-bold">Loaded Sale Record: {linkedSale.purchase_code || linkedSale.id}</p>
+                  <p className="text-[11px] mt-0.5 text-emerald-700 dark:text-emerald-400">
+                    This invoice is automatically pre-filled from the sales registry. You can review items, toggle GST mode, preview, or download the official PDF.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-emerald-300 dark:border-emerald-800 rounded-xl text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shrink-0 self-start sm:self-auto"
+              >
+                Clear & New Invoice
+              </button>
+            </div>
+          )}
+
           {/* GST Validation Alert */}
           {billingType === 'gst' && isGstConfigIncomplete && (
             <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-2xl flex items-start gap-3 text-xs text-amber-800 dark:text-amber-300">

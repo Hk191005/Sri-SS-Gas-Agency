@@ -38,26 +38,37 @@ export const DEFAULT_AGENCY_SETTINGS: AgencySettings = {
   default_price_12kg: 1700,
   default_price_17kg: 2552,
   default_price_21kg: 3152,
+  default_price_33kg: 4850,
   // Buying Prices (Supplier Stock Acquisition)
   default_buying_price_4kg: 600,
   default_buying_price_12kg: 1625,
   default_buying_price_17kg: 2380,
   default_buying_price_21kg: 2940,
+  default_buying_price_33kg: 4500,
   // Security Deposits (Held Cylinder Liability)
   default_deposit_4kg: 1000,
   default_deposit_12kg: 2000,
   default_deposit_17kg: 2500,
   default_deposit_21kg: 3000,
+  default_deposit_33kg: 4000,
   // Refill Reminder Rules
   reminder_auto_enabled: true,
   reminder_interval_4kg: 14,
   reminder_interval_12kg: 30,
   reminder_interval_17kg: 60,
   reminder_interval_21kg: 60,
+  reminder_interval_33kg: 60,
   reminder_lead_days_4kg: 2,
   reminder_lead_days_12kg: 3,
   reminder_lead_days_17kg: 5,
   reminder_lead_days_21kg: 5,
+  reminder_lead_days_33kg: 5,
+  // Opening Stock Inventory Defaults (Baseline Full Cylinders in stock)
+  opening_stock_4kg: 0,
+  opening_stock_12kg: 0,
+  opening_stock_17kg: 0,
+  opening_stock_21kg: 0,
+  opening_stock_33kg: 0,
   // Legacy alias (read-only from existing database column)
   default_price_5kg: 650,
 };
@@ -96,6 +107,11 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 export function isValidUUID(id?: string | null): boolean {
   return typeof id === 'string' && UUID_REGEX.test(id);
 }
+
+// Authoritative central helper imported from customerLifecycle and re-exported
+import { isCustomerActive, getCustomerStatusLabel } from './customerLifecycle';
+export { isCustomerActive, getCustomerStatusLabel };
+
 
 /**
  * Authoritative helper: returns the default selling (refill) price for a cylinder weight.
@@ -226,14 +242,22 @@ export async function updateAgencySettings(settings: Partial<AgencySettings>): P
     'default_price_12kg',
     'default_price_17kg',
     'default_price_21kg',
+    'default_price_33kg',
     'default_buying_price_4kg',
     'default_buying_price_12kg',
     'default_buying_price_17kg',
     'default_buying_price_21kg',
+    'default_buying_price_33kg',
     'default_deposit_4kg',
     'default_deposit_12kg',
     'default_deposit_17kg',
     'default_deposit_21kg',
+    'default_deposit_33kg',
+    'opening_stock_4kg',
+    'opening_stock_12kg',
+    'opening_stock_17kg',
+    'opening_stock_21kg',
+    'opening_stock_33kg',
     'default_price_5kg', // Real column in Postgres schema, kept for legacy compatibility
   ];
 
@@ -286,10 +310,12 @@ export async function updateAgencySettings(settings: Partial<AgencySettings>): P
     'reminder_interval_12kg',
     'reminder_interval_17kg',
     'reminder_interval_21kg',
+    'reminder_interval_33kg',
     'reminder_lead_days_4kg',
     'reminder_lead_days_12kg',
     'reminder_lead_days_17kg',
     'reminder_lead_days_21kg',
+    'reminder_lead_days_33kg',
   ];
   for (const field of reminderFields) {
     if (validated[field] !== undefined) {
@@ -319,14 +345,17 @@ export async function updateAgencySettings(settings: Partial<AgencySettings>): P
         default_price_12kg: updatePayload.default_price_12kg ?? 1700,
         default_price_17kg: updatePayload.default_price_17kg ?? 2552,
         default_price_21kg: updatePayload.default_price_21kg ?? 3152,
+        default_price_33kg: updatePayload.default_price_33kg ?? 4850,
         default_buying_price_4kg: updatePayload.default_buying_price_4kg ?? 600,
         default_buying_price_12kg: updatePayload.default_buying_price_12kg ?? 1625,
         default_buying_price_17kg: updatePayload.default_buying_price_17kg ?? 2380,
         default_buying_price_21kg: updatePayload.default_buying_price_21kg ?? 2940,
+        default_buying_price_33kg: updatePayload.default_buying_price_33kg ?? 4500,
         default_deposit_4kg: updatePayload.default_deposit_4kg ?? 1000,
         default_deposit_12kg: updatePayload.default_deposit_12kg ?? 2000,
         default_deposit_17kg: updatePayload.default_deposit_17kg ?? 2500,
         default_deposit_21kg: updatePayload.default_deposit_21kg ?? 3000,
+        default_deposit_33kg: updatePayload.default_deposit_33kg ?? 4000,
         ...updatePayload,
       })
       .select()
@@ -357,6 +386,11 @@ export async function updateAgencySettings(settings: Partial<AgencySettings>): P
         price: updatedRecord.default_price_21kg,
         buyingPrice: updatedRecord.default_buying_price_21kg,
         deposit: updatedRecord.default_deposit_21kg,
+      },
+      33: {
+        price: updatedRecord.default_price_33kg,
+        buyingPrice: updatedRecord.default_buying_price_33kg,
+        deposit: updatedRecord.default_deposit_33kg,
       },
     };
 
@@ -846,7 +880,14 @@ export async function updateCustomer(id: string, payload: Partial<Customer>): Pr
 }
 
 export async function toggleCustomerActive(id: string, isActive: boolean): Promise<Customer> {
-  return updateCustomer(id, { is_active: isActive });
+  if (isActive) {
+    // When reactivating, explicitly restore is_active: true and clear any soft-deletion timestamp
+    return updateCustomer(id, { is_active: true, deleted_at: null });
+  } else {
+    // When deactivating, set is_active: false and deleted_at: current timestamp
+    const now = new Date().toISOString();
+    return updateCustomer(id, { is_active: false, deleted_at: now });
+  }
 }
 
 // -------------------------------------------------------------
@@ -1026,6 +1067,50 @@ export async function createPurchase(payload: {
 }): Promise<Purchase> {
   assertBackendAccess();
 
+  // 1. Authoritative Backend Customer Validation
+  const customer = await getCustomerById(payload.customer_id);
+  if (!customer) {
+    throw new Error('Customer record not found.');
+  }
+  if (!isCustomerActive(customer)) {
+    throw new Error('Customer is inactive or archived. Cannot create new sales for inactive customers.');
+  }
+
+  // 2. Attempt atomic PostgreSQL RPC execution
+  try {
+    const { data: rpcRes, error: rpcErr } = await supabase.rpc('create_sale_transaction', {
+      p_customer_id: payload.customer_id,
+      p_purchase_date: payload.purchase_date,
+      p_items: payload.items,
+      p_deposit_amount: Number(payload.deposit_amount) || 0,
+      p_deposit_payment_method: payload.deposit_payment_method || 'cash',
+      p_payment_amount: Number(payload.payment_amount) || 0,
+      p_payment_method: payload.payment_method || 'cash',
+      p_delivery_status: payload.delivery_status || 'pending',
+      p_notes: payload.notes || null,
+      p_empty_return_quantity: Number(payload.empty_return_quantity) || 0,
+      p_empty_return_type_id: isValidUUID(payload.empty_return_type_id) ? payload.empty_return_type_id : null,
+      p_empty_return_type_name: payload.empty_return_type_name || null,
+    });
+
+    if (rpcErr) {
+      if (rpcErr.message && rpcErr.message.toLowerCase().includes('inactive')) {
+        throw new Error(rpcErr.message);
+      }
+      if (rpcErr.code !== '42883' && rpcErr.code !== 'PGRST202') {
+        console.warn('RPC create_sale_transaction notice, falling back:', rpcErr.message);
+      }
+    } else if (rpcRes && (rpcRes as any).purchase_id) {
+      const createdPurchase = await getPurchaseById((rpcRes as any).purchase_id);
+      if (createdPurchase) return createdPurchase;
+    }
+  } catch (rpcEx: any) {
+    if (rpcEx.message && rpcEx.message.toLowerCase().includes('inactive')) {
+      throw rpcEx;
+    }
+  }
+
+  // 3. Fallback client-orchestrated execution with enforced active-customer checks
   let totalGas = 0;
   const itemsPrepared = payload.items.map((i) => {
     const total = i.quantity * i.unit_price;
@@ -1037,8 +1122,6 @@ export async function createPurchase(payload: {
       total_price: total,
     };
   });
-
-  const customer = await getCustomerById(payload.customer_id);
 
   // Combine notes with empty return info if provided
   let combinedNotes = (payload.notes || '').trim();
@@ -1691,10 +1774,16 @@ export async function updateDeliveryStatus(id: string, newStatus: DeliveryStatus
 export async function getDashboardStats(): Promise<DashboardStats> {
   assertBackendAccess();
 
-  const { customers, total: totalCust } = await getCustomers({ limit: 1000 });
-  const activeCustomers = customers.filter((c) => c.is_active).length;
-  const individualCustomers = customers.filter((c) => c.customer_type === 'individual').length;
-  const companyCustomers = customers.filter((c) => c.customer_type === 'company').length;
+  const [totalRes, activeRes, indivRes, compRes] = await Promise.all([
+    supabase.from('customers').select('*', { count: 'exact', head: true }),
+    supabase.from('customers').select('*', { count: 'exact', head: true }).eq('is_active', true).is('deleted_at', null),
+    supabase.from('customers').select('*', { count: 'exact', head: true }).eq('customer_type', 'individual'),
+    supabase.from('customers').select('*', { count: 'exact', head: true }).eq('customer_type', 'company'),
+  ]);
+  const totalCust = totalRes.count ?? 0;
+  const activeCustomers = activeRes.count ?? 0;
+  const individualCustomers = indivRes.count ?? 0;
+  const companyCustomers = compRes.count ?? 0;
 
   const todayStr = new Date().toISOString().split('T')[0];
   const deliveries = await getDeliveries();

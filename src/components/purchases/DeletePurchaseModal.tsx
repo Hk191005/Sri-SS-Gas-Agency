@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { AlertTriangle, Trash2, X, Loader2, Calendar, User, DollarSign, Package } from 'lucide-react';
 import type { Purchase } from '../../types/database.types';
 import { deletePurchase } from '../../lib/db';
+import { useModalEscape } from '../../hooks/useModalEscape';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface DeletePurchaseModalProps {
   isOpen: boolean;
@@ -16,6 +18,7 @@ export const DeletePurchaseModal: React.FC<DeletePurchaseModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  useModalEscape(isOpen, onClose);
   const [deleting, setDeleting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -41,8 +44,9 @@ export const DeletePurchaseModal: React.FC<DeletePurchaseModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs backdrop-enter">
-      <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-xl w-full max-w-md overflow-hidden modal-enter">
+    <ModalPortal>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs backdrop-enter overflow-y-auto">
+        <div className="bg-white dark:bg-[#171717] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl shadow-xl w-full max-w-md overflow-hidden modal-enter my-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[#F1F5F9] dark:border-[#262626] flex items-center justify-between bg-[#FFF1F2] dark:bg-red-950/20">
           <div className="flex items-center gap-3">
@@ -159,5 +163,6 @@ export const DeletePurchaseModal: React.FC<DeletePurchaseModalProps> = ({
         </div>
       </div>
     </div>
+  </ModalPortal>
   );
 };

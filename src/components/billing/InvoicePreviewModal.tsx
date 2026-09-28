@@ -5,6 +5,8 @@ import {
   formatCylinderItemDescription,
   formatEmptyReturnLabel,
 } from '../../lib/invoicePdfExport';
+import { useModalEscape } from '../../hooks/useModalEscape';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface InvoicePreviewModalProps {
   isOpen: boolean;
@@ -21,6 +23,7 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   onDownloadPdf,
   isGeneratingPdf,
 }) => {
+  useModalEscape(isOpen, onClose);
   if (!isOpen || !invoiceData) return null;
 
   const handlePrint = () => {
@@ -47,13 +50,14 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
     'Tiruppur, Tamil Nadu';
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto backdrop-enter"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="preview-modal-title"
-    >
-      <div className="relative w-full max-w-4xl bg-neutral-900 border border-neutral-700 rounded-2xl shadow-2xl flex flex-col max-h-[96vh] my-auto overflow-hidden modal-enter">
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto backdrop-enter"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="preview-modal-title"
+      >
+        <div className="relative w-full max-w-4xl bg-neutral-900 border border-neutral-700 rounded-2xl shadow-2xl flex flex-col max-h-[96vh] my-auto overflow-hidden modal-enter">
         {/* Top Control Bar */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 bg-neutral-800/90 border-b border-neutral-700 text-white shrink-0">
           <div className="flex items-center gap-2.5">
@@ -451,5 +455,6 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
         </div>
       </div>
     </div>
+  </ModalPortal>
   );
 };

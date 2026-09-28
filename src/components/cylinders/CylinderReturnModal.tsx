@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { Customer, CylinderType } from '../../types/database.types';
 import { getCustomers, getCylinderTypes, recordCylinderReturn } from '../../lib/db';
 import { useToast } from '../../context/ToastContext';
+import { useModalEscape } from '../../hooks/useModalEscape';
+import { ModalPortal } from '../common/ModalPortal';
 import { X, RotateCcw, Save, AlertCircle } from 'lucide-react';
 
 interface CylinderReturnModalProps {
@@ -17,6 +19,7 @@ export const CylinderReturnModal: React.FC<CylinderReturnModalProps> = ({
   onSuccess,
   preselectedCustomerId,
 }) => {
+  useModalEscape(isOpen, onClose);
   const { showSuccess, showError } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [cylinderTypes, setCylinderTypes] = useState<CylinderType[]>([]);
@@ -94,8 +97,9 @@ export const CylinderReturnModal: React.FC<CylinderReturnModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto backdrop-enter">
-      <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-lg overflow-hidden modal-enter">
+    <ModalPortal>
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-enter">
+        <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#2A2A2A] w-full max-w-lg overflow-hidden modal-enter my-auto">
         {/* Header */}
         <div className="bg-white dark:bg-[#171717] text-[#171717] dark:text-white px-6 py-4 flex items-center justify-between border-b border-[#F1F1F1] dark:border-[#262626]">
           <div>
@@ -212,5 +216,6 @@ export const CylinderReturnModal: React.FC<CylinderReturnModalProps> = ({
         </form>
       </div>
     </div>
+  </ModalPortal>
   );
 };

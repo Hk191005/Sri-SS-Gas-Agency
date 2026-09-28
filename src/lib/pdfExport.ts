@@ -5,7 +5,7 @@
 
 import { jsPDF } from 'jspdf';
 import type { Customer, Purchase, Payment, Deposit } from '../types/database.types';
-import { logAudit } from './db';
+import { logAudit, isCustomerActive } from './db';
 
 export async function exportCustomerProfilePdf(
   customer: Customer,
@@ -81,7 +81,7 @@ export async function exportCustomerProfilePdf(
   doc.setFont('helvetica', 'bold');
   doc.text('Status:', margin + 5, y + 34);
   doc.setFont('helvetica', 'normal');
-  doc.text(customer.is_active ? 'ACTIVE ACCOUNT' : 'INACTIVE / ARCHIVED', margin + 20, y + 34);
+  doc.text(isCustomerActive(customer) ? 'ACTIVE ACCOUNT' : 'INACTIVE / ARCHIVED', margin + 20, y + 34);
 
   // Address (Right column)
   const addrX = margin + contentWidth / 2;
