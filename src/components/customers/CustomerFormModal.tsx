@@ -61,7 +61,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const [landmark, setLandmark] = useState('');
   const [city, setCity] = useState('Tiruppur');
   const [district] = useState('Tiruppur');
-  const [pincode, setPincode] = useState('641601');
+  const [pincode, setPincode] = useState('');
   const [latitude, setLatitude] = useState<number | undefined>();
   const [longitude, setLongitude] = useState<number | undefined>();
   const [notes, setNotes] = useState('');
@@ -172,7 +172,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         setStreet(customerToEdit.street || '');
         setLandmark(customerToEdit.landmark || '');
         setCity(customerToEdit.city || 'Tiruppur');
-        setPincode(customerToEdit.pincode || '641601');
+        setPincode(customerToEdit.pincode || '');
         setLatitude(customerToEdit.latitude || undefined);
         setLongitude(customerToEdit.longitude || undefined);
         setNotes(customerToEdit.notes || '');
@@ -198,7 +198,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         setStreet('');
         setLandmark('');
         setCity('Tiruppur');
-        setPincode('641601');
+        setPincode('');
         setLatitude(undefined);
         setLongitude(undefined);
         setNotes('');
@@ -242,19 +242,31 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     setAltPhoneError('');
     setPincodeError('');
 
-    // Phone: Must be 10 digits
-    if (!/^\d{10}$/.test(phone.trim())) {
-      setPhoneError('Primary phone number must be exactly 10 digits.');
+    // Indian Mobile Normalization & Validation Helper
+    const normalizeIndianMobile = (raw: string): string => {
+      let cleaned = (raw || '').replace(/\D/g, '');
+      if (cleaned.length === 12 && cleaned.startsWith('91')) cleaned = cleaned.slice(2);
+      if (cleaned.length === 11 && cleaned.startsWith('0')) cleaned = cleaned.slice(1);
+      return cleaned;
+    };
+
+    // Primary Phone: Must be a valid 10-digit Indian mobile number
+    const cleanedPhone = normalizeIndianMobile(phone);
+    if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
+      setPhoneError('Primary phone number must be a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
       valid = false;
     }
 
-    // Alt Phone: optional, but if provided must be 10 digits
-    if (alternatePhone.trim() && !/^\d{10}$/.test(alternatePhone.trim())) {
-      setAltPhoneError('Alternate phone must be exactly 10 digits.');
-      valid = false;
+    // Alt Phone: optional, but if provided must be a valid 10-digit Indian mobile number
+    if (alternatePhone.trim()) {
+      const cleanedAltPhone = normalizeIndianMobile(alternatePhone);
+      if (!/^[6-9]\d{9}$/.test(cleanedAltPhone)) {
+        setAltPhoneError('Alternate phone must be a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
+        valid = false;
+      }
     }
 
-    // Pincode: 6 digits
+    // Pincode: optional, but if provided must be exactly 6 digits
     if (pincode.trim() && !/^\d{6}$/.test(pincode.trim())) {
       setPincodeError('Pincode must be exactly 6 digits.');
       valid = false;
@@ -294,13 +306,16 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       }
 
       if (isEditing && customerToEdit) {
+        const cleanedPhone = phone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').replace(/^0(?=\d{10}$)/, '');
+        const cleanedAlt = alternatePhone.trim() ? alternatePhone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').replace(/^0(?=\d{10}$)/, '') : undefined;
+
         await updateCustomer(customerToEdit.id, {
           name: finalName,
           customer_type: customerType,
           company_name: customerType === 'company' ? companyName.trim() : undefined,
           contact_person_name: customerType === 'company' ? contactPersonName.trim() : undefined,
-          phone: phone.trim(),
-          alternate_phone: alternatePhone.trim() || undefined,
+          phone: cleanedPhone,
+          alternate_phone: cleanedAlt,
           street: street.trim() || undefined,
           landmark: landmark.trim() || undefined,
           area1: area1.trim() || undefined,
@@ -321,14 +336,17 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           await uploadCustomerDocument(customerToEdit.id, docFile, docType);
         }
       } else {
+        const cleanedPhone = phone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').replace(/^0(?=\d{10}$)/, '');
+        const cleanedAlt = alternatePhone.trim() ? alternatePhone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').replace(/^0(?=\d{10}$)/, '') : undefined;
+
         // Register new customer
         const newCustomer = await createCustomerWithInitialGas({
           name: finalName,
           customer_type: customerType,
           company_name: customerType === 'company' ? companyName.trim() : undefined,
           contact_person_name: customerType === 'company' ? contactPersonName.trim() : undefined,
-          phone: phone.trim(),
-          alternate_phone: alternatePhone.trim() || undefined,
+          phone: cleanedPhone,
+          alternate_phone: cleanedAlt,
           street: street.trim() || undefined,
           landmark: landmark.trim() || undefined,
           area1: area1.trim() || undefined,
