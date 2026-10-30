@@ -5,11 +5,13 @@ import { getCustomers, toggleCustomerActive, isCustomerActive } from '../lib/db'
 import { CustomerFormModal } from '../components/customers/CustomerFormModal';
 import { DeleteCustomerModal } from '../components/customers/DeleteCustomerModal';
 import { MergeCustomerModal } from '../components/customers/MergeCustomerModal';
+import { ExportCustomerProofPdfModal } from '../components/customers/ExportCustomerProofPdfModal';
 import { useToast } from '../context/ToastContext';
 import {
   Users,
   Search,
   Plus,
+  FileDown,
   Phone,
   MapPin,
   Edit,
@@ -99,6 +101,7 @@ export const Customers: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [customerToMerge, setCustomerToMerge] = useState<Customer | null>(null);
+  const [isExportProofModalOpen, setIsExportProofModalOpen] = useState(false);
   const [activeMoreMenuId, setActiveMoreMenuId] = useState<string | null>(null);
 
   const navigate = useNavigate();
@@ -267,6 +270,16 @@ export const Customers: React.FC = () => {
           </p>
         </div>
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">
+          <button
+            id="btn-export-active-customers-pdf"
+            onClick={() => setIsExportProofModalOpen(true)}
+            className="min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#FFF1F2] dark:hover:bg-red-950/30 text-[#171717] dark:text-white hover:text-[#E31B23] border border-[#E5E5E5] dark:border-[#2A2A2A] hover:border-red-300 dark:hover:border-red-900/50 font-black text-xs px-4 py-2.5 rounded-[12px] shadow-xs transition-all active:scale-98 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23]"
+            title="Export all active customers and their proof documents to an A4 PDF dossier"
+          >
+            <FileDown className="w-4 h-4 text-[#E31B23]" />
+            <span>Export Active Customers PDF</span>
+          </button>
+
           <button
             onClick={() => handleOpenMerge()}
             className="min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-white dark:bg-[#1F1F1F] hover:bg-[#FAFAFA] dark:hover:bg-[#262626] text-[#171717] dark:text-white border border-[#E5E5E5] dark:border-[#2A2A2A] font-black text-xs px-4 py-2.5 rounded-[12px] shadow-xs transition-all active:scale-98 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E31B23]"
@@ -765,6 +778,12 @@ export const Customers: React.FC = () => {
         onSuccess={() => {
           loadData();
         }}
+      />
+
+      {/* Bulk Active Customer Proof PDF Export Modal */}
+      <ExportCustomerProofPdfModal
+        isOpen={isExportProofModalOpen}
+        onClose={() => setIsExportProofModalOpen(false)}
       />
     </div>
   );

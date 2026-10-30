@@ -991,20 +991,27 @@ export async function deleteCustomerDocument(docId: string, storagePath: string)
 
   // Verify document existence before removal
   const { data: doc } = await supabase.from('customer_documents').select('*').eq('id', docId).single();
+  const actualPath = storagePath || doc?.file_path;
 
-  if (storagePath) {
-    const { error: removeStorageErr } = await supabase.storage.from('customer-documents').remove([storagePath]);
-    if (removeStorageErr) console.warn('Storage remove object warning:', removeStorageErr.message);
-  }
-
+  // Safe recoverable order: Delete database record first so that failure preserves the Storage file
   const { error: deleteTableErr } = await supabase.from('customer_documents').delete().eq('id', docId);
   if (deleteTableErr) throw new Error('Failed to delete document record from table: ' + deleteTableErr.message);
 
+  let storageError: string | null = null;
+  if (actualPath) {
+    const { error: removeStorageErr } = await supabase.storage.from('customer-documents').remove([actualPath]);
+    if (removeStorageErr) {
+      storageError = removeStorageErr.message;
+      console.warn('Storage remove object warning (DB record was removed):', removeStorageErr.message);
+    }
+  }
+
   await logAudit('Document Deleted', 'customer_documents', docId, {
-    storagePath,
+    storagePath: actualPath,
     filename: doc?.original_filename,
     docType: doc?.document_type,
     customerId: doc?.customer_id,
+    storageWarning: storageError || undefined,
   });
 }
 
@@ -1292,29 +1299,24 @@ export async function deletePurchase(purchaseId: string): Promise<{ success: boo
   const purchaseCode = purchase.purchase_code || 'Unknown';
   const customerName = (purchase.customer as any)?.name || 'Unknown Customer';
 
-  // 2. Delete purchase_items first to ensure child records are removed
-  const { error: itemsErr } = await supabase
-    .from('purchase_items')
-    .delete()
-    .eq('purchase_id', purchaseId);
+  // 2. Perform atomic transactional cascade deletion using server-side RPC
+  const { error: rpcErr } = await supabase.rpc('remove_customer_purchase', {
+    p_purchase_id: purchaseId,
+  });
 
-  if (itemsErr) {
-    console.warn('Warning deleting purchase items:', itemsErr.message);
-  }
-
-  // 3. Clean up linked deposits, payments, and deliveries created specifically for this purchase
-  await supabase.from('deposits').delete().eq('purchase_id', purchaseId);
-  await supabase.from('payments').delete().eq('purchase_id', purchaseId);
-  await supabase.from('deliveries').delete().eq('purchase_id', purchaseId);
-
-  // 4. Delete the purchase record
-  const { error: delErr } = await supabase
-    .from('purchases')
-    .delete()
-    .eq('id', purchaseId);
-
-  if (delErr) {
-    throw new Error('Failed to delete purchase from Supabase: ' + delErr.message);
+  if (rpcErr) {
+    // If RPC does not exist in legacy environments (code 42883 or PGRST202), execute controlled fallback
+    if (rpcErr.code === '42883' || rpcErr.code === 'PGRST202') {
+      const { error: itemsErr } = await supabase.from('purchase_items').delete().eq('purchase_id', purchaseId);
+      if (itemsErr) console.warn('Warning deleting purchase items:', itemsErr.message);
+      await supabase.from('deposits').delete().eq('purchase_id', purchaseId);
+      await supabase.from('payments').delete().eq('purchase_id', purchaseId);
+      await supabase.from('deliveries').delete().eq('purchase_id', purchaseId);
+      const { error: delErr } = await supabase.from('purchases').delete().eq('id', purchaseId);
+      if (delErr) throw new Error('Failed to delete purchase from Supabase: ' + delErr.message);
+    } else {
+      throw new Error('Failed to delete purchase: ' + rpcErr.message);
+    }
   }
 
   // 5. Record audit log

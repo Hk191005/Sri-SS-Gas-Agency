@@ -46,11 +46,12 @@ export const supabase = createClient(
 /**
  * Resolves an environment-aware, production-safe redirect URL for Supabase Auth flows.
  * - Local development: Uses current localhost origin (e.g., http://localhost:5173 or http://localhost:3000)
- * - Production: Uses window.location.origin (e.g., https://sri-ss-gas-agency.vercel.app) or canonical production fallback
+ * - Production: Uses window.location.origin (e.g., https://ssgasagency.netlify.app) or canonical production fallback
  */
 export function getAuthRedirectUrl(path: string = '/reset-password'): string {
   const formattedPath = path.startsWith('/') ? path : `/${path}`;
-  const canonicalProductionUrl = 'https://sri-ss-gas-agency.vercel.app';
+  // Authoritative production deployment hosted on Netlify
+  const canonicalProductionUrl = 'https://ssgasagency.netlify.app';
 
   if (typeof window !== 'undefined' && window.location?.origin) {
     const origin = window.location.origin;
